@@ -1,9 +1,6 @@
 <script setup lang="ts">
-const envVal = ref({})
+const envVal = import.meta.env
 
-onMounted(() => {
-  envVal.value = import.meta.env
-})
 const handleClick = () => {
   usePost('/v1/auth/login', {
     phone: '008613800001111',
@@ -14,8 +11,10 @@ const handleClick = () => {
 </script>
 <template>
   <div>
-    home 
-    <div>{{ envVal }}</div>
+    home
+    <ClientOnly>
+      <div>{{ envVal }}</div>
+    </ClientOnly>
     <button @click="handleClick">click me</button>
   </div>
 </template>
