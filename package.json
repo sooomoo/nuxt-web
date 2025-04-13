@@ -15,7 +15,6 @@
     "@noble/ciphers": "^1.2.1",
     "@noble/curves": "^1.8.1",
     "@noble/hashes": "^1.7.1",
-    "@nuxt/scripts": "0.11.5",
     "@nuxt/test-utils": "3.17.2",
     "@unhead/vue": "^2.0.0-rc.8",
     "axios": "^1.8.4",
