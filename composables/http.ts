@@ -100,6 +100,9 @@ export interface HttpOptions {
     cancelToken?: CancelToken
 }
 
+/**
+ * 新建一个用于取消请求的 token
+ */
 export const newHttpCanceler = () => {
     const canceler = axios.CancelToken.source()
     return canceler
