@@ -8,6 +8,7 @@ export interface Signer {
     verify(data: Uint8Array, sign: Uint8Array): boolean
     signatureLen(): number
 }
+
 export interface Crypter {
     encrypt(data: Uint8Array): Uint8Array<ArrayBuffer>
     decrypt(data: Uint8Array): Uint8Array<ArrayBuffer>
@@ -88,39 +89,4 @@ export const decodeSecureString = (str: string): {
     }
 
     return { sign: signPubKeySecure, box: boxPubKeySecure }
-}
-
-export const decodeSecrets = (): [KeyPair, KeyPair, string] => {
-    // 当前会话的公钥藏在会话Id中，私钥藏在 ck 中
-    let sessionId = document.cookie.split(';').find(c => c.trim().startsWith('sid='))?.split('=')[1] ?? ''
-    let clientKey = document.cookie.split(';').find(c => c.trim().startsWith('cid='))?.split('=')[1] ?? ''
-    const pubKeys = decodeSecureString(sessionId)
-    const priKeys = decodeSecureString(clientKey)
-    if (!pubKeys.box || !pubKeys.sign || !priKeys.box || !priKeys.sign) {
-        // 需要重新生成
-        const boxKeyPair = newBoxKeyPair()
-        const signKeyPair = newSignKeyPair()
-        sessionId = encodeSecureString(signKeyPair.publicKey, boxKeyPair.publicKey)
-        clientKey = encodeSecureString(signKeyPair.privateKey, boxKeyPair.privateKey)
-        document.cookie = `sid=${sessionId};path=/;samesite=lax`
-        document.cookie = `cid=${clientKey};path=/;samesite=lax`
-        console.debug(`【decodeSecrets】new sign keypair `, signKeyPair)
-        console.debug(`【decodeSecrets】new box keypair `, boxKeyPair)
-
-        const pubKeys1 = decodeSecureString(sessionId)
-        const priKeys1 = decodeSecureString(clientKey)
-        console.debug('xxxxxx sign', pubKeys1.sign, priKeys1.sign)
-        console.debug('xxxxxx box', pubKeys1.box, priKeys1.box)
-        console.debug('sign pub key eq', equalBytes(pubKeys1.sign!, signKeyPair.publicKey))
-        console.debug('box pub key eq', equalBytes(pubKeys1.box!, boxKeyPair.publicKey))
-        console.debug('sign pri key eq', equalBytes(priKeys1.sign!, signKeyPair.privateKey))
-        console.debug('box pri key eq', equalBytes(priKeys1.box!, boxKeyPair.privateKey))
-
-        return [boxKeyPair, signKeyPair, sessionId]
-    } else {
-        const boxKeyPair = newBoxKeyPairFromArray(pubKeys.box, priKeys.box)
-        const signKeyPair = newSignKeyPairFromArray(pubKeys.sign, priKeys.sign)
-        console.debug(`【decodeSecrets】decode from cookie `, sessionId, clientKey, signKeyPair, boxKeyPair)
-        return [boxKeyPair, signKeyPair, sessionId]
-    }
 }
