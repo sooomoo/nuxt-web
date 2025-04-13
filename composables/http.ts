@@ -248,7 +248,7 @@ export const useGet = async  <T = any>(path: string, query?: Record<string, any>
  * @param query 查询参数
  * @returns 业务数据
  */
-const usePost = async  <T = any>(path: string, data?: Record<string, any>, query?: Record<string, any>, options?: HttpOptions): Promise<HttpResponse<T>> => {
+export const usePost = async  <T = any>(path: string, data?: Record<string, any>, query?: Record<string, any>, options?: HttpOptions): Promise<HttpResponse<T>> => {
     const strQuery = query ? stringifyObj(query) : ""
     const tag = `【POST: ${path}?${strQuery}】`
     options ??= {
@@ -391,41 +391,41 @@ const usePost = async  <T = any>(path: string, data?: Record<string, any>, query
 }
 
 
-export const useAsyncCacheKey = (path: string, query?: Record<string, any>, data?: Record<string, any>) => {
-    const strQuery = query ? stringifyObj(query) : ""
-    const strData = data ? blake3(JSON.stringify(data)) : ""
-    const hash = blake3(`${path}:${strQuery}:${strData}`)
-    return bytesToHex(hash)
-}
+// export const useAsyncCacheKey = (path: string, query?: Record<string, any>, data?: Record<string, any>) => {
+//     const strQuery = query ? stringifyObj(query) : ""
+//     const strData = data ? blake3(JSON.stringify(data)) : ""
+//     const hash = blake3(`${path}:${strQuery}:${strData}`)
+//     return bytesToHex(hash)
+// }
 
-/**
- * 对 useAsyncData 和 useGet 进行封装，增加缓存功能
- * 缓存的 key 是由 path、query 组成的，使用 blake3 进行 hash
- * @param path  请求路径 
- * @param query 查询参数
- * @param options 
- * @returns 
- */
-export const useAsyncGet = <ResT = any, NuxtErrorDataT = any, DataT = ResT, PickKeys extends KeysOf<DataT> = KeysOf<DataT>, DefaultT = null>(
-    path: string, query?: Record<string, any>, httpOptions?: HttpOptions, options?: AsyncDataOptions<HttpResponse<ResT>, DataT, PickKeys, DefaultT>):
-    AsyncData<PickFrom<DataT, PickKeys> | DefaultT, (NuxtErrorDataT extends Error | NuxtError ? NuxtErrorDataT : NuxtError<NuxtErrorDataT>) | DefaultAsyncDataErrorValue> => {
-    const cacheKey = useAsyncCacheKey(path, query)
-    return useAsyncData(cacheKey, () => useGet<ResT>(path, query, httpOptions), options)
-}
+// /**
+//  * 对 useAsyncData 和 useGet 进行封装，增加缓存功能
+//  * 缓存的 key 是由 path、query 组成的，使用 blake3 进行 hash
+//  * @param path  请求路径 
+//  * @param query 查询参数
+//  * @param options 
+//  * @returns 
+//  */
+// export const useAsyncGet = <ResT = any, NuxtErrorDataT = any, DataT = ResT, PickKeys extends KeysOf<DataT> = KeysOf<DataT>, DefaultT = null>(
+//     path: string, query?: Record<string, any>, httpOptions?: HttpOptions, options?: AsyncDataOptions<HttpResponse<ResT>, DataT, PickKeys, DefaultT>):
+//     AsyncData<PickFrom<DataT, PickKeys> | DefaultT, (NuxtErrorDataT extends Error | NuxtError ? NuxtErrorDataT : NuxtError<NuxtErrorDataT>) | DefaultAsyncDataErrorValue> => {
+//     const cacheKey = useAsyncCacheKey(path, query)
+//     return useAsyncData(cacheKey, () => useGet<ResT>(path, query, httpOptions), options)
+// }
 
-/**
- * 对 useAsyncData 和 usePost 进行封装，增加缓存功能
- * 缓存的 key 是由 path、query 和 data 组成的，使用 blake3 进行 hash
- * @param path  请求路径
- * @param data  payload
- * @param query 查询参数
- * @param options 
- * @returns 
- */
-export const useAsyncPost = <ResT = any, NuxtErrorDataT = any, DataT = ResT, PickKeys extends KeysOf<DataT> = KeysOf<DataT>, DefaultT = null>(
-    path: string, data?: Record<string, any>, query?: Record<string, any>, httpOptions?: HttpOptions, options?: AsyncDataOptions<HttpResponse<ResT>, DataT, PickKeys, DefaultT>):
-    AsyncData<PickFrom<DataT, PickKeys> | DefaultT, (NuxtErrorDataT extends Error | NuxtError ? NuxtErrorDataT : NuxtError<NuxtErrorDataT>) | DefaultAsyncDataErrorValue> => {
-    const cacheKey = useAsyncCacheKey(path, query, data)
-    console.log(`[useAsyncPost] cacheKey is: ${cacheKey}`)
-    return useAsyncData(cacheKey, async () => await usePost<ResT>(path, data, query, httpOptions), options)
-}
+// /**
+//  * 对 useAsyncData 和 usePost 进行封装，增加缓存功能
+//  * 缓存的 key 是由 path、query 和 data 组成的，使用 blake3 进行 hash
+//  * @param path  请求路径
+//  * @param data  payload
+//  * @param query 查询参数
+//  * @param options 
+//  * @returns 
+//  */
+// export const useAsyncPost = <ResT = any, NuxtErrorDataT = any, DataT = ResT, PickKeys extends KeysOf<DataT> = KeysOf<DataT>, DefaultT = null>(
+//     path: string, data?: Record<string, any>, query?: Record<string, any>, httpOptions?: HttpOptions, options?: AsyncDataOptions<HttpResponse<ResT>, DataT, PickKeys, DefaultT>):
+//     AsyncData<PickFrom<DataT, PickKeys> | DefaultT, (NuxtErrorDataT extends Error | NuxtError ? NuxtErrorDataT : NuxtError<NuxtErrorDataT>) | DefaultAsyncDataErrorValue> => {
+//     const cacheKey = useAsyncCacheKey(path, query, data)
+//     console.log(`[useAsyncPost] cacheKey is: ${cacheKey}`)
+//     return useAsyncData(cacheKey, async () => await usePost<ResT>(path, data, query, httpOptions), options)
+// }
