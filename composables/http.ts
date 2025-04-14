@@ -1,9 +1,4 @@
-import { blake3 } from '@noble/hashes/blake3';
-import { bytesToHex } from '@noble/hashes/utils';
 import axios, { type AxiosRequestConfig, type CancelToken } from 'axios';
-import type { AsyncDataOptions, NuxtError } from 'nuxt/app';
-import type { AsyncData, KeysOf, PickFrom } from '#app/composables/asyncData';
-import type { DefaultAsyncDataErrorValue } from 'nuxt/app/defaults';
 
 const getPlatform = () => {
     const platform = useCookie('p')
@@ -85,7 +80,7 @@ httpInstance.interceptors.request.use((config) => {
         "method": "POST",
         "path": config.url,
         "query": strQuery,
-        "authorization": config.headers['Authorization'] || '',
+        // "authorization": config.headers['Authorization'] || '',
     }
     // 1. 加密请求体（仅针对 POST/PUT 请求）
     if (['post', 'put'].includes((config.method ?? '').toLowerCase())) {
@@ -111,34 +106,79 @@ httpInstance.interceptors.request.use((config) => {
     return config;
 })
 
-httpInstance.interceptors.response.use((resp) => {
-    // 2xx 范围内的状态码都会触发该函数。
-    const [boxKeyPair, _, sessionId] = ensureSecurets()
-    const strQuery = resp.config.params ? stringifyObj(resp.config.params) : ""
-    const respTimestamp = resp.headers[signHeaderTimestamp] as string | undefined ?? ''
-    const respNonce = resp.headers[signHeaderNonce] as string | undefined ?? ''
-    const respSignature = resp.headers[signHeaderSignature] as string | undefined ?? ''
-    const respStr = stringifyObj({
-        "session": sessionId,
-        "nonce": respNonce,
-        "platform": getPlatform(),
-        "timestamp": respTimestamp,
-        "method": "POST",
-        "path": resp.config.url,
-        "query": strQuery,
-        "body": resp.data,
-    })
-    if (!useSignVerify(respStr, respSignature)) {
-        return Promise.reject(new Error('签名验证失败'));
-    }
+httpInstance.interceptors.response.use(
+    resp => {
+        // 2xx 范围内的状态码都会触发该函数。
+        const [boxKeyPair, _, sessionId] = ensureSecurets()
+        const strQuery = resp.config.params ? stringifyObj(resp.config.params) : ""
+        const respTimestamp = resp.headers[signHeaderTimestamp] as string | undefined ?? ''
+        const respNonce = resp.headers[signHeaderNonce] as string | undefined ?? ''
+        const respSignature = resp.headers[signHeaderSignature] as string | undefined ?? ''
+        const respStr = stringifyObj({
+            "session": sessionId,
+            "nonce": respNonce,
+            "platform": getPlatform(),
+            "timestamp": respTimestamp,
+            "method": "POST",
+            "path": resp.config.url,
+            "query": strQuery,
+            "body": resp.data,
+        })
+        if (!useSignVerify(respStr, respSignature)) {
+            return Promise.reject(new Error('签名验证失败'));
+        }
 
-    let respData = resp.data
-    if (isCryptoEnabled() && resp.headers['content-type'] == contentTypeEncrypted) {
-        respData = useDecrypt(boxKeyPair, resp.data)
-    } 
-    resp.data = JSON.parse(respData)
-    return resp;
-})
+        let respData = resp.data
+        if (isCryptoEnabled() && resp.headers['content-type'] == contentTypeEncrypted) {
+            respData = useDecrypt(boxKeyPair, resp.data)
+        }
+        resp.data = JSON.parse(respData)
+        return resp;
+    }, async error => {
+        if (axios.isCancel(error)) {
+            return null;
+        }
+
+        const config = error.config;
+        if (axios.isAxiosError(error) && error.response && config) {
+            if (error.response.status == 401) {
+                if (!config.autoRefreshToken) return error
+                // 刷新 token，然后重试 
+                const accessToken = useAccessToken()
+                accessToken.value = null                // 清除原来的 token
+                const refreshToken = useRefreshToken()
+                if (!refreshToken.value) return error
+
+                const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH
+                const resp = await usePost<TokenPair>(refreshPath, undefined, undefined, {
+                    retries: 3,
+                    autoRefreshToken: false,
+                    token: refreshToken.value,
+                })
+                if (!resp.data) return error
+
+                accessToken.value = resp.data.access_token
+                refreshToken.value = resp.data.refresh_token
+                return await httpInstance(config);
+            } else if (error.response.status >= 500 && error.response.status < 600) {
+                // 如果没有设置重试次数或者已经重试过了，则不进行重试
+                if (!config || !config.retry) return error;
+
+                // 设置一个计数器，用于记录重试次数
+                config.__retryCount = config.__retryCount || config.retry;
+
+                // 如果重试次数小于设定的最大重试次数，则进行重试
+                if (config.__retryCount >= config.retry) return error;
+                config.__retryCount += 1;
+                // 创建一个新的 promise 来等待一段时间后再进行重试 
+                await sleep(1000 * config.__retryCount); // 指数退避
+
+                return await httpInstance(config);
+            }
+        }
+
+        return error;
+    })
 
 
 export interface HttpResponse<T> {
@@ -178,83 +218,23 @@ export const useGet = async  <T = any>(path: string, query?: Record<string, any>
     }
     options.token ??= useAccessToken().value || ''
     try {
-        const [boxKeyPair, signKeyPair, sessionId] = ensureSecurets()
-        // 需要对请求进行签名
-        const nonce = generateUUID()
-        const timestamp = (Date.now() / 1000).toFixed()
-        const platform = getPlatform()
-        const str = stringifyObj({
-            "session": sessionId,
-            "nonce": nonce,
-            "timestamp": timestamp,
-            "platform": platform,
-            "method": "GET",
-            "path": path,
-            "query": strQuery,
-        })
-        const reqSignature = useSignData(signKeyPair, str)
-        console.log(`${tag} request BEGIN........`)
-        console.log(`${tag} request data to sign: `, str)
-        console.log(`${tag} request sign keypair: `, signKeyPair)
-        console.log(`${tag} request signature: `, reqSignature)
-        const headers: Record<string, string> = {
-            [signHeaderPlatform]: platform,
-            [signHeaderSession]: sessionId,
-            [signHeaderTimestamp]: timestamp,
-            [signHeaderNonce]: nonce,
-            [signHeaderSignature]: reqSignature,
-        }
+
+        const headers: Record<string, string> = {}
         if (options.token) {
             headers['Authorization'] = `Bearer ${options.token}`
         }
 
-        console.log(`${tag} request header: `, headers)
-        console.log(`${tag} request END........`)
-
-        const resp = await httpInstance.get<String>(path, {
+        const resp = await httpInstance.get<T>(path, {
             params: query,
             headers: headers,
-            responseType: 'text',
+            responseType: 'json',
             cancelToken: options.cancelToken,
         } as AxiosRequestConfig<any>)
-        console.log(`${tag} response BEGIN........`)
-        console.log(`${tag} response: `, resp)
-        if (resp.status != 200 || typeof (resp.data) !== 'string') {
+        if (resp.status != 200) {
             return { data: null, succeed: false, httpStatus: resp.status, httpStatusText: resp.statusText }
         }
 
-        const respTimestamp = resp.headers[signHeaderTimestamp] as string | undefined ?? ''
-        const respNonce = resp.headers[signHeaderNonce] as string | undefined ?? ''
-        const respSignature = resp.headers[signHeaderSignature] as string | undefined ?? ''
-        const respStr = stringifyObj({
-            "session": sessionId,
-            "nonce": respNonce,
-            "platform": platform,
-            "timestamp": respTimestamp,
-            "method": "GET",
-            "path": path,
-            "query": strQuery,
-            "body": resp.data,
-        })
-        console.log(`${tag} response sign header: `, { respTimestamp, respNonce, respSignature })
-        console.log(`${tag} response data to sign: `, respStr)
-        if (!useSignVerify(respStr, respSignature)) {
-            console.warn(`${tag} response sign verify: FAIL`)
-            return { data: null, succeed: false, httpStatus: resp.status, httpStatusText: resp.statusText }
-        }
-
-        console.log(`${tag} response sign verify: PASS`)
-        let respData = resp.data
-        if (isCryptoEnabled() && resp.headers['Content-Type'] === contentTypeEncrypted) {
-            // 解密
-            console.log(`${tag} response <decrypt> BEFORE: `, resp.data)
-            respData = useDecrypt(boxKeyPair, resp.data)
-            console.log(`${tag} response <decrypt> AFTER: `, respData)
-        }
-        console.log(`${tag} response <JSON.parse> BEFORE: `, respData)
-        const val = JSON.parse(respData)
-        console.log(`${tag} response <JSON.parse> AFTER: `, val)
-        return { data: val, succeed: true, httpStatus: resp.status, httpStatusText: resp.statusText }
+        return { data: resp.data, succeed: true, httpStatus: resp.status, httpStatusText: resp.statusText }
     } catch (error) {
         if (axios.isCancel(error)) {
             console.error(`【${path}【CANCELLED】 `)
@@ -292,8 +272,6 @@ export const useGet = async  <T = any>(path: string, query?: Record<string, any>
         }
         console.error(`【${path}【FAILED】 error is:`, error)
         throw error
-    } finally {
-        console.log(`${tag} response END........`)
     }
 }
 
@@ -312,97 +290,21 @@ export const usePost = async  <T = any>(path: string, data?: Record<string, any>
     }
     options.token ??= useAccessToken().value || ''
     try {
-        const [boxKeyPair, signKeyPair, sessionId] = ensureSecurets()
-        // 加密请求体
-        let reqData = ''
-        if (data) {
-            reqData = JSON.stringify(data)
-            if (isCryptoEnabled()) {
-                reqData = useEncrypt(boxKeyPair, reqData)
-            }
-        }
-        // 需要对请求进行签名
-        const nonce = generateUUID()
-        const timestamp = (Date.now() / 1000).toFixed()
-        const platform = getPlatform()
-        const str = stringifyObj({
-            "session": sessionId,
-            "nonce": nonce,
-            "timestamp": timestamp,
-            "platform": platform,
-            "method": "POST",
-            "path": path,
-            "query": strQuery,
-            "body": reqData,
-        })
-
-        const reqSignature = useSignData(signKeyPair, str)
-        console.log(`${tag} request BEGIN........`)
-        console.log(`${tag} request data: `, reqData)
-        console.log(`${tag} request data to sign: `, str)
-        console.log(`${tag} request sign keypair: `, signKeyPair)
-        console.log(`${tag} request signature: `, reqSignature)
-        const headers: Record<string, string> = {
-            [signHeaderPlatform]: platform,
-            [signHeaderSession]: sessionId,
-            [signHeaderTimestamp]: timestamp,
-            [signHeaderNonce]: nonce,
-            [signHeaderSignature]: reqSignature,
-        }
+        const headers: Record<string, string> = {}
         if (options.token) {
             headers['Authorization'] = `Bearer ${options.token}`
         }
-        if (isCryptoEnabled()) {
-            headers['Content-Type'] = contentTypeEncrypted
-        }
-
-        console.log(`${tag} request header: `, headers)
-        console.log(`${tag} request END........`)
-
-        const resp = await httpInstance.post<String>(path, reqData, {
+        const resp = await httpInstance.post<T>(path, data, {
             params: query,
             headers: headers,
-            responseType: 'text',
+            responseType: 'json',
             cancelToken: options.cancelToken,
         } as AxiosRequestConfig<any>)
-        console.log(`${tag} response BEGIN........`)
-        console.log(`${tag} response: `, resp)
-        if (resp.status != 200 || typeof (resp.data) !== 'string') {
+        if (resp.status != 200) {
             return { data: null, succeed: false, httpStatus: resp.status, httpStatusText: resp.statusText }
         }
 
-        const respTimestamp = resp.headers[signHeaderTimestamp] as string | undefined ?? ''
-        const respNonce = resp.headers[signHeaderNonce] as string | undefined ?? ''
-        const respSignature = resp.headers[signHeaderSignature] as string | undefined ?? ''
-        const respStr = stringifyObj({
-            "session": sessionId,
-            "nonce": respNonce,
-            "platform": platform,
-            "timestamp": respTimestamp,
-            "method": "POST",
-            "path": path,
-            "query": strQuery,
-            "body": resp.data,
-        })
-        console.log(`${tag} response sign header: `, { respTimestamp, respNonce, respSignature })
-        console.log(`${tag} response data to sign: `, respStr)
-        if (!useSignVerify(respStr, respSignature)) {
-            console.warn(`${tag} response sign verify: FAIL`)
-            return { data: null, succeed: false, httpStatus: resp.status, httpStatusText: resp.statusText }
-        }
-
-        console.log(`${tag} response sign verify: PASS`)
-        let respData = resp.data
-        if (isCryptoEnabled() && resp.headers['content-type'] == contentTypeEncrypted) {
-            // 解密
-            console.log(`${tag} response <decrypt> BEFORE: `, resp.data)
-            respData = useDecrypt(boxKeyPair, resp.data)
-            console.log(`${tag} response <decrypt> AFTER: `, respData)
-        }
-        console.log(`${tag} response <JSON.parse> BEFORE: `, respData)
-        const val = JSON.parse(respData)
-        console.log(`${tag} response <JSON.parse> AFTER: `, val)
-        return { data: val, succeed: true, httpStatus: resp.status, httpStatusText: resp.statusText }
+        return { data: resp.data, succeed: true, httpStatus: resp.status, httpStatusText: resp.statusText }
     } catch (error) {
         if (axios.isCancel(error)) {
             console.error(`【${path}【CANCELLED】 `)
@@ -440,8 +342,6 @@ export const usePost = async  <T = any>(path: string, data?: Record<string, any>
         }
         console.error(`【${path}【FAILED】 error is:`, error)
         throw error
-    } finally {
-        console.log(`${tag} response END........`)
     }
 }
 
