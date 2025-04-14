@@ -13,19 +13,7 @@ const getPlatform = () => {
 const isCryptoEnabled = () => {
     return import.meta.env.VITE_ENABLE_CRYPTO === 'true'
 }
-
-const decodeSecrets = (): [KeyPair, KeyPair, string] => {
-    const sessionId = useCookie('sk')
-    const clientKey = useCookie('ck')
-    console.log('[decodeSecrets] sk is :', sessionId.value)
-    console.log('[decodeSecrets] ck is :', clientKey.value)
-    const pubKeys = decodeSecureString(sessionId.value || '')
-    const priKeys = decodeSecureString(clientKey.value || '')
-    const boxKeyPair = newBoxKeyPairFromArray(pubKeys.box!, priKeys.box!)
-    const signKeyPair = newSignKeyPairFromArray(pubKeys.sign!, priKeys.sign!)
-    console.log(`[decodeSecrets] decode from cookie `, sessionId, clientKey, signKeyPair, boxKeyPair)
-    return [boxKeyPair, signKeyPair, sessionId.value || '']
-}
+ 
 
 const signHeaderTimestamp = "x-timestamp";
 const signHeaderNonce = "x-nonce";
@@ -41,15 +29,15 @@ export interface ResponseDto<T> {
 }
 
 export interface TokenPair {
-    access: string
-    refresh: string
+    access_token: string
+    refresh_token: string
 }
 
 // 创建一个实例并设置 baseURL
 const httpInstance = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
     timeout: 15000,
-    withCredentials: false,
+    withCredentials: true,
     validateStatus: (_e: number) => true,
 });
 
@@ -75,7 +63,7 @@ const stringifyObj = (obj: any): string => {
  * @returns token
  */
 export const useAccessToken = () => {
-    return useCookie('atk')
+    return useCookie(import.meta.env.VITE_COOKIE_ACCESS_TOKEN_NAME)
 }
 
 /**
@@ -83,7 +71,7 @@ export const useAccessToken = () => {
  * @returns token
  */
 export const useRefreshToken = () => {
-    return useCookie('rtk')
+    return useCookie(import.meta.env.VITE_COOKIE_REFRESH_TOKEN_NAME)
 }
 
 export interface HttpResponse<T> {
@@ -123,7 +111,7 @@ export const useGet = async  <T = any>(path: string, query?: Record<string, any>
     }
     options.token ??= useAccessToken().value || ''
     try {
-        const [boxKeyPair, signKeyPair, sessionId] = decodeSecrets()
+        const [boxKeyPair, signKeyPair, sessionId] = ensureSecurets()
         // 需要对请求进行签名
         const nonce = generateUUID()
         const timestamp = (Date.now() / 1000).toFixed()
@@ -224,8 +212,8 @@ export const useGet = async  <T = any>(path: string, query?: Record<string, any>
                 })
                 if (!resp.data) throw error
 
-                accessToken.value = resp.data.access
-                refreshToken.value = resp.data.refresh
+                accessToken.value = resp.data.access_token
+                refreshToken.value = resp.data.refresh_token
                 return await useGet(path, query, { retries: 3, autoRefreshToken: false, token: accessToken.value })
             } else if ([500, 502, 503, 504].includes(error.response.status)) {
                 if (options.retries > 0) {
@@ -257,7 +245,7 @@ export const usePost = async  <T = any>(path: string, data?: Record<string, any>
     }
     options.token ??= useAccessToken().value || ''
     try {
-        const [boxKeyPair, signKeyPair, sessionId] = decodeSecrets()
+        const [boxKeyPair, signKeyPair, sessionId] = ensureSecurets()
         // 加密请求体
         let reqData = ''
         if (data) {
@@ -368,12 +356,12 @@ export const usePost = async  <T = any>(path: string, data?: Record<string, any>
                 const resp = await usePost<TokenPair>(refreshPath, undefined, undefined, {
                     retries: 3,
                     autoRefreshToken: false,
-                    token: refreshToken.value, 
+                    token: refreshToken.value,
                 })
                 if (!resp.data) throw error
 
-                accessToken.value = resp.data.access
-                refreshToken.value = resp.data.refresh
+                accessToken.value = resp.data.access_token
+                refreshToken.value = resp.data.refresh_token
                 return await usePost(path, data, query, { retries: 3, autoRefreshToken: false, token: accessToken.value })
             } else if ([500, 502, 503, 504].includes(error.response.status)) {
                 if (options.retries > 0) {
@@ -389,43 +377,15 @@ export const usePost = async  <T = any>(path: string, data?: Record<string, any>
         console.log(`${tag} response END........`)
     }
 }
+ 
+export interface LoginParam {
+    phone: string
+    code: string
+    secure_code: string
+}
 
-
-// export const useAsyncCacheKey = (path: string, query?: Record<string, any>, data?: Record<string, any>) => {
-//     const strQuery = query ? stringifyObj(query) : ""
-//     const strData = data ? blake3(JSON.stringify(data)) : ""
-//     const hash = blake3(`${path}:${strQuery}:${strData}`)
-//     return bytesToHex(hash)
-// }
-
-// /**
-//  * 对 useAsyncData 和 useGet 进行封装，增加缓存功能
-//  * 缓存的 key 是由 path、query 组成的，使用 blake3 进行 hash
-//  * @param path  请求路径 
-//  * @param query 查询参数
-//  * @param options 
-//  * @returns 
-//  */
-// export const useAsyncGet = <ResT = any, NuxtErrorDataT = any, DataT = ResT, PickKeys extends KeysOf<DataT> = KeysOf<DataT>, DefaultT = null>(
-//     path: string, query?: Record<string, any>, httpOptions?: HttpOptions, options?: AsyncDataOptions<HttpResponse<ResT>, DataT, PickKeys, DefaultT>):
-//     AsyncData<PickFrom<DataT, PickKeys> | DefaultT, (NuxtErrorDataT extends Error | NuxtError ? NuxtErrorDataT : NuxtError<NuxtErrorDataT>) | DefaultAsyncDataErrorValue> => {
-//     const cacheKey = useAsyncCacheKey(path, query)
-//     return useAsyncData(cacheKey, () => useGet<ResT>(path, query, httpOptions), options)
-// }
-
-// /**
-//  * 对 useAsyncData 和 usePost 进行封装，增加缓存功能
-//  * 缓存的 key 是由 path、query 和 data 组成的，使用 blake3 进行 hash
-//  * @param path  请求路径
-//  * @param data  payload
-//  * @param query 查询参数
-//  * @param options 
-//  * @returns 
-//  */
-// export const useAsyncPost = <ResT = any, NuxtErrorDataT = any, DataT = ResT, PickKeys extends KeysOf<DataT> = KeysOf<DataT>, DefaultT = null>(
-//     path: string, data?: Record<string, any>, query?: Record<string, any>, httpOptions?: HttpOptions, options?: AsyncDataOptions<HttpResponse<ResT>, DataT, PickKeys, DefaultT>):
-//     AsyncData<PickFrom<DataT, PickKeys> | DefaultT, (NuxtErrorDataT extends Error | NuxtError ? NuxtErrorDataT : NuxtError<NuxtErrorDataT>) | DefaultAsyncDataErrorValue> => {
-//     const cacheKey = useAsyncCacheKey(path, query, data)
-//     console.log(`[useAsyncPost] cacheKey is: ${cacheKey}`)
-//     return useAsyncData(cacheKey, async () => await usePost<ResT>(path, data, query, httpOptions), options)
-// }
+export const useLogin = async (param: LoginParam) => {
+    const path = import.meta.env.VITE_API_LOGIN_PATH 
+    const resp = await usePost<ResponseDto<TokenPair>>(path, param) 
+    return resp
+}
