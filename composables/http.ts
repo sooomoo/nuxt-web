@@ -13,7 +13,7 @@ const getPlatform = () => {
 const isCryptoEnabled = () => {
     return import.meta.env.VITE_ENABLE_CRYPTO === 'true'
 }
- 
+
 
 const signHeaderTimestamp = "x-timestamp";
 const signHeaderNonce = "x-nonce";
@@ -32,14 +32,6 @@ export interface TokenPair {
     access_token: string
     refresh_token: string
 }
-
-// 创建一个实例并设置 baseURL
-const httpInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
-    timeout: 15000,
-    withCredentials: true,
-    validateStatus: (_e: number) => true,
-});
 
 /**
  * 将对象按照 key 排序后，拼接成字符串
@@ -62,17 +54,92 @@ const stringifyObj = (obj: any): string => {
  * 获取 access token
  * @returns token
  */
-export const useAccessToken = () => {
-    return useCookie(import.meta.env.VITE_COOKIE_ACCESS_TOKEN_NAME)
-}
+export const useAccessToken = () => useCookie(import.meta.env.VITE_COOKIE_ACCESS_TOKEN_NAME)
 
 /**
  * 获取 refresh token
  * @returns token
  */
-export const useRefreshToken = () => {
-    return useCookie(import.meta.env.VITE_COOKIE_REFRESH_TOKEN_NAME)
-}
+export const useRefreshToken = () => useCookie(import.meta.env.VITE_COOKIE_REFRESH_TOKEN_NAME)
+
+// 创建一个实例并设置 baseURL
+const httpInstance = axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL,
+    timeout: 15000,
+    withCredentials: true,
+    // validateStatus: (_e: number) => true,
+});
+
+httpInstance.interceptors.request.use((config) => {
+    const [boxKeyPair, signKeyPair, sessionId] = ensureSecurets()
+    // 需要对请求进行签名
+    const nonce = generateUUID()
+    const timestamp = (Date.now() / 1000).toFixed()
+    const platform = getPlatform()
+    const strQuery = config.params ? stringifyObj(config.params) : ""
+    const signData: Record<string, any> = {
+        "session": sessionId,
+        "nonce": nonce,
+        "timestamp": timestamp,
+        "platform": platform,
+        "method": "POST",
+        "path": config.url,
+        "query": strQuery,
+        "authorization": config.headers['Authorization'] || '',
+    }
+    // 1. 加密请求体（仅针对 POST/PUT 请求）
+    if (['post', 'put'].includes((config.method ?? '').toLowerCase())) {
+        let reqData = ''
+        // 先加密
+        if (config.data) {
+            reqData = JSON.stringify(config.data)
+            if (isCryptoEnabled()) {
+                reqData = useEncrypt(boxKeyPair, reqData)
+            }
+        }
+        config.data = reqData; // 替换原始数据为加密后的数据
+        signData['body'] = reqData
+        config.headers['Content-Type'] = contentTypeEncrypted
+    }
+    const str = stringifyObj(signData)
+    const reqSignature = useSignData(signKeyPair, str)
+    config.headers[signHeaderPlatform] = platform
+    config.headers[signHeaderSession] = sessionId
+    config.headers[signHeaderTimestamp] = timestamp
+    config.headers[signHeaderNonce] = nonce
+    config.headers[signHeaderSignature] = reqSignature
+    return config;
+})
+
+httpInstance.interceptors.response.use((resp) => {
+    // 2xx 范围内的状态码都会触发该函数。
+    const [boxKeyPair, _, sessionId] = ensureSecurets()
+    const strQuery = resp.config.params ? stringifyObj(resp.config.params) : ""
+    const respTimestamp = resp.headers[signHeaderTimestamp] as string | undefined ?? ''
+    const respNonce = resp.headers[signHeaderNonce] as string | undefined ?? ''
+    const respSignature = resp.headers[signHeaderSignature] as string | undefined ?? ''
+    const respStr = stringifyObj({
+        "session": sessionId,
+        "nonce": respNonce,
+        "platform": getPlatform(),
+        "timestamp": respTimestamp,
+        "method": "POST",
+        "path": resp.config.url,
+        "query": strQuery,
+        "body": resp.data,
+    })
+    if (!useSignVerify(respStr, respSignature)) {
+        return Promise.reject(new Error('签名验证失败'));
+    }
+
+    let respData = resp.data
+    if (isCryptoEnabled() && resp.headers['content-type'] == contentTypeEncrypted) {
+        respData = useDecrypt(boxKeyPair, resp.data)
+    } 
+    resp.data = JSON.parse(respData)
+    return resp;
+})
+
 
 export interface HttpResponse<T> {
     data: T | null
@@ -377,7 +444,7 @@ export const usePost = async  <T = any>(path: string, data?: Record<string, any>
         console.log(`${tag} response END........`)
     }
 }
- 
+
 export interface LoginParam {
     phone: string
     code: string
@@ -385,7 +452,7 @@ export interface LoginParam {
 }
 
 export const useLogin = async (param: LoginParam) => {
-    const path = import.meta.env.VITE_API_LOGIN_PATH 
-    const resp = await usePost<ResponseDto<TokenPair>>(path, param) 
+    const path = import.meta.env.VITE_API_LOGIN_PATH
+    const resp = await usePost<ResponseDto<TokenPair>>(path, param)
     return resp
 }
