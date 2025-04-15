@@ -4,6 +4,6 @@
  */
 export default defineNuxtPlugin((nuxtApp) => {
     nuxtApp.hook('app:created', () => {
-        ensureSecurets()
+        ensureSecuretsWithoutCtx() // 本身就在 nuxt 上下文中，因此不需要传递 ctx
     })
 })

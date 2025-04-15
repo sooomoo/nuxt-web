@@ -26,3 +26,21 @@ export const useSignVerify = (data: string, signature: string) => {
     const serverSignPubKey = base64Decode(import.meta.env.VITE_SERVER_SIGN_PUB_KEY)
     return ed25519.verify(sigData, rawData, serverSignPubKey)
 }
+
+
+/**
+ * 将对象按照 key 排序后，拼接成字符串
+ * @param obj 待排序的对象
+ * @returns 排序后的字符串
+ */
+export const stringifyObj = (obj: any): string => {
+    if (!obj) {
+        return ""
+    }
+    if (typeof (obj) !== 'object') {
+        return `${obj}`
+    }
+    const keys = Object.keys(obj).sort()
+    const strObj = keys.map(k => `${k}=${obj[k]}`).join('&')
+    return strObj
+}

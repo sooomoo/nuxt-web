@@ -1,4 +1,3 @@
-
 export interface LoginParam {
     phone: string
     code: string
@@ -6,9 +5,5 @@ export interface LoginParam {
 }
 
 export const auth = {
-    login: async (param: LoginParam) => {
-        const path = import.meta.env.VITE_API_LOGIN_PATH
-        const resp = await usePost<ResponseDto<TokenPair>>(path, param)
-        return resp
-    }
+    login: (param: LoginParam) => useAsyncPost<ResponseDto<TokenPair>>("/v1/auth/login", param, undefined)
 }

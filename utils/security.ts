@@ -1,3 +1,4 @@
+import type { NuxtApp } from '#app'
 import * as base64 from '@juanelas/base64'
 import { equalBytes } from "@noble/ciphers/utils"
 import { randomBytes } from '@noble/ciphers/webcrypto'
@@ -91,14 +92,20 @@ export const decodeSecureString = (str: string): {
     return { sign: signPubKeySecure, box: boxPubKeySecure }
 }
 
-export const ensureSecurets = (): [KeyPair, KeyPair, string] => {
-    const platform = useCookie(import.meta.env.VITE_COOKIE_PLATFORM_NAME)
-    platform.value = '8'
+export interface Secrets {
+    boxKeyPair: KeyPair,
+    signKeyPair: KeyPair,
+    sessionId: string,
+}
 
+/**
+ * Only called in session_init.server.ts
+ * 确保在第一次请求时会话密钥已准备好
+ * @returns
+ */
+export const ensureSecuretsWithoutCtx = (): Secrets => {
     const sessionId = useCookie(import.meta.env.VITE_COOKIE_SK1_NAME)
     const clientKey = useCookie(import.meta.env.VITE_COOKIE_SK2_NAME)
-    // console.log('sk is :', sessionId.value)
-    // console.log('ck is :', clientKey.value)
     const pubKeys = decodeSecureString(sessionId.value || '')
     const priKeys = decodeSecureString(clientKey.value || '')
     if (!pubKeys.box || !pubKeys.sign || !priKeys.box || !priKeys.sign) {
@@ -107,22 +114,14 @@ export const ensureSecurets = (): [KeyPair, KeyPair, string] => {
         const signKeyPair = newSignKeyPair()
         sessionId.value = encodeSecureString(signKeyPair.publicKey, boxKeyPair.publicKey)
         clientKey.value = encodeSecureString(signKeyPair.privateKey, boxKeyPair.privateKey)
-        // console.log(`【decodeSecrets】new sign keypair `, signKeyPair)
-        // console.log(`【decodeSecrets】new box keypair `, boxKeyPair)
-
-        const pubKeys1 = decodeSecureString(sessionId.value)
-        const priKeys1 = decodeSecureString(clientKey.value)
-        // console.log('xxxxxx sign', pubKeys1.sign, priKeys1.sign)
-        // console.log('xxxxxx box', pubKeys1.box, priKeys1.box)
-        // console.log('sign pub key eq', equalBytes(pubKeys1.sign!, signKeyPair.publicKey))
-        // console.log('box pub key eq', equalBytes(pubKeys1.box!, boxKeyPair.publicKey))
-        // console.log('sign pri key eq', equalBytes(priKeys1.sign!, signKeyPair.privateKey))
-        // console.log('box pri key eq', equalBytes(priKeys1.box!, boxKeyPair.privateKey))
-        return [boxKeyPair, signKeyPair, sessionId.value || '']
+        return { boxKeyPair: boxKeyPair, signKeyPair: signKeyPair, sessionId: sessionId.value || '' }
     } else {
         const boxKeyPair = newBoxKeyPairFromArray(pubKeys.box!, priKeys.box!)
         const signKeyPair = newSignKeyPairFromArray(pubKeys.sign!, priKeys.sign!)
-        // console.log(`[decodeSecrets] decode from cookie `, sessionId.value, clientKey.value, signKeyPair, boxKeyPair)
-        return [boxKeyPair, signKeyPair, sessionId.value || '']
+        return { boxKeyPair: boxKeyPair, signKeyPair: signKeyPair, sessionId: sessionId.value || '' }
     }
+}
+
+export const ensureSecurets = async (ctx?: NuxtApp): Promise<Secrets> => {
+    return ctx ? await ctx.runWithContext(() => ensureSecuretsWithoutCtx()) : ensureSecuretsWithoutCtx()
 }
