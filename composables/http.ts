@@ -1,5 +1,3 @@
-
-import axios, { } from 'axios';
 import type { NuxtApp } from 'nuxt/app';
 import { FetchError } from 'ofetch';
 

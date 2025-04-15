@@ -4,7 +4,7 @@ export interface LoginParam {
     secure_code: string
 }
 
-export const auth = {
+export const apiAuth = {
     login: (param: LoginParam) => useAsyncPost<ResponseDto<TokenPair>>("/v1/auth/login", param, undefined),
     logout:async () => {
         await useAsyncPost<ResponseDto<null>>("/v1/auth/logout")
