@@ -1,6 +1,7 @@
 
 import axios, { } from 'axios';
 import type { NuxtApp } from 'nuxt/app';
+import { FetchError } from 'ofetch';
 
 const signHeaderTimestamp = "x-timestamp";
 const signHeaderNonce = "x-nonce";
@@ -26,42 +27,6 @@ interface HttpOptionsInternal extends HttpOptions {
     token?: string
 }
 
-/**
- * 新建一个用于取消请求的 token
- */
-export const newHttpCanceler = () => axios.CancelToken.source()
-
-// let refreshTokenPromise: Promise<TokenPair | undefined> | null = null;
-// const doRefreshToken = async (nuxtCtx?: NuxtApp): Promise<TokenPair | undefined> => {
-//     let refreshToken = await safeGetRefreshToken(nuxtCtx)
-//     if (!refreshToken || refreshToken.length === 0) return
-//     const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH
-//     console.log(`[Handle 401], start refreshing. refresh token: ${refreshToken}`)
-//     const opt: HttpOptionsInternal = { autoRefreshToken: false, token: refreshToken, }
-//     return await usePost<TokenPair>(refreshPath, undefined, undefined, nuxtCtx, opt)
-// }
-// /**
-//  * 
-//  * @param error 
-//  * @param autoRefreshToken 
-//  * @param nuxtCtx 
-//  * @returns 是否已被处理，true 表示已被处理，false 表示未被处理
-//  */
-// const handle401 = async <T>(error: unknown, autoRefreshToken: boolean, callback: () => Promise<T>, nuxtCtx?: NuxtApp): Promise<T | undefined> => {
-//     if (!error || !autoRefreshToken) return
-//     if (!axios.isAxiosError(error) || !error.response || error.response.status !== 401) return
-
-//     if (refreshTokenPromise) {
-//         // 等待刷新 token 完成
-//         const tokens = await refreshTokenPromise
-//         return tokens ? await callback() : undefined
-//     }
-
-//     refreshTokenPromise = doRefreshToken(nuxtCtx)
-//     const tokens = await refreshTokenPromise
-//     setTimeout(() => refreshTokenPromise = null, 5000); // 5s 后释放，防止重复刷新 token
-//     return tokens ? await callback() : undefined
-// }
 
 const fetchInstance = $fetch.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -148,35 +113,126 @@ const fetchInstance = $fetch.create({
         saveCookies((options as any).__nuxtCtx, response.headers.getSetCookie())
         response._data = JSON.parse(respData)
     },
-    onResponseError({ request, response, options }) {
+    onResponseError: async ({ request, response, options, error }) => {
         console.log('【onResponseError】 Failed to fetch', response, options)
     },
 })
 
-const doFetch = async <TResp>(method: string, path: string, body?: Record<string, any>, query?: Record<string, any>,
-    ctx?: NuxtApp, options?: HttpOptions) => {
+let refreshTokenPromise: Promise<ResponseDto<TokenPair> | undefined> | null = null;
+const doRefreshToken = async (ctx?: NuxtApp): Promise<ResponseDto<TokenPair> | undefined> => {
+    let refreshToken = await safeGetRefreshToken(ctx)
+    if (!refreshToken || refreshToken.length === 0) return
+    const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH
+    console.log(`[Handle 401], start refreshing. refresh token: ${refreshToken}`)
     const secrets = await ensureSecurets(ctx)
-    console.log(`doFetch secrets:`, secrets)
-    const internalOpts = options as HttpOptionsInternal ?? { autoRefreshToken: true }
-    internalOpts.token ??= await safeGetAccessToken(ctx)
-    const resp = await fetchInstance<TResp>(path, {
+    console.log(`doRefreshToken secrets:`, secrets)
+    return await fetchInstance<ResponseDto<TokenPair>>(refreshPath, {
         method: 'POST',
-        body: body,
-        query: query,
         secrets: secrets,
-        __path: path,
+        __path: refreshPath,
         __nuxtCtx: ctx,
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${internalOpts.token}`,
+            'Authorization': `Bearer ${refreshToken}`,
         }
     } as any)
-    return resp
 }
 
-export const useFetchAsyncPost = <TResp>(
+const handle401 = async (nuxtCtx?: NuxtApp) => {
+    if (refreshTokenPromise) {
+        // 等待刷新 token 完成
+        return await refreshTokenPromise
+    }
+
+    refreshTokenPromise = doRefreshToken(nuxtCtx)
+    const tokens = await refreshTokenPromise
+    setTimeout(() => refreshTokenPromise = null, 5000); // 5s 后释放，防止重复刷新 token
+    return tokens
+}
+
+const doFetch = async <TResp>(
+    method: string,
     path: string,
-    body: Record<string, any>,
+    body?: Record<string, any>,
+    query?: Record<string, any>,
+    ctx?: NuxtApp,
+    options?: HttpOptions
+) => {
+    const callFn = async () => {
+        const secrets = await ensureSecurets(ctx)
+        console.log(`doFetch secrets:`, secrets)
+        const internalOpts = options as HttpOptionsInternal ?? { autoRefreshToken: true }
+        internalOpts.token ??= await safeGetAccessToken(ctx)
+        return await fetchInstance<TResp>(path, {
+            method: method,
+            body: body,
+            query: query,
+            secrets: secrets,
+            __path: path,
+            __nuxtCtx: ctx,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${internalOpts.token}`,
+            }
+        } as any)
+    }
+    try {
+        return await callFn()
+    } catch (error) {
+        if (error instanceof FetchError) {
+            if (error.status === 401 || error.statusCode === 401) {
+                // 处理 401 错误
+                const tokens = await handle401(ctx)
+                if (tokens) {
+                    console.log(`[Handle 401] refresh token success, retry call.`)
+                    // 刷新 token 成功，重新调用接口
+                    return await callFn()
+                }
+            }
+        } else {
+            console.log(`doFetch error is not a FetchError:`, error)
+        }
+        throw error
+    }
+}
+
+/**
+ * 在服务端渲染时不安全, 因为在 SSR 中无法调用 `useCookie`。
+ * 如果确信是在 browser 中调用的，可以使用
+ */
+export const usePost = <TResp>(
+    path: string,
+    body?: Record<string, any>,
+    query?: Record<string, any>,
+    options?: HttpOptions
+) => {
+    if (import.meta.server) {
+        console.warn(`usePost 在服务端渲染时不安全, 因为在 SSR 中无法调用 'useCookie'.`)
+    }
+    return doFetch<TResp>('POST', path, body, query, undefined, options)
+}
+
+/**
+ * 在服务端渲染时不安全, 因为在 SSR 中无法调用 `useCookie`。
+ * 如果确信是在 browser 中调用的，可以使用
+ */
+export const useGet = <TResp>(
+    path: string,
+    query?: Record<string, any>,
+    options?: HttpOptions
+) => {
+    if (import.meta.server) {
+        console.warn(`useGet 在服务端渲染时不安全, 因为在 SSR 中无法调用 'useCookie'.`)
+    }
+    return doFetch<TResp>('GET', path, undefined, query, undefined, options)
+}
+
+/**
+ * 推荐调用此方法，在服务端渲染时可以调用 `useCookie`，客户端也是安全的
+ */
+export const useAsyncPost = <TResp>(
+    path: string,
+    body?: Record<string, any>,
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
@@ -185,7 +241,10 @@ export const useFetchAsyncPost = <TResp>(
         useAsyncData<TResp>((ctx) => doFetch<TResp>('POST', path, body, query, ctx, options))
 }
 
-export const useFetchAsyncGet = <TResp>(
+/**
+ * 推荐调用此方法，在服务端渲染时可以调用 `useCookie`，客户端也是安全的
+ */
+export const useAsyncGet = <TResp>(
     path: string,
     query?: Record<string, any>,
     options?: HttpOptions

@@ -5,9 +5,9 @@ export interface LoginParam {
 }
 
 export const auth = {
-    login: (param: LoginParam) => useFetchAsyncPost<ResponseDto<TokenPair>>("/v1/auth/login", param, undefined),
-    // logout:async () => {
-    //     await useAsyncPost<ResponseDto<null>>("/v1/auth/logout", undefined, undefined)
-    //     await clearTokens()
-    // },
+    login: (param: LoginParam) => useAsyncPost<ResponseDto<TokenPair>>("/v1/auth/login", param, undefined),
+    logout:async () => {
+        await useAsyncPost<ResponseDto<null>>("/v1/auth/logout")
+        await clearTokens()
+    },
 }
