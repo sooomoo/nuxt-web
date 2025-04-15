@@ -17,33 +17,6 @@ export interface ResponseDto<T> {
     data: T
 }
 
-export interface TokenPair {
-    access_token: string
-    refresh_token: string
-}
-
-/**
- * 获取 access token
- * @returns token
- */ 
-export const safeGetAccessToken = async (ctx?: NuxtApp): Promise<string | undefined> => {
-    if (ctx) {
-        return await ctx.runWithContext(() => useCookie(import.meta.env.VITE_COOKIE_ACCESS_TOKEN_NAME).value) ?? undefined
-    }
-    return useCookie(import.meta.env.VITE_COOKIE_ACCESS_TOKEN_NAME).value ?? undefined
-}
-
-/**
- * 获取 refresh token
- * @returns token
- */ 
-export const safeGetRefreshToken = async (ctx?: NuxtApp): Promise<string | null> => {
-    if (ctx) {
-        return await ctx.runWithContext(() => useCookie(import.meta.env.VITE_COOKIE_REFRESH_TOKEN_NAME).value) ?? null
-    }
-    return useCookie(import.meta.env.VITE_COOKIE_REFRESH_TOKEN_NAME).value ?? null
-}
-
 // 创建一个实例并设置 baseURL
 const httpInstance = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
