@@ -17,6 +17,7 @@ export interface ResponseDto<T> {
     data: T
 }
 
+const platform = '8'
 // 创建一个实例并设置 baseURL
 const httpInstance = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -140,7 +141,7 @@ export const newHttpCanceler = () => axios.CancelToken.source()
 
 let refreshTokenPromise: Promise<TokenPair | undefined> | null = null;
 const doRefreshToken = async (nuxtCtx?: NuxtApp): Promise<TokenPair | undefined> => {
-    let refreshToken =await safeGetRefreshToken(nuxtCtx)  
+    let refreshToken = await safeGetRefreshToken(nuxtCtx)
     if (!refreshToken || refreshToken.length === 0) return
     const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH
     console.log(`[Handle 401], start refreshing. refresh token: ${refreshToken}`)
@@ -184,7 +185,7 @@ export const useGet = async  <T = any>(
 ): Promise<T> => {
     const tag = `【GET: ${path}】`
     const internalOpts = options as HttpOptionsInternal ?? { autoRefreshToken: true }
-    internalOpts.token ??=await safeGetAccessToken(nuxtCtx) 
+    internalOpts.token ??= await safeGetAccessToken(nuxtCtx)
     try {
         const secrets = await ensureSecurets(nuxtCtx)
         console.log(`${tag} secrets:`, secrets)
@@ -198,7 +199,7 @@ export const useGet = async  <T = any>(
             cancelToken: internalOpts.cancelToken,
             retry: 3,
             secrets: secrets,
-        } as AxiosRequestConfig<any>) 
+        } as AxiosRequestConfig<any>)
         await saveCookies(nuxtCtx, resp.headers['set-cookie']) // 保存 cookie
         return resp.data
     } catch (error) {
@@ -226,7 +227,7 @@ export const usePost = async  <T = any>(
 ): Promise<T> => {
     const tag = `【POST: ${path}】`
     const internalOpts = options as HttpOptionsInternal ?? { autoRefreshToken: true }
-    internalOpts.token ??=await safeGetAccessToken(nuxtCtx) 
+    internalOpts.token ??= await safeGetAccessToken(nuxtCtx)
     try {
         const secrets = await ensureSecurets(nuxtCtx)
         console.log(`${tag} secrets:`, secrets)
@@ -239,7 +240,7 @@ export const usePost = async  <T = any>(
             cancelToken: internalOpts.cancelToken,
             retry: 3,
             secrets: secrets,
-        } as AxiosRequestConfig<any>) 
+        } as AxiosRequestConfig<any>)
         await saveCookies(nuxtCtx, resp.headers['set-cookie']) // 保存 cookie
         return resp.data
     } catch (error) {
@@ -288,4 +289,137 @@ export const useAsyncPost = <ResT = any, NuxtErrorDataT = any, DataT = ResT, Pic
     return httpOptions?.cacheKey ?
         useAsyncData(httpOptions.cacheKey, async (ctx) => await usePost<ResT>(path, data, query, ctx, httpOptions), options) :
         useAsyncData(async (ctx) => await usePost<ResT>(path, data, query, ctx, httpOptions), options)
+}
+
+
+const fetchInstance = $fetch.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL,
+    responseType: 'json',
+    timeout: 15000,
+    credentials: 'include',
+    retry: 3,
+    retryDelay: 1000,
+    async onRequest({ request, options }) {
+        // 请求拦截：签名和加密
+        const { boxKeyPair, signKeyPair, sessionId } = (options as any).secrets as Secrets
+        // 需要对请求进行签名
+        const nonce = generateUUID()
+        const timestamp = (Date.now() / 1000).toFixed()
+        const strQuery = options.query ? stringifyObj(options.query) : ""
+        const signData: Record<string, any> = {
+            "session": sessionId,
+            "nonce": nonce,
+            "timestamp": timestamp,
+            "platform": platform,
+            "method": options.method,
+            "path": (options as any).__path,
+            "query": strQuery,
+            "authorization": options.headers.get('Authorization') ?? '',
+        }
+        // 1. 加密请求体（仅针对 POST/PUT 请求）
+        if (['post', 'put'].includes((options.method ?? '').toLowerCase())) {
+            let reqData = ''
+            // 先加密
+            if (options.body) {
+                reqData = JSON.stringify(options.body)
+                if (import.meta.env.VITE_ENABLE_CRYPTO === 'true') {
+                    reqData = useEncrypt(boxKeyPair, reqData)
+                }
+            }
+            options.body = reqData; // 替换原始数据为加密后的数据
+            signData['body'] = reqData
+            options.headers.set('Content-Type', contentTypeEncrypted)
+        }
+        const str = stringifyObj(signData)
+        const reqSignature = useSignData(signKeyPair, str)
+        options.headers.set(signHeaderPlatform, platform)
+        options.headers.set(signHeaderSession, sessionId)
+        options.headers.set(signHeaderTimestamp, timestamp)
+        options.headers.set(signHeaderNonce, nonce)
+        options.headers.set(signHeaderSignature, reqSignature)
+    },
+    onRequestError({ request, options, error }) {
+        console.log('【onRequestError】 Failed to request', request, options, error)
+    },
+    onResponse({ request, response, options }) {
+        if (response.status !== 200) {
+            return
+        }
+        const { boxKeyPair, sessionId } = (options as any).secrets as Secrets
+        const strQuery = options.query ? stringifyObj(options.query) : ""
+        const respTimestamp = response.headers.get(signHeaderTimestamp) ?? ''
+        const respNonce = response.headers.get(signHeaderNonce) ?? ''
+        const respSignature = response.headers.get(signHeaderSignature) ?? ''
+        console.log(`onResponse【verify】1`, respSignature)
+        let respData = response._data
+        console.log(`onResponse【verify】2`, respData)
+        const respStr = stringifyObj({
+            "session": sessionId,
+            "nonce": respNonce,
+            "platform": platform,
+            "timestamp": respTimestamp,
+            "method": options.method,
+            "path": (options as any).__path,
+            "query": strQuery,
+            "body": respData,
+        })
+        console.log(`onResponse【verify】3`, respStr)
+        if (!useSignVerify(respStr, respSignature)) {
+            console.log(`onResponse【FAILED】签名验证失败`, respData)
+            throw new Error('签名验证失败')
+        }
+        const contentType = response.headers.get('content-type') ?? ''
+
+        if (import.meta.env.VITE_ENABLE_CRYPTO === 'true' && contentType == contentTypeEncrypted) {
+            respData = useDecrypt(boxKeyPair, respData)
+        }
+
+        saveCookies((options as any).__nuxtCtx, response.headers.getSetCookie())
+        response._data = JSON.parse(respData)
+    },
+    onResponseError({ request, response, options }) {
+        console.log('【onResponseError】 Failed to fetch', response, options)
+    },
+})
+
+export const useFetchAsyncPost = <TResp>(path: string, body: Record<string, any>, cacheKey?: string) => {
+    const fn = async (ctx?: NuxtApp) => {
+        const secrets = await ensureSecurets(ctx)
+        console.log(`useF secrets:`, secrets)
+        const resp = await fetchInstance<ResponseDto<TResp>>(path, {
+            method: 'POST',
+            body: body,
+            secrets: secrets,
+            __path: path,
+            __nuxtCtx: ctx,
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        } as any)
+        return resp
+    }
+    return cacheKey && cacheKey.length > 0 ?
+        useAsyncData<ResponseDto<TResp>>(cacheKey, fn) :
+        useAsyncData<ResponseDto<TResp>>(fn)
+}
+
+export const useFetchAsyncGet = <TResp>(path: string, query?: Record<string, any>, cacheKey?: string) => {
+    const fn = async (ctx?: NuxtApp) => {
+        const secrets = await ensureSecurets(ctx)
+        console.log(`useF secrets:`, secrets)
+        const resp = await fetchInstance<ResponseDto<TResp>>(path, {
+            method: 'GET',
+            query: query,
+            secrets: secrets,
+            __path: path,
+            __nuxtCtx: ctx,
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        } as any)
+        return resp
+    }
+    return cacheKey && cacheKey.length > 0 ?
+        useAsyncData<ResponseDto<TResp>>(cacheKey, fn) :
+        useAsyncData<ResponseDto<TResp>>(fn)
 }

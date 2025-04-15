@@ -1,4 +1,9 @@
 <script setup lang="ts">
+// const { data: loginResp, error } =  await useFetchAsyncPost<TokenPair>( '/v1/auth/login',{
+//   phone: '08613800001111',
+//   code: '1234',
+//   secure_code: '8888'
+// })
 const { data: loginResp, error } = await auth.login({
   phone: '08613800001111',
   code: '1234',
