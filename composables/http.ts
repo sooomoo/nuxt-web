@@ -20,6 +20,7 @@ const platform = '8'
 
 export interface HttpOptions {
     cacheKey?: string
+    signal?: AbortSignal
 }
 
 interface HttpOptionsInternal extends HttpOptions {
@@ -75,7 +76,7 @@ const fetchInstance = $fetch.create({
         options.headers.set(signHeaderSignature, reqSignature)
     },
     onRequestError({ request, options, error }) {
-        console.log('【onRequestError】 Failed to request', request, options, error)
+        console.log('【onRequestError】 Failed to request', error)
     },
     onResponse({ request, response, options }) {
         if (response.status !== 200) {
@@ -86,9 +87,7 @@ const fetchInstance = $fetch.create({
         const respTimestamp = response.headers.get(signHeaderTimestamp) ?? ''
         const respNonce = response.headers.get(signHeaderNonce) ?? ''
         const respSignature = response.headers.get(signHeaderSignature) ?? ''
-        console.log(`onResponse【verify】1`, respSignature)
         let respData = response._data
-        console.log(`onResponse【verify】2`, respData)
         const respStr = stringifyObj({
             "session": sessionId,
             "nonce": respNonce,
@@ -99,7 +98,6 @@ const fetchInstance = $fetch.create({
             "query": strQuery,
             "body": respData,
         })
-        console.log(`onResponse【verify】3`, respStr)
         if (!useSignVerify(respStr, respSignature)) {
             console.log(`onResponse【FAILED】签名验证失败`, respData)
             throw new Error('签名验证失败')
@@ -114,7 +112,7 @@ const fetchInstance = $fetch.create({
         response._data = JSON.parse(respData)
     },
     onResponseError: async ({ request, response, options, error }) => {
-        console.log('【onResponseError】 Failed to fetch', response, options)
+        console.log('【onResponseError】 Failed to fetch', response.status, response.statusText, error)
     },
 })
 
@@ -125,7 +123,6 @@ const doRefreshToken = async (ctx?: NuxtApp): Promise<ResponseDto<TokenPair> | u
     const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH
     console.log(`[Handle 401], start refreshing. refresh token: ${refreshToken}`)
     const secrets = await ensureSecurets(ctx)
-    console.log(`doRefreshToken secrets:`, secrets)
     return await fetchInstance<ResponseDto<TokenPair>>(refreshPath, {
         method: 'POST',
         secrets: secrets,
@@ -160,7 +157,6 @@ const doFetch = async <TResp>(
 ) => {
     const callFn = async () => {
         const secrets = await ensureSecurets(ctx)
-        console.log(`doFetch secrets:`, secrets)
         const internalOpts = options as HttpOptionsInternal ?? { autoRefreshToken: true }
         internalOpts.token ??= await safeGetAccessToken(ctx)
         return await fetchInstance<TResp>(path, {
@@ -170,6 +166,7 @@ const doFetch = async <TResp>(
             secrets: secrets,
             __path: path,
             __nuxtCtx: ctx,
+            signal: options?.signal,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${internalOpts.token}`,
@@ -181,6 +178,7 @@ const doFetch = async <TResp>(
     } catch (error) {
         if (error instanceof FetchError) {
             if (error.status === 401 || error.statusCode === 401) {
+                console.log(`[Handle 401] start refresh token.`)
                 // 处理 401 错误
                 const tokens = await handle401(ctx)
                 if (tokens) {
