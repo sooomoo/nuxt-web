@@ -21,12 +21,6 @@ export interface HttpOptions {
     signal?: AbortSignal
 }
 
-interface HttpOptionsInternal extends HttpOptions {
-    autoRefreshToken: boolean
-    token?: string
-}
-
-
 const fetchInstance = $fetch.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
     responseType: 'json',
@@ -154,9 +148,8 @@ const doFetch = async <TResp>(
     options?: HttpOptions
 ) => {
     const callFn = async () => {
-        const secrets = await ensureSecurets(ctx)
-        const internalOpts = options as HttpOptionsInternal ?? { autoRefreshToken: true }
-        internalOpts.token ??= await safeGetAccessToken(ctx)
+        const secrets = await ensureSecurets(ctx) 
+        const token = await safeGetAccessToken(ctx)
         return await fetchInstance<TResp>(path, {
             method: method,
             body: body,
@@ -167,7 +160,7 @@ const doFetch = async <TResp>(
             signal: options?.signal,
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${internalOpts.token}`,
+                'Authorization': `Bearer ${token}`,
             }
         } as any)
     }
