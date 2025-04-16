@@ -52,7 +52,7 @@ export const saveCookies = async (ctx?: NuxtApp, cookies?: string[]) => {
                 path: c.options.path ?? '/',
                 httpOnly: c.options['httponly'],
             })
-            cooRef.value = null
+            cooRef.value = undefined
             cooRef.value = c.value
         })
     })

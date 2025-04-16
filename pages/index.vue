@@ -3,8 +3,9 @@ const loginResp = ref<ResponseDto<any> | null>(null)
 const error = ref<any>(null)
 const handleClick = async () => {
   const { data: loginResp1, error: err } = await apiUser.getUserInfo()
-  if (error.value) {
-    if (error.value.statusCode === 401) {
+  if (err.value) { 
+    console.log('err', err.value)
+    if (err.value.statusCode === 401) {
       // 未登录，跳转到登录页
       navigateTo({
         path: '/login',

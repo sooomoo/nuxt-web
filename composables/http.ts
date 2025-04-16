@@ -1,4 +1,4 @@
-import type { NuxtApp } from 'nuxt/app';
+import type { AsyncData, AsyncDataRequestStatus, NuxtApp } from 'nuxt/app';
 import { FetchError } from 'ofetch';
 
 const signHeaderTimestamp = "x-timestamp";
@@ -43,7 +43,7 @@ const fetchInstance = $fetch.create({
             "method": options.method,
             "path": (options as any).__path,
             "query": strQuery,
-            // "authorization": options.headers.get('Authorization') ?? '',
+            "authorization": options.headers.get('Authorization') ?? '',
         }
         // 1. 加密请求体（仅针对 POST/PUT 请求）
         if (['post', 'put'].includes((options.method ?? '').toLowerCase())) {
@@ -148,7 +148,7 @@ const doFetch = async <TResp>(
     options?: HttpOptions
 ) => {
     const callFn = async () => {
-        const secrets = await ensureSecurets(ctx) 
+        const secrets = await ensureSecurets(ctx)
         const token = await safeGetAccessToken(ctx)
         return await fetchInstance<TResp>(path, {
             method: method,
@@ -186,8 +186,7 @@ const doFetch = async <TResp>(
 }
 
 /**
- * 在服务端渲染时不安全, 因为在 SSR 中无法调用 `useCookie`。
- * 如果确信是在 browser 中调用的，可以使用
+ * 推荐调用此方法，在服务端渲染时可以调用 `useCookie`，客户端也是安全的
  */
 export const usePost = <TResp>(
     path: string,
@@ -195,49 +194,103 @@ export const usePost = <TResp>(
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
-    if (import.meta.server) {
-        console.warn(`usePost 在服务端渲染时不安全, 因为在 SSR 中无法调用 'useCookie'.`)
+    console.log(`【usePost】${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
+    if (import.meta.client) {
+        try {
+            let res: AsyncData<TResp | null, FetchError>
+            res = {
+                data: ref<TResp | null>(),
+                error: ref<any>(null),
+                status: ref<AsyncDataRequestStatus>('pending'),
+                refresh: async () => {
+                    try {
+                        res.status.value = 'pending'
+                        res.data.value = await doFetch<TResp>('POST', path, body, query, undefined, options)
+                        res.status.value = 'success'
+                    } catch (error) {
+                        res.status.value = 'error'
+                        res.error.value = error as any
+                    }
+                },
+                execute: async () => {
+                    try {
+                        res.status.value = 'pending'
+                        res.data.value = await doFetch<TResp>('POST', path, body, query, undefined, options)
+                        res.status.value = 'success'
+                    } catch (error) {
+                        res.status.value = 'error'
+                        res.error.value = error as any
+                    }
+                },
+                clear: () => {
+                    res.data.value = null
+                    res.error.value = null
+                    res.status.value = 'idle'
+                }
+            } as AsyncData<TResp | null, FetchError>
+            return new Promise<AsyncData<TResp | null, FetchError>>(async (resolve) => {
+                await res.execute()
+                resolve(res)
+            })
+        } catch (error) {
+            console.log(`useAsyncPost error:`, error)
+        }
     }
-    return doFetch<TResp>('POST', path, body, query, undefined, options)
+    return (options?.cacheKey && options?.cacheKey.length > 0 ?
+        useAsyncData<TResp>(options?.cacheKey, (ctx) => doFetch<TResp>('POST', path, body, query, ctx, options)) :
+        useAsyncData<TResp>((ctx) => doFetch<TResp>('POST', path, body, query, ctx, options)))
 }
 
 /**
- * 在服务端渲染时不安全, 因为在 SSR 中无法调用 `useCookie`。
- * 如果确信是在 browser 中调用的，可以使用
+ * 推荐调用此方法，在服务端渲染时可以调用 `useCookie`，客户端也是安全的
  */
 export const useGet = <TResp>(
     path: string,
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
-    if (import.meta.server) {
-        console.warn(`useGet 在服务端渲染时不安全, 因为在 SSR 中无法调用 'useCookie'.`)
+    console.log(`【useGet】${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
+    if (import.meta.client) {
+        try {
+            let res: AsyncData<TResp | null, FetchError>
+            res = {
+                data: ref<TResp | null>(),
+                error: ref<any>(null),
+                status: ref<AsyncDataRequestStatus>('pending'),
+                refresh: async () => {
+                    try {
+                        res.status.value = 'pending'
+                        res.data.value = await doFetch<TResp>('GET', path, undefined, query, undefined, options)
+                        res.status.value = 'success'
+                    } catch (error) {
+                        res.status.value = 'error'
+                        res.error.value = error as any
+                    }
+                },
+                execute: async () => {
+                    try {
+                        res.status.value = 'pending'
+                        res.data.value = await doFetch<TResp>('GET', path, undefined, query, undefined, options)
+                        res.status.value = 'success'
+                    } catch (error) {
+                        res.status.value = 'error'
+                        res.error.value = error as any
+                    }
+                },
+                clear: () => {
+                    res.data.value = null
+                    res.error.value = null
+                    res.status.value = 'idle'
+                }
+            } as AsyncData<TResp | null, FetchError>
+            return new Promise<AsyncData<TResp | null, FetchError>>(async (resolve) => {
+                await res.execute()
+                resolve(res)
+            })
+        } catch (error) {
+            console.log(`useAsyncPost error:`, error)
+        }
     }
-    return doFetch<TResp>('GET', path, undefined, query, undefined, options)
-}
-
-/**
- * 推荐调用此方法，在服务端渲染时可以调用 `useCookie`，客户端也是安全的
- */
-export const useAsyncPost = <TResp>(
-    path: string,
-    body?: Record<string, any>,
-    query?: Record<string, any>,
-    options?: HttpOptions
-) => {
-    return options?.cacheKey && options?.cacheKey.length > 0 ?
-        useAsyncData<TResp>(options?.cacheKey, (ctx) => doFetch<TResp>('POST', path, body, query, ctx, options)) :
-        useAsyncData<TResp>((ctx) => doFetch<TResp>('POST', path, body, query, ctx, options))
-}
-
-/**
- * 推荐调用此方法，在服务端渲染时可以调用 `useCookie`，客户端也是安全的
- */
-export const useAsyncGet = <TResp>(
-    path: string,
-    query?: Record<string, any>,
-    options?: HttpOptions
-) => {
     return options?.cacheKey && options?.cacheKey.length > 0 ?
         useAsyncData<TResp>(options?.cacheKey, (ctx) => doFetch<TResp>('GET', path, undefined, query, ctx, options)) :
         useAsyncData<TResp>((ctx) => doFetch<TResp>('GET', path, undefined, query, ctx, options))

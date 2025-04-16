@@ -1,4 +1,4 @@
 
 export const apiUser = {
-    getUserInfo: () => useAsyncGet<ResponseDto<any>>("/v1/user/info"),
+    getUserInfo: () => useGet<ResponseDto<any>>("/v1/user/info"),
 }
