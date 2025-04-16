@@ -1,16 +1,19 @@
 <script setup lang="ts">
-const { data: loginResp, error } =  await apiUser.getUserInfo()
-// const { data: loginResp, error } = await auth.login({
-//   phone: '08613800001111',
-//   code: '1234',
-//   secure_code: '8888'
-// })
-const handleClick = async () => {
-  // loginResp.value = await auth.login({
-  //   phone: '08613800001111',
-  //   code: '1234',
-  //   secure_code: '8888'
-  // })
+import { encode } from '@juanelas/base64';
+
+const { data: loginResp, error } = await apiUser.getUserInfo()
+if (error.value) {
+  if (error.value.statusCode === 401) {
+    // 未登录，跳转到登录页
+    navigateTo({
+      path: '/login',
+      query: {
+        redirect: encodeURIComponent('/'),
+      }
+    }, {
+      replace: true,
+    })
+  }
 }
 </script>
 <template>
@@ -21,6 +24,5 @@ const handleClick = async () => {
       <!-- <pre>{{ user2 }}</pre> -->
     </div>
     <div>{{ error }}</div>
-    <button @click="handleClick">click me</button>
   </div>
 </template>
