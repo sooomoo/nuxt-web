@@ -43,7 +43,7 @@ const fetchInstance = $fetch.create({
             "method": options.method,
             "path": (options as any).__path,
             "query": strQuery,
-            "authorization": options.headers.get('Authorization') ?? '',
+            // "authorization": options.headers.get('Authorization') ?? '',
         }
         // 1. 加密请求体（仅针对 POST/PUT 请求）
         if (['post', 'put'].includes((options.method ?? '').toLowerCase())) {

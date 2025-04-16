@@ -48,8 +48,9 @@ export const saveCookies = async (ctx?: NuxtApp, cookies?: string[]) => {
         parsedCookies.forEach(c => {
             const cooRef = useCookie(c.name, {
                 maxAge: Number(c.options['max-age']),
-                sameSite: c.options['same-site'] ?? 'lax',
+                sameSite: c.options['samesite'],
                 path: c.options.path ?? '/',
+                httpOnly: c.options['httponly'],
             })
             cooRef.value = null
             cooRef.value = c.value
