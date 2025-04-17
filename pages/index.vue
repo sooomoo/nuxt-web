@@ -20,6 +20,17 @@ const handleClick = async () => {
   loginResp.value = loginResp1.value
   error.value = err.value
 }
+
+onMounted(async () => {
+  logger.debug('home onMounted') 
+  logger.tag('index').debug('home onMounted') 
+  logger.info('home onMounted')
+  logger.tag('index').info('home onMounted') 
+  logger.warn('home onMounted')
+  logger.tag('index').warn('home onMounted') 
+  logger.error('home onMounted')
+  logger.tag('index').error('home onMounted') 
+})
 </script>
 <template>
   <div>
@@ -30,5 +41,14 @@ const handleClick = async () => {
     </div>
     <div>{{ error }}</div>
     <button @click="handleClick">get</button>
+    <div class="block"></div>
   </div>
 </template>
+
+<style scoped>
+.block {
+  width: 100px;
+  height: 100px;
+  background-color: #ffa41d;
+}
+</style>

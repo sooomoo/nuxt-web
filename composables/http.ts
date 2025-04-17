@@ -194,47 +194,43 @@ export const usePost = <TResp>(
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
-    console.log(`【usePost】${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
+    logger.tag('usePost').debug(`${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
     if (import.meta.client) {
-        try {
-            let res: AsyncData<TResp | null, FetchError>
-            res = {
-                data: ref<TResp | null>(),
-                error: ref<any>(null),
-                status: ref<AsyncDataRequestStatus>('pending'),
-                refresh: async () => {
-                    try {
-                        res.status.value = 'pending'
-                        res.data.value = await doFetch<TResp>('POST', path, body, query, undefined, options)
-                        res.status.value = 'success'
-                    } catch (error) {
-                        res.status.value = 'error'
-                        res.error.value = error as any
-                    }
-                },
-                execute: async () => {
-                    try {
-                        res.status.value = 'pending'
-                        res.data.value = await doFetch<TResp>('POST', path, body, query, undefined, options)
-                        res.status.value = 'success'
-                    } catch (error) {
-                        res.status.value = 'error'
-                        res.error.value = error as any
-                    }
-                },
-                clear: () => {
-                    res.data.value = null
-                    res.error.value = null
-                    res.status.value = 'idle'
+        let res: AsyncData<TResp | null, FetchError>
+        res = {
+            data: ref<TResp | null>(),
+            error: ref<any>(null),
+            status: ref<AsyncDataRequestStatus>('pending'),
+            refresh: async () => {
+                try {
+                    res.status.value = 'pending'
+                    res.data.value = await doFetch<TResp>('POST', path, body, query, undefined, options)
+                    res.status.value = 'success'
+                } catch (error) {
+                    res.status.value = 'error'
+                    res.error.value = error as any
                 }
-            } as AsyncData<TResp | null, FetchError>
-            return new Promise<AsyncData<TResp | null, FetchError>>(async (resolve) => {
-                await res.execute()
-                resolve(res)
-            })
-        } catch (error) {
-            console.log(`useAsyncPost error:`, error)
-        }
+            },
+            execute: async () => {
+                try {
+                    res.status.value = 'pending'
+                    res.data.value = await doFetch<TResp>('POST', path, body, query, undefined, options)
+                    res.status.value = 'success'
+                } catch (error) {
+                    res.status.value = 'error'
+                    res.error.value = error as any
+                }
+            },
+            clear: () => {
+                res.data.value = null
+                res.error.value = null
+                res.status.value = 'idle'
+            }
+        } as AsyncData<TResp | null, FetchError>
+        return new Promise<AsyncData<TResp | null, FetchError>>(async (resolve) => {
+            await res.execute()
+            resolve(res)
+        })
     }
     return (options?.cacheKey && options?.cacheKey.length > 0 ?
         useAsyncData<TResp>(options?.cacheKey, (ctx) => doFetch<TResp>('POST', path, body, query, ctx, options)) :
@@ -249,47 +245,43 @@ export const useGet = <TResp>(
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
-    console.log(`【useGet】${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
+    logger.tag('useGet').debug(`${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
     if (import.meta.client) {
-        try {
-            let res: AsyncData<TResp | null, FetchError>
-            res = {
-                data: ref<TResp | null>(),
-                error: ref<any>(null),
-                status: ref<AsyncDataRequestStatus>('pending'),
-                refresh: async () => {
-                    try {
-                        res.status.value = 'pending'
-                        res.data.value = await doFetch<TResp>('GET', path, undefined, query, undefined, options)
-                        res.status.value = 'success'
-                    } catch (error) {
-                        res.status.value = 'error'
-                        res.error.value = error as any
-                    }
-                },
-                execute: async () => {
-                    try {
-                        res.status.value = 'pending'
-                        res.data.value = await doFetch<TResp>('GET', path, undefined, query, undefined, options)
-                        res.status.value = 'success'
-                    } catch (error) {
-                        res.status.value = 'error'
-                        res.error.value = error as any
-                    }
-                },
-                clear: () => {
-                    res.data.value = null
-                    res.error.value = null
-                    res.status.value = 'idle'
+        let res: AsyncData<TResp | null, FetchError>
+        res = {
+            data: ref<TResp | null>(),
+            error: ref<any>(null),
+            status: ref<AsyncDataRequestStatus>('pending'),
+            refresh: async () => {
+                try {
+                    res.status.value = 'pending'
+                    res.data.value = await doFetch<TResp>('GET', path, undefined, query, undefined, options)
+                    res.status.value = 'success'
+                } catch (error) {
+                    res.status.value = 'error'
+                    res.error.value = error as any
                 }
-            } as AsyncData<TResp | null, FetchError>
-            return new Promise<AsyncData<TResp | null, FetchError>>(async (resolve) => {
-                await res.execute()
-                resolve(res)
-            })
-        } catch (error) {
-            console.log(`useAsyncPost error:`, error)
-        }
+            },
+            execute: async () => {
+                try {
+                    res.status.value = 'pending'
+                    res.data.value = await doFetch<TResp>('GET', path, undefined, query, undefined, options)
+                    res.status.value = 'success'
+                } catch (error) {
+                    res.status.value = 'error'
+                    res.error.value = error as any
+                }
+            },
+            clear: () => {
+                res.data.value = null
+                res.error.value = null
+                res.status.value = 'idle'
+            }
+        } as AsyncData<TResp | null, FetchError>
+        return new Promise<AsyncData<TResp | null, FetchError>>(async (resolve) => {
+            await res.execute()
+            resolve(res)
+        })
     }
     return options?.cacheKey && options?.cacheKey.length > 0 ?
         useAsyncData<TResp>(options?.cacheKey, (ctx) => doFetch<TResp>('GET', path, undefined, query, ctx, options)) :

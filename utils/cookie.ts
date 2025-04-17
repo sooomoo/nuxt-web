@@ -1,4 +1,4 @@
-import type { NuxtApp } from "#app";
+import type { NuxtApp } from "#app";  
 
 export const parseCookies = (cookies: string[] | undefined): {
     name: string;
@@ -43,8 +43,8 @@ export const saveCookies = async (ctx?: NuxtApp, cookies?: string[]) => {
     }
 
     await ctx?.runWithContext(() => {
-        const parsedCookies = parseCookies(cookies)
-        console.log(`【saveCookies】runWithContext`, parsedCookies)
+        const parsedCookies = parseCookies(cookies) 
+        logger.tag('saveCookies').debug(`runWithContext`, parsedCookies)
         parsedCookies.forEach(c => {
             const cooRef = useCookie(c.name, {
                 maxAge: Number(c.options['max-age']),
