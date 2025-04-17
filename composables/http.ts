@@ -68,12 +68,16 @@ const fetchInstance = $fetch.create({
         options.headers.set(signHeaderSignature, reqSignature)
     },
     onRequestError({ request, options, error }) {
-        console.log('【onRequestError】 Failed to request', error)
+        logger.tag('onRequestError').error('failed to request', request, error)
     },
     onResponse({ request, response, options }) {
         if (response.status !== 200) {
+            if (response.status === 401) {
+                navigateTo('/login', { redirectCode: 302 })
+            }
             return
         }
+
         const { boxKeyPair, sessionId } = (options as any).secrets as Secrets
         const strQuery = options.query ? stringifyObj(options.query) : ""
         const respTimestamp = response.headers.get(signHeaderTimestamp) ?? ''
@@ -91,20 +95,29 @@ const fetchInstance = $fetch.create({
             "body": respData,
         })
         if (!useSignVerify(respStr, respSignature)) {
-            console.log(`onResponse【FAILED】签名验证失败`, respData)
+            logger.tag('onResponse').warn(`【FAILED】签名验证失败`, respData)
             throw new Error('签名验证失败')
         }
-        const contentType = response.headers.get('content-type') ?? ''
 
-        if (import.meta.env.VITE_ENABLE_CRYPTO === 'true' && contentType == contentTypeEncrypted) {
+        const contentType = response.headers.get('content-type') ?? ''
+        if (contentType == contentTypeEncrypted) {
             respData = useDecrypt(boxKeyPair, respData)
+            const rawType = response.headers.get('x-raw-type') ?? ''
+            if (rawType) {
+                response.headers.set('content-type', rawType)
+            }
         }
 
         saveCookies((options as any).__nuxtCtx, response.headers.getSetCookie())
-        response._data = JSON.parse(respData)
+
+        if (options.responseType === 'json' && typeof respData === 'string') {
+            response._data = JSON.parse(respData)
+        } else {
+            response._data = respData
+        }
     },
     onResponseError: async ({ request, response, options, error }) => {
-        console.log('【onResponseError】 Failed to fetch', response.status, response.statusText, error)
+        logger.tag('onRequestError').error('failed to fetch', request, response.status, response.statusText, error)
     },
 })
 
