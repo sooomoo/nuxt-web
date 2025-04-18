@@ -1,6 +1,5 @@
 <script setup lang="ts">
 definePageMeta({
-  middleware: 'auth',
   validate: async (route) => {
     // Check if the id is made up of digits
     if (typeof route.params.id === 'string' && /^\d+$/.test(route.params.id)) {
@@ -37,6 +36,7 @@ log.debug('routing...') // 123
   <div>
     <pre>{{ loginResp }}</pre>
   </div>
+  <div>{{ error }}</div>
 </template>
 <style lang="sass" scoped>
 

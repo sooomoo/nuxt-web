@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export enum LogLevel {
     /**
      * 未制定日志级别 

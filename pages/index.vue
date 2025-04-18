@@ -17,7 +17,7 @@ onMounted(async () => {
       <!-- <pre>{{ user2 }}</pre> -->
     </div>
     <!-- <button @click="handleClick">get</button> -->
-    <div class="block"></div>
+    <div class="block"/>
   </div>
 </template>
 

@@ -1,6 +1,4 @@
-import type { NuxtApp } from '#app'
 import * as base64 from '@juanelas/base64'
-import { equalBytes } from "@noble/ciphers/utils"
 import { randomBytes } from '@noble/ciphers/webcrypto'
 import { ed25519, x25519 } from "@noble/curves/ed25519"
 

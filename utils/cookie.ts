@@ -1,8 +1,8 @@
-import type { NuxtApp } from "#app"; 
-import { p } from "@noble/curves/pasta";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { NuxtApp } from "#app";
 
-export const safeGetCookies = ( ) => {
-    if (import.meta.client){
+export const safeGetCookies = () => {
+    if (import.meta.client) {
         return document.cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
     } else {
         const cookie = useRequestHeader('cookie') ?? ''
@@ -28,7 +28,7 @@ export const parseCookies = (cookies: string[] | undefined): {
         }
         const cookieName = nameValue[0].trim();
         const cookieValue = nameValue[1].trim();
-        const cookieOptions: Record<string, any> = {};
+        const cookieOptions: Record<string, unknown> = {};
         parts.forEach((part) => {
             const [key, value] = part.split('=');
             if (key) {
@@ -53,14 +53,15 @@ export const saveCookies = async (ctx?: NuxtApp, cookies?: string[]) => {
     }
 
     await ctx?.runWithContext(() => {
-        const parsedCookies = parseCookies(cookies) 
+        const parsedCookies = parseCookies(cookies)
         logger.tag('saveCookies').debug(`runWithContext`, parsedCookies)
         parsedCookies.forEach(c => {
             const cooRef = useCookie(c.name, {
-                maxAge: Number(c.options['max-age']),
+                maxAge: Number(c.options['max-age'] ?? '0'),
                 sameSite: c.options['samesite'],
                 path: c.options.path ?? '/',
                 httpOnly: c.options['httponly'],
+                secure: c.options['secure'],
             })
             cooRef.value = undefined
             cooRef.value = c.value
