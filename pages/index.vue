@@ -38,7 +38,6 @@ const error = ref<any>(null)
       <pre>{{ loginResp }}</pre>
       <!-- <pre>{{ user2 }}</pre> -->
     </div>
-    <div>{{ error }}</div>
     <!-- <button @click="handleClick">get</button> -->
     <div class="block"></div>
   </div>

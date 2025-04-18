@@ -19,7 +19,7 @@ const platform = '8'
 export interface HttpOptions {
     cacheKey?: string
     signal?: AbortSignal
-    headers?: Record<string, string>
+    responseType?: 'json' | 'text' | 'blob' | 'arrayBuffer' | 'stream'
 }
 
 const fetchInstance = $fetch.create({
@@ -31,7 +31,7 @@ const fetchInstance = $fetch.create({
     retryDelay: 1000,
     async onRequest({ request, options }) {
         // 请求拦截：签名和加密
-        const { boxKeyPair, signKeyPair, sessionId } = (options as any).secrets as Secrets
+        const { boxKeyPair, signKeyPair, sessionId } = (options as any).__secrets as Secrets
         // 需要对请求进行签名
         const nonce = generateUUID()
         const timestamp = (Date.now() / 1000).toFixed()
@@ -44,7 +44,7 @@ const fetchInstance = $fetch.create({
             "method": options.method,
             "path": (options as any).__path,
             "query": strQuery,
-            "authorization": options.headers.get('Authorization') ?? '',
+            // "authorization": options.headers.get('Authorization') ?? '',
         }
         // 1. 加密请求体（仅针对 POST/PUT 请求）
         if (['post', 'put'].includes((options.method ?? '').toLowerCase())) {
@@ -68,9 +68,6 @@ const fetchInstance = $fetch.create({
         options.headers.set(signHeaderNonce, nonce)
         options.headers.set(signHeaderSignature, reqSignature)
     },
-    onRequestError({ request, options, error }) {
-        logger.tag('onRequestError').error('failed to request', request, error)
-    },
     onResponse({ request, response, options }) {
         if (response.status !== 200) {
             if (response.status === 401) {
@@ -79,7 +76,7 @@ const fetchInstance = $fetch.create({
             return
         }
 
-        const { boxKeyPair, sessionId } = (options as any).secrets as Secrets
+        const { boxKeyPair, sessionId } = (options as any).__secrets as Secrets
         const strQuery = options.query ? stringifyObj(options.query) : ""
         const respTimestamp = response.headers.get(signHeaderTimestamp) ?? ''
         const respNonce = response.headers.get(signHeaderNonce) ?? ''
@@ -117,9 +114,6 @@ const fetchInstance = $fetch.create({
             response._data = respData
         }
     },
-    onResponseError: async ({ request, response, options, error }) => {
-        logger.tag('onRequestError').error('failed to fetch', request, response.status, response.statusText, error)
-    },
 })
 
 let refreshTokenPromise: Promise<ResponseDto<TokenPair> | undefined> | null = null;
@@ -128,12 +122,13 @@ const doRefreshToken = async (ctx?: NuxtApp): Promise<ResponseDto<TokenPair> | u
     if (!refreshToken || refreshToken.length === 0) return
     const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH
     logger.tag('doRefreshToken').debug(`[Handle 401], start refreshing. refresh token: ${refreshToken}`)
-    const secrets = await ensureSecurets(ctx)
+    const secrets = getSecurets()
     return await fetchInstance<ResponseDto<TokenPair>>(refreshPath, {
         method: 'POST',
-        secrets: secrets,
+        __secrets: secrets,
         __path: refreshPath,
         __nuxtCtx: ctx,
+
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${refreshToken}`,
@@ -161,22 +156,30 @@ const doFetch = async <TResp>(
     ctx?: NuxtApp,
     options?: HttpOptions,
 ) => {
+    // 在 SSR 过程中，fetch 请求不会自动携带 cookie，需要手动传递
+    // 为了方便，此处统一处理
+    const cookies = safeGetCookies()
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Cookie': cookies.join('; '),
+    }
+    logger.tag('doFetch').debug('headers', headers)
     const callFn = async () => {
-        const secrets = await ensureSecurets(ctx)
-        const token = await safeGetAccessToken(ctx)
+        const secrets = getSecurets()
+        if (!secrets) {
+            logger.tag('doFetch').error('cannot get secrets')
+            throw new Error('secrets is null')
+        }
         return await fetchInstance<TResp>(path, {
             method: method,
             body: body,
+            responseType: options?.responseType ?? 'json',
             query: query,
-            secrets: secrets,
+            __secrets: secrets,
             __path: path,
             __nuxtCtx: ctx,
             signal: options?.signal,
-            headers: {
-                ...options?.headers,
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            }
+            headers: headers
         } as any)
     }
     try {
@@ -209,14 +212,6 @@ export const usePost = <TResp>(
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
-    options ??= { }
-    options.headers ??= {}
-    const cookie = useRequestHeader('cookie')
-    if (cookie) {
-        options.headers['Cookie'] = cookie
-    }
-    const headers = useRequestHeaders()
-    logger.tag('usePost').debug('headers', headers)
     logger.tag('usePost').debug(`${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
     if (import.meta.client) {
         let res: AsyncData<TResp | null, FetchError>
@@ -268,13 +263,6 @@ export const useGet = <TResp>(
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
-    options ??= { }
-    options.headers ??= {}
-    const cookie = useRequestHeader('cookie')
-    if (cookie) {
-        options.headers['Cookie'] = cookie
-    }
-    logger.tag('useGet').debug('headers', useRequestHeaders())
     logger.tag('useGet').debug(`${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
     if (import.meta.client) {
         let res: AsyncData<TResp | null, FetchError>

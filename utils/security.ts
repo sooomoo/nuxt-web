@@ -99,11 +99,29 @@ export interface Secrets {
 }
 
 /**
+ * 安全的获取会话密钥
+ * @returns
+ */
+export const getSecurets = (): Secrets | undefined => {
+    const cookies = safeGetCookies()
+    const parsedCookies = parseCookies(cookies)
+    const sessionId = parsedCookies.find(c => c.name === import.meta.env.VITE_COOKIE_SK1_NAME)?.value ?? ''
+    const clientKey = parsedCookies.find(c => c.name === import.meta.env.VITE_COOKIE_SK2_NAME)?.value ?? '' 
+    const pubKeys = decodeSecureString(sessionId)
+    const priKeys = decodeSecureString(clientKey)
+    if (pubKeys.box && pubKeys.sign && priKeys.box && priKeys.sign) {
+        const boxKeyPair = newBoxKeyPairFromArray(pubKeys.box!, priKeys.box!)
+        const signKeyPair = newSignKeyPairFromArray(pubKeys.sign!, priKeys.sign!)
+        return { boxKeyPair: boxKeyPair, signKeyPair: signKeyPair, sessionId: sessionId || '' }
+    }
+}
+ 
+/**
  * Only called in session_init.server.ts
  * 确保在第一次请求时会话密钥已准备好
  * @returns
  */
-export const ensureSecuretsWithoutCtx = (): Secrets => {
+export const ensureSecurets = (): Secrets => {
     const sessionId = useCookie(import.meta.env.VITE_COOKIE_SK1_NAME)
     const clientKey = useCookie(import.meta.env.VITE_COOKIE_SK2_NAME)
     const pubKeys = decodeSecureString(sessionId.value || '')
@@ -120,8 +138,4 @@ export const ensureSecuretsWithoutCtx = (): Secrets => {
         const signKeyPair = newSignKeyPairFromArray(pubKeys.sign!, priKeys.sign!)
         return { boxKeyPair: boxKeyPair, signKeyPair: signKeyPair, sessionId: sessionId.value || '' }
     }
-}
-
-export const ensureSecurets = async (ctx?: NuxtApp): Promise<Secrets> => {
-    return ctx ? await ctx.runWithContext(() => ensureSecuretsWithoutCtx()) : ensureSecuretsWithoutCtx()
 }

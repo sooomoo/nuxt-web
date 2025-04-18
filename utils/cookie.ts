@@ -1,4 +1,13 @@
-import type { NuxtApp } from "#app";  
+import type { NuxtApp } from "#app"; 
+
+export const safeGetCookies = ( ) => {
+    if (import.meta.client){
+        return document.cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
+    } else {
+        const cookie = useRequestHeader('cookie') ?? ''
+        return cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
+    }
+}
 
 export const parseCookies = (cookies: string[] | undefined): {
     name: string;
