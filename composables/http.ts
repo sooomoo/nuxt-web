@@ -19,6 +19,7 @@ const platform = '8'
 export interface HttpOptions {
     cacheKey?: string
     signal?: AbortSignal
+    headers?: Record<string, string>
 }
 
 const fetchInstance = $fetch.create({
@@ -158,7 +159,7 @@ const doFetch = async <TResp>(
     body?: Record<string, any>,
     query?: Record<string, any>,
     ctx?: NuxtApp,
-    options?: HttpOptions
+    options?: HttpOptions,
 ) => {
     const callFn = async () => {
         const secrets = await ensureSecurets(ctx)
@@ -172,6 +173,7 @@ const doFetch = async <TResp>(
             __nuxtCtx: ctx,
             signal: options?.signal,
             headers: {
+                ...options?.headers,
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             }
@@ -207,6 +209,14 @@ export const usePost = <TResp>(
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
+    options ??= { }
+    options.headers ??= {}
+    const cookie = useRequestHeader('cookie')
+    if (cookie) {
+        options.headers['Cookie'] = cookie
+    }
+    const headers = useRequestHeaders()
+    logger.tag('usePost').debug('headers', headers)
     logger.tag('usePost').debug(`${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
     if (import.meta.client) {
         let res: AsyncData<TResp | null, FetchError>
@@ -258,6 +268,13 @@ export const useGet = <TResp>(
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
+    options ??= { }
+    options.headers ??= {}
+    const cookie = useRequestHeader('cookie')
+    if (cookie) {
+        options.headers['Cookie'] = cookie
+    }
+    logger.tag('useGet').debug('headers', useRequestHeaders())
     logger.tag('useGet').debug(`${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
     if (import.meta.client) {
         let res: AsyncData<TResp | null, FetchError>
