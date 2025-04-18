@@ -1,4 +1,5 @@
 import type { NuxtApp } from "#app"; 
+import { p } from "@noble/curves/pasta";
 
 export const safeGetCookies = ( ) => {
     if (import.meta.client){

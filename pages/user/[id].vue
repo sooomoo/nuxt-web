@@ -1,6 +1,5 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: 'default',
   middleware: 'auth',
   validate: async (route) => {
     // Check if the id is made up of digits
@@ -28,11 +27,16 @@ definePageMeta({
 // const { data1 } = await useFetch('/api/item') 
 
 const route = useRoute()
-// route.params.id is now a string of digit
-logger.tag(`USER ${route.params.id}`).debug('routing...') // 123
+
+const log = logger.tag(`USER ${route.params.id}`) 
+const { data: loginResp, error } = await apiUser.getUserInfo()
+log.debug('routing...') // 123
+
 </script>
 <template>
-  <h1>User {{ $route.params.id }}</h1>
+  <div>
+    <pre>{{ loginResp }}</pre>
+  </div>
 </template>
 <style lang="sass" scoped>
 
