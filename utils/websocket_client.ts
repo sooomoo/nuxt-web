@@ -6,6 +6,7 @@ export abstract class WebSocketClientBase {
     readonly binaryType: BinaryType
     readonly reconnectStrategy?: RetryStrategy
     readonly heartbeatIntervalMs: number
+    private readonly log = logger.tag('WebSocketClientBase')
 
     constructor(url: string, protocols?: string[], binaryType: BinaryType = 'arraybuffer', reconnectStrategy?: RetryStrategy, heartbeatMs: number = 5000) {
         this.url = url
@@ -77,12 +78,12 @@ export abstract class WebSocketClientBase {
         clearInterval(this.heartbeatTimer)
         this.heartbeatTimer = undefined
         this.reconnectStrategy?.reset()
-        console.log('close normally')
+        this.log.debug('close normally')
         this.onDispose()
     }
     onDispose() { }
     onWillReconnect(durationMs: number) {
-        console.log(`reconnect after ${durationMs}ms`)
+        this.log.debug(`reconnect after ${durationMs}ms`)
     }
 
     close() {

@@ -29,7 +29,7 @@ definePageMeta({
 
 const route = useRoute()
 // route.params.id is now a string of digit
-console.log(route.params.id) // 123
+logger.tag(`USER ${route.params.id}`).debug('routing...') // 123
 </script>
 <template>
   <h1>User {{ $route.params.id }}</h1>

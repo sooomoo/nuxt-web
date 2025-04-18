@@ -126,7 +126,7 @@ const doRefreshToken = async (ctx?: NuxtApp): Promise<ResponseDto<TokenPair> | u
     let refreshToken = await safeGetRefreshToken(ctx)
     if (!refreshToken || refreshToken.length === 0) return
     const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH
-    console.log(`[Handle 401], start refreshing. refresh token: ${refreshToken}`)
+    logger.tag('doRefreshToken').debug(`[Handle 401], start refreshing. refresh token: ${refreshToken}`)
     const secrets = await ensureSecurets(ctx)
     return await fetchInstance<ResponseDto<TokenPair>>(refreshPath, {
         method: 'POST',
@@ -182,17 +182,17 @@ const doFetch = async <TResp>(
     } catch (error) {
         if (error instanceof FetchError) {
             if (error.status === 401 || error.statusCode === 401) {
-                console.log(`[Handle 401] start refresh token.`)
+                logger.tag('Handle 401').debug(`start refresh token.`)
                 // 处理 401 错误
                 const tokens = await handle401(ctx)
                 if (tokens) {
-                    console.log(`[Handle 401] refresh token success, retry call.`)
+                    logger.tag('Handle 401').debug(`refresh token success, retry call.`)
                     // 刷新 token 成功，重新调用接口
                     return await callFn()
                 }
             }
         } else {
-            console.log(`doFetch error is not a FetchError:`, error)
+            logger.tag('doFetch').debug(`doFetch error`, error)
         }
         throw error
     }

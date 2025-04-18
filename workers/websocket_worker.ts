@@ -18,10 +18,10 @@ scope.onconnect = (e: MessageEvent) => {
     ports.push(port)
 
     port.onmessage = (e: MessageEvent<IWebSocketCmd>) => {
-        console.log(' 收到消息 ', e.data)
+       logger.tag('WebSocketWorker').debug(' 收到消息 ', e.data)
         if (e.data.cmd === WebSocketCmdConnect) {
             if (websocket) {
-                console.log('websocket 已连接')
+                logger.tag('WebSocketWorker').debug('websocket 已连接')
                 return
             }
 
@@ -41,10 +41,10 @@ scope.onconnect = (e: MessageEvent) => {
 
     onData(data: string | ArrayBuffer): void {
         if (typeof data == 'string') {
-            console.log('text message: ', data)
+            logger.tag('WebSocketClient').debug('text message: ', data)
         } else if (data instanceof ArrayBuffer) {
             // const [msgType, reqId, payload] = this.msgProtocol.decode(new Uint8Array(data))
-            // console.log('binary message: ', msgType, reqId, payload)
+            // logger.tag('WebSocketClient').debug('binary message: ', msgType, reqId, payload)
         }
     }
 
@@ -53,10 +53,10 @@ scope.onconnect = (e: MessageEvent) => {
     }
 
     override onConnected(): void {
-        console.log('connected')
+        logger.tag('WebSocketClient').debug('connected')
     }
     override onWillReconnect(durationMs: number): void {
-        console.log(`reconnect after ${durationMs}ms`)
+        logger.tag('WebSocketClient').debug(`reconnect after ${durationMs}ms`)
     }
 
     // sendMsg(msgType: MsgType, payload: Uint8Array): RequestId {
