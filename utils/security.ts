@@ -1,3 +1,4 @@
+import type { NuxtApp } from '#app'
 import * as base64 from '@juanelas/base64'
 import { randomBytes } from '@noble/ciphers/webcrypto'
 import { ed25519, x25519 } from "@noble/curves/ed25519"
@@ -100,8 +101,8 @@ export interface Secrets {
  * 安全的获取会话密钥
  * @returns
  */
-export const getSecurets = (): Secrets | undefined => {
-    const cookies = safeGetCookies()
+export const getSecurets =async (ctx?: NuxtApp): Promise<Secrets | undefined> => {
+    const cookies =await safeGetCookies(ctx)
     const parsedCookies = parseCookies(cookies)
     const sessionId = parsedCookies.find(c => c.name === import.meta.env.VITE_COOKIE_SK1_NAME)?.value ?? ''
     const clientKey = parsedCookies.find(c => c.name === import.meta.env.VITE_COOKIE_SK2_NAME)?.value ?? '' 

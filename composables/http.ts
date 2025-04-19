@@ -71,9 +71,6 @@ const fetchInstance = $fetch.create({
     },
     onResponse({ response, options }) {
         if (response.status !== 200) {
-            if (response.status === 401) {
-                navigateTo(import.meta.env.VITE_LOGIN_PAGE, { redirectCode: 302 })
-            }
             return
         }
 
@@ -115,47 +112,41 @@ const fetchInstance = $fetch.create({
             response._data = respData
         }
     },
-    onResponseError({ request, response, error }) {
-        logger.tag('onResponseError').error(`【FAILED】请求失败`, request, response, error)
-    }
 })
 
 let refreshTokenPromise: Promise<ResponseDto<TokenPair> | undefined> | null = null;
-const doRefreshToken = async (ctx?: NuxtApp): Promise<ResponseDto<TokenPair> | undefined> => {
+const doRefreshToken = async (secrets: Secrets, cookie: string, ctx?: NuxtApp, signal?: AbortSignal): Promise<ResponseDto<TokenPair> | undefined> => {
     logger.tag('doRefreshToken').debug('start refreshing.')
-    const refreshToken = await safeGetRefreshToken(ctx)
-    if (!refreshToken || refreshToken.length === 0) return
     const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH
-    logger.tag('doRefreshToken').debug(`[doRefreshToken], start refreshing. refresh token: ${refreshToken}`, refreshPath)
-    const secrets = getSecurets()
+    logger.tag('doRefreshToken').debug(`[doRefreshToken], start refreshing.`, refreshPath)
     return await fetchInstance<ResponseDto<TokenPair>>(refreshPath, {
         method: 'POST',
+        responseType: 'json',
         __secrets: secrets,
         __path: refreshPath,
         __nuxtCtx: ctx,
+        signal: signal,
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${refreshToken}`,
+            'Cookie': cookie,
         }
     } as any)
 }
 
-const handle401 = async (nuxtCtx?: NuxtApp) => {
+const handle401 = async (secrets: Secrets, cookie: string, nuxtCtx?: NuxtApp, signal?: AbortSignal) => {
     try {
         if (refreshTokenPromise) {
             const results = await Promise.allSettled([refreshTokenPromise]);
-            if (results[0].status === 'fulfilled') {
-                // 等待刷新 token 完成
-                return await refreshTokenPromise
+            if (results[0].status === 'fulfilled' && results[0].value) {
+                return results[0].value
             }
         }
-        refreshTokenPromise = doRefreshToken(nuxtCtx)
+        refreshTokenPromise = doRefreshToken(secrets, cookie, nuxtCtx, signal)
         const tokens = await refreshTokenPromise
         setTimeout(() => refreshTokenPromise = null, 5000); // 5s 后释放，防止重复刷新 token
         return tokens
     } catch (error) {
-        logger.tag('handle401').error(`refresh token failed.`, error)
         refreshTokenPromise = null
+        throw error
     }
 }
 
@@ -167,20 +158,23 @@ const doFetch = async <TResp>(
     ctx?: NuxtApp,
     options?: HttpOptions,
 ) => {
-    const callFn = async () => {
-        // 在 SSR 过程中，fetch 请求不会自动携带 cookie，需要手动传递
-        // 为了方便，此处统一处理
-        const cookies = safeGetCookies()
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-            'Cookie': cookies.join('; '),
-        }
-        logger.tag('doFetch').debug('headers', headers)
-        const secrets = getSecurets()
-        if (!secrets) {
-            logger.tag('doFetch').error('cannot get secrets')
-            throw new Error('secrets is null')
-        }
+    // 在 SSR 过程中，fetch 请求不会自动携带 cookie，需要手动传递
+    // 为了方便，此处统一处理
+    const cookies =await safeGetCookies()
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Cookie': cookies.join('; '),
+    }
+    logger.tag('doFetch').debug('headers', headers)
+    // 此处传递 secrets 是为了此次请求的 secrets 保持一致
+    // 服务端也是这样处理的，单个请求的 secrets 是一致的
+    const secrets =await getSecurets(ctx)
+    if (!secrets) {
+        logger.tag('doFetch').error('cannot get secrets')
+        throw new Error('secrets is null')
+    }
+
+    const callFn = async (headers: Record<string, string>) => {
         return await fetchInstance<TResp>(path, {
             method: method,
             body: body,
@@ -190,27 +184,37 @@ const doFetch = async <TResp>(
             __path: path,
             __nuxtCtx: ctx,
             signal: options?.signal,
-            headers: headers
+            headers: headers,
         } as any)
     }
     try {
-        return await callFn()
+        return await callFn(headers)
     } catch (error) {
-        if (error instanceof FetchError) {
-            if (error.status === 401 || error.statusCode === 401) {
+        logger.tag('doFetch').debug(`doFetch error`, error)
+        if (error instanceof FetchError && (error.status === 401 || error.statusCode === 401)) {
+            try {
                 logger.tag('Handle 401').debug(`start refresh token.`)
-                // 处理 401 错误
-                const tokens = await handle401(ctx)
+                const tokens = await handle401(secrets, cookies.join(";"), ctx)
+                logger.tag('Handle 401').debug(`refresh token resulut `, tokens)
                 if (tokens) {
-                    logger.tag('Handle 401').debug(`refresh token success, retry call.`)
                     // 刷新 token 成功，重新调用接口
-                    return await callFn()
-                } else {
-                    logger.tag('Handle 401').debug(`refresh token failed.`)
+                    await sleep(500)
+                    const cookies =await safeGetCookies(ctx)
+                    logger.tag('doFetch').debug(`refresh token success, start call again.`, cookies)
+                    const headers: Record<string, string> = {
+                        'Content-Type': 'application/json',
+                        'Cookie': cookies.join('; '),
+                    }
+                    logger.tag('doFetch').debug('headers', headers)
+                    return await callFn(headers)
+                }
+            } catch (error) {
+                logger.tag('Handle 401').error(`refresh token failed.`, error)
+                if (error instanceof FetchError && (error.status === 401 || error.statusCode === 401)) {
+                    await navigateTo(import.meta.env.VITE_LOGIN_PAGE, { redirectCode: 302 })
+                    throw new Error('refresh token failed')
                 }
             }
-        } else {
-            logger.tag('doFetch').debug(`doFetch error`, error)
         }
         throw error
     }
@@ -225,9 +229,8 @@ export const usePost = <TResp>(
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
-    logger.tag('usePost').debug(`${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
+    logger.tag('usePost').debug(`${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options, useRequestHeaders())
     if (import.meta.client) {
-        // let res: AsyncData<TResp | null, FetchError>
         const res: AsyncData<TResp | null, FetchError> = {
             data: ref<TResp | null>(),
             error: ref<any>(null),
@@ -275,7 +278,7 @@ export const useGet = <TResp>(
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
-    logger.tag('useGet').debug(`${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
+    logger.tag('useGet').debug(`${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options, useRequestHeaders())
     if (import.meta.client) {
         const res: AsyncData<TResp | null, FetchError> = {
             data: ref<TResp | null>(),
@@ -307,7 +310,7 @@ export const useGet = <TResp>(
                 res.status.value = 'idle'
             }
         } as AsyncData<TResp | null, FetchError>
-        return new Promise<AsyncData<TResp | null, FetchError>>(  (resolve, reject) => {
+        return new Promise<AsyncData<TResp | null, FetchError>>((resolve, reject) => {
             res.execute().then(() => resolve(res)).catch(err => reject(err))
         })
     }
