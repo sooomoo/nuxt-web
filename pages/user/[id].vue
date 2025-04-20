@@ -28,7 +28,7 @@ definePageMeta({
 const route = useRoute()
 
 const log = logger.tag(`USER ${route.params.id}`) 
-const { data: loginResp, error } = await apiUser.getUserInfo()
+const { data: loginResp } = await apiUser.getUserInfo()
 log.debug('routing...') // 123
 
 </script>
@@ -36,7 +36,6 @@ log.debug('routing...') // 123
   <div>
     <pre>{{ loginResp }}</pre>
   </div>
-  <div>{{ error }}</div>
 </template>
 <style lang="sass" scoped>
 

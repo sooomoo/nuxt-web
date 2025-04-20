@@ -32,10 +32,19 @@ const commonStyle = `
     font-size:11px;
     line-height: 1;
     padding:4px;  
-    border-radius: 2px;
+    border-radius: 2px; 
 `;
 
-const tagStyle = `color: green;font-weight:bold;font-size:12px;`
+const tagStyle = `
+    font-weight:bold;
+    color:green;
+    border:1px solid green;
+    border-radius: 2px;
+    font-weight:bold;
+    line-height: 1;
+    font-size:11px;
+    padding:3px 4px;  
+`
 const debugStyle = `background-color: gray;${commonStyle}`
 const infoStyle = `background-color: #2f75f6;${commonStyle}`
 const warnStyle = `background-color: #ff9900;${commonStyle}`
@@ -68,13 +77,19 @@ class Logger {
         return new Logger(tag, this._minLevel);
     }
 
+    public newlines(...args: any[]) {
+        if (import.meta.dev) {
+            console.log(...args);
+        }
+    }
+
     public debug(...args: any[]) {
         if (LogLevel.DEBUG < this._minLevel) {
             return;
         }
 
         if (this._tag) {
-            args.unshift(`%cDEBUG%c %c[${this._tag}]`, debugStyle, "", tagStyle);
+            args.unshift(`%cDEBUG%c %c${this._tag}`, debugStyle, "", tagStyle);
         } else {
             args.unshift(`%cDEBUG`, debugStyle);
         }
@@ -92,7 +107,7 @@ class Logger {
         }
 
         if (this._tag) {
-            args.unshift(`%cINFO%c %c[${this._tag}]`, infoStyle, "", tagStyle);
+            args.unshift(`%cINFO%c %c${this._tag}`, infoStyle, "", tagStyle);
         } else {
             args.unshift(`%cINFO`, infoStyle);
         }
@@ -109,14 +124,14 @@ class Logger {
             return;
         }
         if (this._tag) {
-            args.unshift(`%cWARN%c %c[${this._tag}]`, warnStyle, "", tagStyle);
+            args.unshift(`%cWARN%c %c${this._tag}`, warnStyle, "", tagStyle);
         } else {
             args.unshift(`%cWARN`, warnStyle);
         }
 
         const lines = new Error().stack?.split('\n') ?? []
         if (lines.length >= 3) {
-            args.push(`\n${lines[2]}`);
+            args.push(`\n\n${lines[2]}`);
         }
         console.warn(...args);
     }
@@ -127,14 +142,14 @@ class Logger {
         }
 
         if (this._tag) {
-            args.unshift(`%cERROR%c %c[${this._tag}]`, errorStyle, "", tagStyle);
+            args.unshift(`%cERROR%c %c${this._tag}`, errorStyle, "", tagStyle);
         } else {
             args.unshift(`%cERROR`, errorStyle);
         }
 
         const lines = new Error().stack?.split('\n') ?? []
         if (lines.length >= 3) {
-            args.push(`\n${lines[2]}`);
+            args.push(`\n\n${lines[2]}`);
         }
         console.error(...args);
     }
