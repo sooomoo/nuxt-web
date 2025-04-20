@@ -64,6 +64,8 @@ export const saveCookies = async (ctx?: NuxtApp, cookies?: string[]) => {
     if (!ctx || !cookies || cookies.length === 0) {
         return;
     }
+    // ctx?.ssrContext?.event.node.res.h
+
 
     await ctx?.runWithContext(() => {
         const parsedCookies = parseCookies(cookies)
