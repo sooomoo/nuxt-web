@@ -4,6 +4,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxt/test-utils', '@nuxt/eslint'],
   css: [
+    '@/assets/css/reset.css',
     '@/assets/css/main.css',
     // '@/assets/css/fn.scss'
   ],
@@ -11,12 +12,15 @@ export default defineNuxtConfig({
     typeCheck: true
   },
   vite: {
-    css: {
-      preprocessorOptions: {
-        scss: {
-          additionalData: '@import "@/assets/css/fn.scss";'
-        }
-      }
-    }
+    // css: {
+    //   preprocessorOptions: {
+    //     scss: {
+    //       additionalData: '@import "@/assets/css/fn.scss";'
+    //     }
+    //   }
+    // }
+  },
+  eslint: {
+
   }
 })

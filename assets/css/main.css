@@ -2,8 +2,20 @@
 *::before,
 *::after {
     box-sizing: border-box;
-    margin: 0;
-    font-weight: normal;
+    margin: 0; 
+    padding: 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+input, button, textarea, select {
+  font: inherit;
+  border: none;
+  background: none;
+  outline: none;
 }
 
 body {
@@ -25,7 +37,7 @@ body {
       'Droid Sans',
       'Helvetica Neue',
       sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

@@ -1,7 +1,5 @@
-<script setup lang="ts">
-
-const log = logger.tag('index')
-
+<script setup lang="ts"> 
+const log = useTagLogger('index')
 
 onMounted(async () => {
   log.debug('home onMounted') 
@@ -21,7 +19,7 @@ onMounted(async () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .block {
   width: 100px;
   height: 100px;
