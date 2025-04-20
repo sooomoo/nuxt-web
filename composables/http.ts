@@ -305,7 +305,6 @@ export const useGet = <TResp>(
     query?: Record<string, any>,
     options?: HttpOptions
 ) => {
-    logger.tag('useGet').debug(`${path} will run on ${import.meta.client ? 'CLIENT' : 'SERVER'}`, query, options)
     if (import.meta.client) {
         const res: AsyncData<TResp | null, FetchError> = {
             data: ref<TResp | null>(),
