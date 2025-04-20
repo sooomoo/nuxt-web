@@ -218,9 +218,9 @@ const doFetch = async <TResp>(
                     })
                     return res?._data as TResp
                 }
-            } catch (error) {
-                refLog.error(`refresh token failed.`, error)
-                if (isStatusError(error, 401)) {
+            } catch (error2) {
+                refLog.error(`refresh token failed.`, error2)
+                if (isStatusError(error2, 401)) {
                     await navigateTo(import.meta.env.VITE_LOGIN_PAGE + `?redirect=${encodeURIComponent(pagePath)}`, { redirectCode: 302 })
                     throw new Error('refresh token failed')
                 }

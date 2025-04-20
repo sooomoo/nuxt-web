@@ -8,6 +8,9 @@ export default withNuxt(
       'nuxt/prefer-import-meta': 'off',
       'vue/no-multiple-template-roots': 'off',
       'vue/no-multiple-template-root':'off',
+      'no-shadow-restricted-names': 'error',
+      'no-shadow': 'error',
+      'import/no-self-import': 'error',
     }
   }
 )
