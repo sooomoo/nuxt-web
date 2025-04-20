@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { NuxtApp } from "#app";
 
-export const safeGetCookies =async (ctx?: NuxtApp) => {
+export const safeGetCookies = async (ctx?: NuxtApp) => {
     if (import.meta.client) {
         return document.cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
     } else {
-        if(ctx) {
-          return await  ctx.runWithContext(() => {
-                const cookie = useRequestHeader('cookie')?? ''
+        if (ctx) {
+            return await ctx.runWithContext(() => {
+                const cookie = useRequestHeader('cookie') ?? ''
                 return cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
             })
         }
@@ -18,8 +18,8 @@ export const safeGetCookies =async (ctx?: NuxtApp) => {
 export const safeGetUserAgent = () => {
     if (import.meta.client) {
         return navigator.userAgent
-    } else { 
-        return useRequestHeader('User-Agent')?? '' 
+    } else {
+        return useRequestHeader('User-Agent') ?? ''
     }
 }
 
@@ -36,7 +36,7 @@ export const parseCookies = (cookies: string[] | undefined): {
         const cookie = cookies[i];
         const parts = cookie.split(';');
         const nameValue = parts.shift()?.split('=');
-        if (!nameValue) {
+        if (!nameValue || nameValue.length !== 2) {
             continue;
         }
         const cookieName = nameValue[0].trim();
@@ -66,10 +66,13 @@ export const saveCookies = async (ctx?: NuxtApp, cookies?: string[]) => {
     }
     // ctx?.ssrContext?.event.node.res.h
 
-
-    await ctx?.runWithContext(() => {
-        const parsedCookies = parseCookies(cookies)
-        // logger.tag('saveCookies').debug(`runWithContext`, parsedCookies)
+    if (import.meta.client || ctx === null || ctx === undefined) {
+        return
+    }
+    ctx.ssrContext?.event.node.res.setHeader('Set-Cookie', cookies)
+    const parsedCookies = parseCookies(cookies)
+    // logger.tag('saveCookies').debug(`runWithContext`, parsedCookies)
+    await ctx.runWithContext(() => { 
         parsedCookies.forEach(c => {
             const cooRef = useCookie(c.name, {
                 maxAge: Number(c.options['max-age'] ?? '0'),
@@ -80,6 +83,6 @@ export const saveCookies = async (ctx?: NuxtApp, cookies?: string[]) => {
             })
             cooRef.value = undefined
             cooRef.value = c.value
-        })
+        }) 
     })
 }
