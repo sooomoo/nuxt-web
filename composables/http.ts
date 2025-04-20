@@ -23,6 +23,7 @@ export interface HttpOptions {
     responseType?: 'json' | 'text' | 'blob' | 'arrayBuffer' | 'stream'
     cookie?: string
     timeout?: number,
+    autoHandle401?: boolean
 }
 
 const defaultFetchOptions: Record<string, any> = {
@@ -47,6 +48,21 @@ const isRefreshTokenAvailable = (ctx?: NuxtApp): boolean => {
     return refreshToken.length > 0
 }
 
+const getUserAgentAndCookies = (ctx?: NuxtApp): { userAgent: string, cookies: string[] } => {
+    let cookies: string[] = []
+    let userAgent: string = ''
+    if (import.meta.server) {
+        const ctxHeaders = ctx?.ssrContext?.event.node.req.headers
+        const cookie = ctxHeaders?.cookie ?? ""
+        userAgent = ctxHeaders?.['user-agent'] ?? ""
+        cookies = cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
+    } else if (import.meta.client) {
+        cookies = document.cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
+        userAgent = navigator.userAgent
+    }
+    return { userAgent, cookies }
+}
+
 const doRawFetch = async <TResp>(
     method: string,
     path: string,
@@ -58,18 +74,12 @@ const doRawFetch = async <TResp>(
     const fetchLogger = logger.tag(`doFetchInternal: ${method} ${path}`)
     fetchLogger.debug(`ctx has value ? ${ctx !== null && ctx !== undefined}, running on ${import.meta.client ? 'CLIENT' : 'SERVER'}\n`)
 
-    const headers = new Headers({ "Content-Type": "application/json" })
-    let cookies: string[] = []
-    if (import.meta.server) {
-        const ctxHeaders = ctx?.ssrContext?.event.node.req.headers
-        const cookie = ctxHeaders?.cookie ?? ""
-        const userAgent = ctxHeaders?.['user-agent'] ?? ""
-        headers.set('cookie', cookie)
-        headers.set('user-agent', userAgent)
-        cookies = cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
-    } else if (import.meta.client) {
-        cookies = document.cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
-    }
+    const headers = new Headers({ "Content-Type": "application/json" }) 
+    const { userAgent, cookies  } = getUserAgentAndCookies(ctx)
+    if (import.meta.server) { 
+        headers.set('cookie', cookies.join(';'))
+        headers.set('user-agent', userAgent) 
+    } 
     if (options?.cookie) {
         headers.set('cookie', options.cookie)
     }
@@ -187,17 +197,17 @@ const doFetch = async <TResp>(
 ) => {
     logger.newlines('\n\n')
     let pagePath = '/'
-    if (ctx) {
-        pagePath = ctx?._route?.fullPath ?? ''
-    } else if (import.meta.client) {
-        pagePath = window.location.pathname
+    if (import.meta.client) {
+        pagePath = window.location.pathname + window.location.search
+    } else if (import.meta.server && ctx) {
+        pagePath = ctx?._route?.fullPath ?? (ctx?.ssrContext?.event.node.req.url ?? '/')
     }
     logger.tag('doFetch').debug('redirect path is :', pagePath)
     try {
         const res = await doRawFetch<TResp>(method, path, body, query, ctx, options)
         return res?._data as TResp
     } catch (error) {
-        if (isStatusError(error, 401)) {
+        if (isStatusError(error, 401) && (options?.autoHandle401 ?? true)) {
             const refLog = logger.tag(`Handle 401: ${method} ${path}`)
             if (!isRefreshTokenAvailable(ctx)) {
                 refLog.debug(`refresh token is not available.`)
@@ -209,11 +219,13 @@ const doFetch = async <TResp>(
                 refLog.debug(`start refresh token.`)
                 const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH
                 const resRefresh = await doRawFetch("POST", refreshPath, undefined, undefined, ctx, options)
+                logger.tag('Handle 401').debug(`refresh token response.`, resRefresh)
                 if (resRefresh && resRefresh.status === 200) {
                     logger.tag('Handle 401').debug(`refresh token success.`)
                     // 重新发起请求
                     const res = await doRawFetch<TResp>(method, path, body, query, ctx, {
                         ...options,
+                        // 此处需要手动传递新的 cookie，因为在 ssr 时，刷新 token 返回的 cookie 还未同步到上下文中
                         cookie: resRefresh.headers.getSetCookie().join(';')
                     })
                     return res?._data as TResp
