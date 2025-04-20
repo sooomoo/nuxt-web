@@ -33,6 +33,7 @@ export const useSignVerify = (data: string, signature: string) => {
  * @param obj 待排序的对象
  * @returns 排序后的字符串
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const stringifyObj = (obj: any): string => {
     if (!obj) {
         return ""
