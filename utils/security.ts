@@ -1,4 +1,4 @@
-import type { NuxtApp } from '#app'
+
 import * as base64 from '@juanelas/base64'
 import { randomBytes } from '@noble/ciphers/webcrypto'
 import { ed25519, x25519 } from "@noble/curves/ed25519"
@@ -98,14 +98,13 @@ export interface Secrets {
 }
 
 /**
- * 安全的获取会话密钥
+ * 获取会话密钥
  * @returns
  */
-export const getSecurets =async (ctx?: NuxtApp): Promise<Secrets | undefined> => {
-    const cookies =await safeGetCookies(ctx)
+export const getSecuretsFromCookie = (cookies: string[]): Secrets | undefined => {
     const parsedCookies = parseCookies(cookies)
     const sessionId = parsedCookies.find(c => c.name === import.meta.env.VITE_COOKIE_SK1_NAME)?.value ?? ''
-    const clientKey = parsedCookies.find(c => c.name === import.meta.env.VITE_COOKIE_SK2_NAME)?.value ?? '' 
+    const clientKey = parsedCookies.find(c => c.name === import.meta.env.VITE_COOKIE_SK2_NAME)?.value ?? ''
     const pubKeys = decodeSecureString(sessionId)
     const priKeys = decodeSecureString(clientKey)
     if (pubKeys.box && pubKeys.sign && priKeys.box && priKeys.sign) {
@@ -115,19 +114,6 @@ export const getSecurets =async (ctx?: NuxtApp): Promise<Secrets | undefined> =>
     }
 }
 
-export const getSecuretsFromCookie =  (cookies: string[]):  Secrets | undefined  => { 
-    const parsedCookies = parseCookies(cookies)
-    const sessionId = parsedCookies.find(c => c.name === import.meta.env.VITE_COOKIE_SK1_NAME)?.value ?? ''
-    const clientKey = parsedCookies.find(c => c.name === import.meta.env.VITE_COOKIE_SK2_NAME)?.value ?? '' 
-    const pubKeys = decodeSecureString(sessionId)
-    const priKeys = decodeSecureString(clientKey)
-    if (pubKeys.box && pubKeys.sign && priKeys.box && priKeys.sign) {
-        const boxKeyPair = newBoxKeyPairFromArray(pubKeys.box!, priKeys.box!)
-        const signKeyPair = newSignKeyPairFromArray(pubKeys.sign!, priKeys.sign!)
-        return { boxKeyPair: boxKeyPair, signKeyPair: signKeyPair, sessionId: sessionId || '' }
-    }
-}
- 
 /**
  * Only called in session_init.server.ts
  * 确保在第一次请求时会话密钥已准备好

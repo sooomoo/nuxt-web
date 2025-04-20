@@ -1,28 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { NuxtApp } from "#app";
 
-export const safeGetCookies = async (ctx?: NuxtApp) => {
-    if (import.meta.client) {
-        return document.cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
-    } else {
-        if (ctx) {
-            return await ctx.runWithContext(() => {
-                const cookie = useRequestHeader('cookie') ?? ''
-                return cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
-            })
-        }
-        const cookie = useRequestHeader('cookie') ?? ''
-        return cookie.split(';').map(c => c.trim()).filter(c => c.length > 0)
-    }
-}
-export const safeGetUserAgent = () => {
-    if (import.meta.client) {
-        return navigator.userAgent
-    } else {
-        return useRequestHeader('User-Agent') ?? ''
-    }
-}
-
 export const parseCookies = (cookies: string[] | undefined): {
     name: string;
     value: string;
@@ -59,20 +37,15 @@ export const parseCookies = (cookies: string[] | undefined): {
     return parsedCookies;
 }
 
-
 export const saveCookies = async (ctx?: NuxtApp, cookies?: string[]) => {
-    if (!ctx || !cookies || cookies.length === 0) {
+    if (!ctx || !cookies || cookies.length === 0 || import.meta.client) {
         return;
     }
-    // ctx?.ssrContext?.event.node.res.h
 
-    if (import.meta.client || ctx === null || ctx === undefined) {
-        return
-    }
     ctx.ssrContext?.event.node.res.setHeader('Set-Cookie', cookies)
     const parsedCookies = parseCookies(cookies)
     // logger.tag('saveCookies').debug(`runWithContext`, parsedCookies)
-    await ctx.runWithContext(() => { 
+    await ctx.runWithContext(() => {
         parsedCookies.forEach(c => {
             const cooRef = useCookie(c.name, {
                 maxAge: Number(c.options['max-age'] ?? '0'),
@@ -83,6 +56,6 @@ export const saveCookies = async (ctx?: NuxtApp, cookies?: string[]) => {
             })
             cooRef.value = undefined
             cooRef.value = c.value
-        }) 
+        })
     })
 }
