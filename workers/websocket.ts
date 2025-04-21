@@ -6,7 +6,7 @@ const sharedWorker = ref<SharedWorker>();
 export const startWebSocket = () => {
     sharedWorker.value = new SharedWorker(
         new URL('./websocket_worker.ts', import.meta.url),
-        { type: 'module', name: 'niu_websocket_worker', credentials: 'same-origin' });
+        { type: 'module', name: 'niu_websocket_worker', credentials: 'include' });
     sharedWorker.value?.port.start()
 }
 
@@ -23,7 +23,7 @@ export const closeWebSocket = () => {
     }
 }
 
-export const postMessageToWebSocket = (message: IWebSocketCmd) => {
+export const postMessageToWebSocket = <T>(message: IWebSocketCmd<T>) => {
     sharedWorker.value?.port.postMessage(message)
 }
 

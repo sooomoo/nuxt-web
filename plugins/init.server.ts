@@ -6,6 +6,8 @@
 export default defineNuxtPlugin((nuxtApp) => {
     nuxtApp.hook('app:created', () => {
         ensureSecurets() // 本身就在 nuxt 上下文中，因此不需要传递 ctx
+        const platform = useCookie('pla')
+        platform.value = '8'
         logger.tag('init.server.ts').debug('app:created')
     })
 })

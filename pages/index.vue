@@ -1,12 +1,5 @@
-<script setup lang="ts"> 
-const log = useTagLogger('index')
+<script setup lang="ts">  
 
-onMounted(async () => {
-  log.debug('home onMounted') 
-  log.info('home onMounted')
-  log.warn('home onMounted')
-  log.error('home onMounted')
-})
 </script>
 <template>
   <div>

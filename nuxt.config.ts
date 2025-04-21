@@ -6,21 +6,21 @@ export default defineNuxtConfig({
   css: [
     '@/assets/css/reset.css',
     '@/assets/css/main.css',
-    // '@/assets/css/fn.scss'
   ],
   typescript:{
     typeCheck: true
   },
-  vite: {
-    // css: {
-    //   preprocessorOptions: {
-    //     scss: {
-    //       additionalData: '@import "@/assets/css/fn.scss";'
-    //     }
-    //   }
-    // }
-  },
   eslint: {
 
+  },
+  nitro:{
+    devProxy: {
+      '/ws': {
+        target: 'ws://localhost:8001/ws',
+        ws: true,
+        secure: false,
+        changeOrigin: true, 
+      }
+    }
   }
 })

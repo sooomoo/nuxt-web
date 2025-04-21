@@ -21,7 +21,7 @@ export abstract class WebSocketClientBase {
 
     connect() {
         this.connected = false
-        this.socket = new WebSocket("ws://localhost:8080/stats?id=20001", ["proto-v2"])
+        this.socket = new WebSocket(this.url, this.protocols)
         this.socket.binaryType = this.binaryType
         this.socket.onopen = () => {
             this.connected = true
