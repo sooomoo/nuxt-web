@@ -14,13 +14,14 @@ export default defineNuxtConfig({
 
   },
   nitro:{
-    devProxy: {
-      '/ws': {
-        target: 'ws://localhost:8001/ws',
-        ws: true,
-        secure: false,
-        changeOrigin: true, 
-      }
-    }
+    // // websocket 的代理不起作用
+    // devProxy: {
+    //   '/hub': {
+    //     target: 'ws://localhost:8001',
+    //     ws: true,
+    //     secure: false,
+    //     changeOrigin: true, 
+    //   }
+    // }
   }
 })

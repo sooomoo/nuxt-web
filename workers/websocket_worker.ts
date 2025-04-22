@@ -1,54 +1,67 @@
 /// <reference lib="webworker" />
 
 import { WebSocketClientBase } from "@/utils/websocket_client";
-import { type IWebSocketCmd, WebSocketCmdConnect } from "./websocket_cmd";
+import { type IWebSocketCmd, isConnectCmd, type WebSocketConnectCmdData, WebSocketMsgType } from "./websocket_cmd";
 import { ExponentialRetryStrategy } from "@/utils/retry_strategy";
+import { PacketProtocol } from "@/utils/bytes/packet";
+import { msgPackMarshaler } from "~/utils/bytes/marshaler";
 
-if (import.meta.client) { 
-    const ports: MessagePort[] = [];
-    let websocket: WebSocketClient | undefined
+const ports: MessagePort[] = [];
+let websocket: WebSocketClient | undefined
 
+if (import.meta.client) {
     const scope = self as unknown as SharedWorkerGlobalScope
     if (!scope) {
         throw new Error('scope is not SharedWorkerGlobalScope')
     }
+    const wlogger = logger.tag('WebSocketWorker')
 
     scope.onconnect = (e: MessageEvent) => {
         const port = e.ports[0]
         ports.push(port)
 
+
         port.onmessage = (e: MessageEvent<IWebSocketCmd<any>>) => {
-            logger.tag('WebSocketWorker').debug(' 收到消息 ', e.data)
-            if (e.data.cmd === WebSocketCmdConnect) {
+            wlogger.debug(' 收到消息 ', e.data)
+            if (isConnectCmd(e.data)) {
                 if (websocket) {
-                    logger.tag('WebSocketWorker').debug('websocket 已连接')
+                    wlogger.debug('websocket 已连接')
                     return
                 }
-                const url = e.data.data as string
-                websocket = new WebSocketClient(url)
+                websocket = new WebSocketClient(e.data.data)
                 websocket.connect()
             }
-            ports.forEach(p => p.postMessage("i've received your message"))
         }
     }
 }
 
+
+
 export class WebSocketClient extends WebSocketClientBase {
-    constructor(url: string) {
-        super(url, ['niu-v1'], 'arraybuffer', new ExponentialRetryStrategy(1000, 5))
+    private readonly protocal: PacketProtocol
+    private requestId = 0
+    private readonly logger = logger.tag('WebSocketClient')
+
+    constructor(data: WebSocketConnectCmdData) {
+        super(data.url, data.subprotocol, 'arraybuffer',
+            new ExponentialRetryStrategy(1000, data.maxRetryAttempts), data.heartbeatInterval)
+        this.protocal = new PacketProtocol(msgPackMarshaler)
     }
 
     onData(data: string | ArrayBuffer): void {
         if (typeof data == 'string') {
-            logger.tag('WebSocketClient').debug('text message: ', data)
+            this.logger.debug('text message: ', data)
         } else if (data instanceof ArrayBuffer) {
-            // const [msgType, reqId, payload] = this.msgProtocol.decode(new Uint8Array(data))
-            // logger.tag('WebSocketClient').debug('binary message: ', msgType, reqId, payload)
+            const {msgType, requestId, timestamp, code} = this.protocal.getResponseMeta(new Uint8Array(data))
+            this.logger.debug('[META] response message: ', msgType, requestId, timestamp, code)
+            if (msgType == WebSocketMsgType.pong) {
+                this.logger.debug('pong message')
+            } 
         }
     }
 
     override onHeartbeatTick(): void {
-        //this.sendMsg(MsgType.ping, new Uint8Array(0));
+         this.sendMsg(WebSocketMsgType.ping );
     }
 
     override onConnected(): void {
@@ -61,11 +74,10 @@ export class WebSocketClient extends WebSocketClientBase {
         logger.tag('WebSocketClient').debug('error', error)
     }
 
-    // sendMsg(msgType: MsgType, payload: Uint8Array): RequestId {
-    //     // const id = RequestId.next();
-    //     // const data = this.msgProtocol.encode(msgType, id, payload);
-    //     // this.send(data);
-    //     // return id;
-    // }
+    sendMsg<T>(msgType: WebSocketMsgType, payload?: T) : number{
+        this.requestId = (this.requestId + 1) % 0xFFFFFFFF
+        this.protocal.encodeReq<T>(msgType, this.requestId, payload)
+        return this.requestId
+    }
 }
 

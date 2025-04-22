@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { WebSocketCmdConnect, type IWebSocketCmd } from "./websocket_cmd";
+import { WebSocketCmdConnect, type IWebSocketCmd, type WebSocketConnectCmdData } from "./websocket_cmd";
 
 const sharedWorker = ref<SharedWorker>();
 
@@ -27,10 +27,10 @@ export const postMessageToWebSocket = <T>(message: IWebSocketCmd<T>) => {
     sharedWorker.value?.port.postMessage(message)
 }
 
-export const postConnectCmdToWebSocket = (url: string) => {
+export const postConnectCmdToWebSocket = (data: WebSocketConnectCmdData) => {
     sharedWorker.value?.port.postMessage({
         cmd: WebSocketCmdConnect,
-        data: url,
+        data: data,
     })
 }
 

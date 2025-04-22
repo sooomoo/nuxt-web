@@ -7,5 +7,22 @@ export interface IWebSocketCmd<T> {
     data: T
 }
 
+export interface WebSocketConnectCmdData {
+    url: string
+    subprotocol: string[]
+    heartbeatInterval: number
+    maxRetryAttempts: number
+}
+
+export const isConnectCmd = (cmd: IWebSocketCmd<any>): cmd is IWebSocketCmd<WebSocketConnectCmdData> => {
+    return cmd.cmd === WebSocketCmdConnect
+}
+
 export const WebSocketCmdConnect: WebSocketCmd = "connect"
+
+export enum WebSocketMsgType {
+    ready = 1,
+    ping = 5,
+    pong = 6,
+}
 

@@ -3,7 +3,7 @@ import type { Marshaler } from "./marshaler"
 
 export interface PacketMetaData {
     msgType: number     // 1字节
-    requestId: number   // 1字节
+    requestId: number   // 4字节
     timestamp: number   // 4字节，从2025-01-01 00:00:00开始的秒数 
 }
 
@@ -70,20 +70,23 @@ export class PacketProtocol {
 
     /**
      * 打包请求，便于通过WebSocket发送
-     * @param msgType 消息类型
+     * @param msgType 消息类型 1字节
+     * @param requestId 消息序号 4字节
      * @param payload 业务内容
      * @returns 返回打包后的消息
      */
-    encodeReq<T = unknown>(msgType: number, requestId: number, payload: T): Uint8Array {
+    encodeReq<T = unknown>(msgType: number, requestId: number, payload?: T): Uint8Array {
         const ts = Number((Date.now() / 1000 - this.protocolStartTime).toFixed(0))
         const reqIdBuf = [requestId >> 24 & 0x000F, requestId >> 16 & 0x000F, requestId >> 8 & 0x000F, requestId & 0x000F]
         const tsBuf = [ts >> 24 & 0x000F, ts >> 16 & 0x000F, ts >> 8 & 0x000F, ts & 0x000F]
         const outArr = [msgType, ...reqIdBuf, ...tsBuf]
-        let body = this._marshaler.marshal<T>(payload)
-        if (this._crypter) {
-            body = this._crypter.encrypt(body)
+        let body = payload ? this._marshaler.marshal<T>(payload) : undefined
+        if (body) {
+            if (this._crypter) {
+                body = this._crypter.encrypt(body)
+            }
+            outArr.push(...body)
         }
-        outArr.push(...body)
         if (this._signer) {
             const dataToSign = new Uint8Array(outArr)
             const sign = this._signer.sign(dataToSign)
