@@ -91,9 +91,15 @@ export abstract class WebSocketClientBase {
         this.socket?.close(1000, "closeByClient")
     }
 
+     
+    public get readyState() : number | undefined {
+        return this.socket?.readyState;
+    } 
+    
+
     private readonly bufferData: Array<string | ArrayBufferLike> = []
-    send(data: string | ArrayBufferLike) {
-        if (this.socket?.readyState === WebSocket.OPEN) {
+    send(data: string | ArrayBufferLike) { 
+        if (this.readyState === WebSocket.OPEN) {
             this.socket?.send(data)
         } else {
             this.bufferData.push(data)

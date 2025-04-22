@@ -56,7 +56,7 @@ export class PacketProtocol {
      */
     getResponseMeta(data: Uint8Array): ResponsePacketMetaData {
         if (data.length < this.responseMetaLength) {
-            throw new Error("data length is too short")
+            throw new Error(`response data length is too short: ${data.length}/${this.responseMetaLength}`)
         }
         const requestId = data[1] << 24 | data[2] << 16 | data[3] << 8 | data[4]
         const ts = data[5] << 24 | data[6] << 16 | data[7] << 8 | data[8]

@@ -65,18 +65,20 @@ export class WebSocketClient extends WebSocketClientBase {
     }
 
     override onConnected(): void {
-        logger.tag('WebSocketClient').debug('connected')
+        this.logger.debug('connected')
     }
     override onWillReconnect(durationMs: number): void {
-        logger.tag('WebSocketClient').debug(`reconnect after ${durationMs}ms`)
+        this.logger.debug(`reconnect after ${durationMs}ms`)
     }
     override onError(error: Event): void {
-        logger.tag('WebSocketClient').debug('error', error)
+        this.logger.debug('error', error)
     }
 
     sendMsg<T>(msgType: WebSocketMsgType, payload?: T) : number{
         this.requestId = (this.requestId + 1) % 0xFFFFFFFF
-        this.protocal.encodeReq<T>(msgType, this.requestId, payload)
+        const packet = this.protocal.encodeReq<T>(msgType, this.requestId, payload)
+        this.logger.debug('send message: ', msgType, this.requestId, payload, packet, this.readyState)
+        this.send(packet.buffer)
         return this.requestId
     }
 }
