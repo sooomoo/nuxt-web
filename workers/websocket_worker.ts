@@ -53,7 +53,7 @@ export class WebSocketClient extends WebSocketClientBase {
             this.logger.debug('text message: ', data)
         } else if (data instanceof ArrayBuffer) {
             const {msgType, requestId, timestamp, code} = this.protocal.getResponseMeta(new Uint8Array(data))
-            this.logger.debug('[META] response message: ', msgType, requestId, timestamp, code)
+            this.logger.debug('[META] recv message: ', msgType, requestId, timestamp, code)
             if (msgType == WebSocketMsgType.pong) {
                 this.logger.debug('pong message')
             } 
