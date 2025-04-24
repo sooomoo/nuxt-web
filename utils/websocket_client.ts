@@ -29,6 +29,7 @@ export abstract class WebSocketClientBase {
         }
         this.socket.onerror = (error) => this.onError(error)
         this.socket.onclose = (ev) => {
+            this.log.debug('onclose', ev)
             if (ev.code === 1000) {
                 this.closeNormally = true;
                 this.onClosed();
@@ -89,6 +90,7 @@ export abstract class WebSocketClientBase {
     close() {
         this.closeNormally = true;
         this.socket?.close(1000, "closeByClient")
+        this.log.debug(`closeByClient`)
     }
 
      

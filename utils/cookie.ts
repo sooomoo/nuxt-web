@@ -37,14 +37,14 @@ export const parseCookies = (cookies: string[] | undefined): {
     return parsedCookies;
 }
 
-export const saveCookies = async (ctx?: NuxtApp, cookies?: string[]) => {
+export const saveCookies = async (ctx?: NuxtApp, cookies?: string[]) => { 
     if (!ctx || !cookies || cookies.length === 0 || import.meta.client) {
         return;
     }
 
     ctx.ssrContext?.event.node.res.setHeader('Set-Cookie', cookies)
     const parsedCookies = parseCookies(cookies)
-    // logger.tag('saveCookies').debug(`runWithContext`, parsedCookies)
+    //  logger.tag('saveCookies').debug(`runWithContext`, parsedCookies)
     await ctx.runWithContext(() => {
         parsedCookies.forEach(c => {
             const cooRef = useCookie(c.name, {

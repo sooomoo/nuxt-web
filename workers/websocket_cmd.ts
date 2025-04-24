@@ -19,6 +19,7 @@ export const isConnectCmd = (cmd: IWebSocketCmd<any>): cmd is IWebSocketCmd<WebS
 }
 
 export const WebSocketCmdConnect: WebSocketCmd = "connect"
+export const WebSocketCmdClose: WebSocketCmd = "close"
 
 export enum WebSocketMsgType {
     ready = 1,

@@ -1,5 +1,10 @@
 import { ref } from "vue";
-import { WebSocketCmdConnect, type IWebSocketCmd, type WebSocketConnectCmdData } from "./websocket_cmd";
+import {
+    WebSocketCmdConnect,
+    WebSocketCmdClose,
+    type IWebSocketCmd,
+    type WebSocketConnectCmdData
+} from "./websocket_cmd";
 
 const sharedWorker = ref<SharedWorker>();
 
@@ -17,11 +22,13 @@ export const onWebSocketMessage = (callback: (event: MessageEvent) => void) => {
 }
 
 export const closeWebSocket = () => {
-    if (sharedWorker.value) {
-        sharedWorker.value.port.onmessage = null
-        sharedWorker.value.port.close()
-    }
+    // if (sharedWorker.value) {
+    //     sharedWorker.value.port.onmessage = null
+    //     sharedWorker.value.port.close()
+    // }
+    sharedWorker.value?.port.postMessage({ cmd: WebSocketCmdClose })
 }
+
 
 export const postMessageToWebSocket = <T>(message: IWebSocketCmd<T>) => {
     sharedWorker.value?.port.postMessage(message)

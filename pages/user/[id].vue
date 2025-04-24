@@ -18,11 +18,16 @@ const log = logger.tag(`USER ${route.params.id}`)
 const { data: loginResp } = await apiUser.getUserInfo()
 log.debug('routing...') // 123
 
+const logout = async () => {
+  await apiAuth.logout()
+}
+
 </script>
 <template>
   <div>
     <pre>{{ loginResp }}</pre>
   </div>
+  <button @click="logout">Logout</button>
 </template>
 <style lang="scss" scoped>
 

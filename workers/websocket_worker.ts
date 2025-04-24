@@ -1,7 +1,13 @@
 /// <reference lib="webworker" />
 
 import { WebSocketClientBase } from "@/utils/websocket_client";
-import { type IWebSocketCmd, isConnectCmd, type WebSocketConnectCmdData, WebSocketMsgType } from "./websocket_cmd";
+import {
+    type IWebSocketCmd,
+    isConnectCmd,
+    type WebSocketConnectCmdData,
+    WebSocketMsgType,
+    WebSocketCmdClose
+} from "./websocket_cmd";
 import { ExponentialRetryStrategy } from "@/utils/retry_strategy";
 import { PacketProtocol } from "@/utils/bytes/packet";
 import { msgPackMarshaler } from "~/utils/bytes/marshaler";
@@ -30,6 +36,9 @@ if (import.meta.client) {
                 }
                 websocket = new WebSocketClient(e.data.data)
                 websocket.connect()
+            } else if (e.data.cmd === WebSocketCmdClose) {
+                websocket?.close()
+                websocket = undefined
             }
         }
     }
@@ -52,16 +61,16 @@ export class WebSocketClient extends WebSocketClientBase {
         if (typeof data == 'string') {
             this.logger.debug('text message: ', data)
         } else if (data instanceof ArrayBuffer) {
-            const {msgType, requestId, timestamp, code} = this.protocal.getResponseMeta(new Uint8Array(data))
+            const { msgType, requestId, timestamp, code } = this.protocal.getResponseMeta(new Uint8Array(data))
             this.logger.debug('[META] recv message: ', msgType, requestId, timestamp, code)
             if (msgType == WebSocketMsgType.pong) {
                 this.logger.debug('pong message')
-            } 
+            }
         }
     }
 
     override onHeartbeatTick(): void {
-         this.sendMsg(WebSocketMsgType.ping );
+        this.sendMsg(WebSocketMsgType.ping);
     }
 
     override onConnected(): void {
@@ -74,7 +83,7 @@ export class WebSocketClient extends WebSocketClientBase {
         this.logger.debug('error', error)
     }
 
-    sendMsg<T>(msgType: WebSocketMsgType, payload?: T) : number{
+    sendMsg<T>(msgType: WebSocketMsgType, payload?: T): number {
         this.requestId = (this.requestId + 1) % 0xFFFFFFFF
         const packet = this.protocal.encodeReq<T>(msgType, this.requestId, payload)
         this.logger.debug('send message: ', msgType, this.requestId, payload, packet, this.readyState)

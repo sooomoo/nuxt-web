@@ -1,3 +1,5 @@
+import { closeWebSocket } from "~/workers/websocket"
+
 export interface LoginParam {
     phone: string
     code: string
@@ -8,5 +10,6 @@ export const apiAuth = {
     login: (param: LoginParam) => usePost("/v1/auth/login", param, undefined),
     logout:async () => {
         await usePost<ResponseDto<null>>("/v1/auth/logout") 
+        closeWebSocket()
     },
 }

@@ -177,8 +177,12 @@ const doRawFetch = async <TResp>(
 
     saveCookies(ctx ?? undefined, response.headers.getSetCookie())
 
-    if ((options?.responseType ?? 'json') === 'json' && typeof respData === 'string') {
-        response._data = JSON.parse(respData)
+    if ((options?.responseType ?? 'json') === 'json' && typeof respData === 'string' && respData.length > 0) {
+        try {
+            response._data = JSON.parse(respData)
+        } catch (error) {
+            fetchLogger.error(`【FAILED】解析响应数据失败`, respData, error)
+        }
     } else {
         response._data = respData
     }
