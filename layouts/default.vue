@@ -3,7 +3,9 @@
 <template>
     <header class="default-layout__header flex flex-align-center gap-l">
         <slot name="header">
-            <span>LOGO</span>
+            <NuxtLink to="/">
+                <span>LOGO</span>
+            </NuxtLink>
             <span class="spacer"></span>
             <span>Header1</span>
             <span>Header1</span>

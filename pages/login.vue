@@ -20,7 +20,7 @@ const handleLoginStatusUpdated = (status: LoginStatus) => {
 
 </script>
 <template>
-    <NLoginView @status-update="handleLoginStatusUpdated" class="page-login " />
+    <NLoginView @status-update="handleLoginStatusUpdated" class="page-login" />
 </template>
 
 <style lang="scss" scoped>
