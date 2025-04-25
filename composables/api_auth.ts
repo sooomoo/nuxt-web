@@ -6,6 +6,8 @@ export interface LoginParam {
     secure_code: string
 }
 
+export type LoginStatus = 'success' | 'error' | 'fail'
+
 export const apiAuth = {
     login: async (param: LoginParam) =>{
         const res =await usePost<ResponseDto<null>>("/v1/auth/login", param)
