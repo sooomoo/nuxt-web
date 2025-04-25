@@ -22,24 +22,24 @@ export const onWebSocketMessage = (callback: (event: MessageEvent) => void) => {
 }
 
 export const closeWebSocket = () => {
-    // if (sharedWorker.value) {
-    //     sharedWorker.value.port.onmessage = null
-    //     sharedWorker.value.port.close()
-    // }
     sharedWorker.value?.port.postMessage({ cmd: WebSocketCmdClose })
 }
 
+export const openWebSocket = () => {
+    sharedWorker.value?.port.postMessage({
+        cmd: WebSocketCmdConnect,
+        data: {
+            url: 'ws://localhost:8001/hub/chat',
+            subprotocol: ['niu-v1'],
+            heartbeatInterval: 10000,
+            maxRetryAttempts: 10,
+        },
+    })
+}
 
 export const postMessageToWebSocket = <T>(message: IWebSocketCmd<T>) => {
     sharedWorker.value?.port.postMessage(message)
-}
-
-export const postConnectCmdToWebSocket = (data: WebSocketConnectCmdData) => {
-    sharedWorker.value?.port.postMessage({
-        cmd: WebSocketCmdConnect,
-        data: data,
-    })
-}
+} 
 
 // 跨标签页通信可以使用： BroadcastChannel，sharedWorker，localStorage触发storage事件
 // API	            核心功能	                                                        通信模型	        典型用途

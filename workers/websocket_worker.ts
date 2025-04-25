@@ -44,8 +44,6 @@ if (import.meta.client) {
     }
 }
 
-
-
 export class WebSocketClient extends WebSocketClientBase {
     private readonly protocal: PacketProtocol
     private requestId = 0

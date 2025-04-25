@@ -9,12 +9,6 @@ const signHeaderPlatform = "x-platform";
 const signHeaderSession = "x-session";
 const contentTypeEncrypted = "application/x-encrypted;charset=utf-8"
 
-export interface ResponseDto<T> {
-    code: string
-    msg: string
-    data: T
-}
-
 const platform = '8'
 
 export interface HttpOptions {
@@ -74,12 +68,12 @@ const doRawFetch = async <TResp>(
     const fetchLogger = logger.tag(`doFetchInternal: ${method} ${path}`)
     fetchLogger.debug(`ctx has value ? ${ctx !== null && ctx !== undefined}, running on ${import.meta.client ? 'CLIENT' : 'SERVER'}\n`)
 
-    const headers = new Headers({ "Content-Type": "application/json" }) 
-    const { userAgent, cookies  } = getUserAgentAndCookies(ctx)
-    if (import.meta.server) { 
+    const headers = new Headers({ "Content-Type": "application/json" })
+    const { userAgent, cookies } = getUserAgentAndCookies(ctx)
+    if (import.meta.server) {
         headers.set('cookie', cookies.join(';'))
-        headers.set('user-agent', userAgent) 
-    } 
+        headers.set('user-agent', userAgent)
+    }
     if (options?.cookie) {
         headers.set('cookie', options.cookie)
     }
@@ -190,6 +184,26 @@ const doRawFetch = async <TResp>(
 }
 
 const isStatusError = (error: unknown, status: number) => error instanceof FetchError && (error.status === status || error.statusCode === status);
+
+export const reportAuthRefreshedEvent = (ctx?: NuxtApp) => {
+    if (import.meta.server) {
+        if (!ctx) {
+            logger.tag('reportAuthRefreshedEvent').error('ctx is null or undefined')
+            return
+        }
+        ctx.hooks.hookOnce('app:rendered', () => {
+            const event = new Event('auth-refreshed')
+            window.dispatchEvent(event)
+        })
+    } else if (import.meta.client) {
+        setTimeout(() => {
+            const event = new Event('auth-refreshed')
+            window.dispatchEvent(event)
+        }, 100);
+    } else {
+        logger.tag('reportAuthRefreshedEvent').error('not running on client or server')
+    }
+}
 
 const doFetch = async <TResp>(
     method: string,

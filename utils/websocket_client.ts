@@ -17,35 +17,42 @@ export abstract class WebSocketClientBase {
     }
 
     private socket?: WebSocket
-    private connected: boolean = false
+    private openTimes: number = 0
 
     connect() {
-        this.connected = false
-        this.socket = new WebSocket(this.url, this.protocols)
-        this.socket.binaryType = this.binaryType
-        this.socket.onopen = () => {
-            this.connected = true
-            this.onConnectedInternal()
-        }
-        this.socket.onerror = (error) => this.onError(error)
-        this.socket.onclose = (ev) => {
-            this.log.debug('onclose', ev)
-            if (ev.code === 1000) {
-                this.closeNormally = true;
-                this.onClosed();
-            } else {
-                this.reconnect()
+        this.openTimes = 0
+        try {
+            this.socket = new WebSocket(this.url, this.protocols)
+            this.socket.binaryType = this.binaryType
+            this.socket.onopen = () => {
+                this.openTimes += 1
+                this.onConnectedInternal()
             }
-        };
+            this.socket.onerror = (error) => this.onError(error)
+            this.socket.onclose = (ev) => {
+                this.log.debug('onclose', ev)
+                if (this.openTimes === 0){
+                    this.log.debug('onclose, 连接从未打开过，不触发重连' )
+                    return
+                }
+                if ([1000,1001,1002,1003].includes(ev.code)) {
+                    this.closeNormally = true;
+                    this.onClosed();
+                } else {
+                    this.reconnect()
+                }
+            };
 
-        this.socket.onmessage = (evt: MessageEvent) => this.onData(evt.data);
+            this.socket.onmessage = (evt: MessageEvent) => this.onData(evt.data);
+        } catch (error) {
+            this.log.error('connect error: ', error) 
+        }
     }
 
     private closeNormally?: boolean
     private reconnectTimer?: NodeJS.Timeout
     private reconnect() {
-        if (this.closeNormally === true || this.reconnectStrategy === undefined) return;
-        this.connected = false;
+        if (this.closeNormally === true || this.reconnectStrategy === undefined) return; 
         clearInterval(this.heartbeatTimer)
         this.heartbeatTimer = undefined
 
@@ -73,7 +80,7 @@ export abstract class WebSocketClientBase {
     }
     abstract onData(data: string | ArrayBuffer): void;
     private onClosed() {
-        this.connected = false
+        this.openTimes = 0
         clearTimeout(this.reconnectTimer)
         this.reconnectTimer = undefined
         clearInterval(this.heartbeatTimer)
@@ -93,14 +100,14 @@ export abstract class WebSocketClientBase {
         this.log.debug(`closeByClient`)
     }
 
-     
-    public get readyState() : number | undefined {
+
+    public get readyState(): number | undefined {
         return this.socket?.readyState;
-    } 
-    
+    }
+
 
     private readonly bufferData: Array<string | ArrayBufferLike> = []
-    send(data: string | ArrayBufferLike) { 
+    send(data: string | ArrayBufferLike) {
         if (this.readyState === WebSocket.OPEN) {
             this.socket?.send(data)
         } else {

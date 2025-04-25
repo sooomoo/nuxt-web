@@ -8,7 +8,7 @@ const handleClick = async () => {
         code: '1234',
         secure_code: '8888'
     })
-    if (data.value) {
+    if (data.value && data.value.code === RespCode.succeed) {
         // 登录成功，跳转到首页
         navigateTo(decodeURIComponent(route.query.redirect as string || '/'), {
             replace: true,
