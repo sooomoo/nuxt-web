@@ -1,5 +1,11 @@
 import type { RetryStrategy } from "./retry_strategy"
 
+export enum DeadReason {
+    HandshakeFailed = 'HandshakeFailed',
+    ReachMaxRetries = 'ReachMaxRetries',
+    NormalClose = 'NormalClose',
+}
+
 export abstract class WebSocketClientBase {
     readonly url: string
     readonly protocols?: string[]
@@ -33,6 +39,7 @@ export abstract class WebSocketClientBase {
                 this.log.debug('onclose', ev)
                 if (this.openTimes === 0){
                     this.log.debug('onclose, 连接从未打开过，不触发重连' )
+                    this.onDead(DeadReason.HandshakeFailed)
                     return
                 }
                 if ([1000,1001,1002,1003].includes(ev.code)) {
@@ -54,10 +61,18 @@ export abstract class WebSocketClientBase {
     private reconnect() {
         if (this.closeNormally === true || this.reconnectStrategy === undefined) return; 
         clearInterval(this.heartbeatTimer)
-        this.heartbeatTimer = undefined
+        this.heartbeatTimer = undefined 
+        clearTimeout(this.reconnectTimer)
+        this.reconnectTimer = undefined
+
+        if (this.reconnectStrategy.shouldAbort()){
+            // 超过最大重试次数，不再重试
+             this.log.debug('reconnectStrategy.shouldAbort()', '超过最大重试次数，不再重试')
+             this.onDead(DeadReason.ReachMaxRetries)
+             return
+        }
 
         const dur = this.reconnectStrategy.next()
-        clearTimeout(this.reconnectTimer)
         this.reconnectTimer = setTimeout(() => this.connect(), dur);
         this.onWillReconnect(dur)
     }
@@ -78,6 +93,9 @@ export abstract class WebSocketClientBase {
     onError(error: Event) {
         console.error('WebSocket 错误:', error);
     }
+    onDead(reason: DeadReason){
+        this.log.debug('onDead, reason: ', reason)
+    }
     abstract onData(data: string | ArrayBuffer): void;
     private onClosed() {
         this.openTimes = 0
@@ -87,6 +105,7 @@ export abstract class WebSocketClientBase {
         this.heartbeatTimer = undefined
         this.reconnectStrategy?.reset()
         this.log.debug('close normally')
+        this.onDead(DeadReason.NormalClose)
         this.onDispose()
     }
     onDispose() { }

@@ -2,8 +2,7 @@ import { ref } from "vue";
 import {
     WebSocketCmdConnect,
     WebSocketCmdClose,
-    type IWebSocketCmd,
-    type WebSocketConnectCmdData
+    type IWebSocketCmd, 
 } from "./websocket_cmd";
 
 const sharedWorker = ref<SharedWorker>();

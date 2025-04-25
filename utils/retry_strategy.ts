@@ -5,6 +5,8 @@ export interface RetryStrategy {
 
     /// Reset the backoff to its initial state.
     reset(): void
+
+    shouldAbort(): boolean
 }
 
 export class ExponentialRetryStrategy implements RetryStrategy {
@@ -31,42 +33,45 @@ export class ExponentialRetryStrategy implements RetryStrategy {
         this.currentDur = this.initial
         this.currentStep = 1
     }
-}
-
-export class ConstantRetryStrategy implements RetryStrategy {
-    readonly duration: number
-    constructor(duration: number) {
-        this.duration = duration
-    }
-    next(): number {
-        return this.duration
-    }
-    reset(): void { }
-}
-
-export class FixedRetryStrategy implements RetryStrategy {
-    readonly durations: number[]
-    readonly maxStep: number
-    constructor(durations: number[]) {
-        console.assert(durations.length > 0, "durations cannot be empty")
-        this.durations = durations
-        this.maxStep = this.durations.length - 1
-        this.step = 1
-        this.current = durations[0]
-    }
-
-    private step: number
-    private current: number
-
-    next(): number {
-        const backoff = this.current;
-        this.step += 1;
-        const idx = this.step >= this.maxStep ? this.maxStep : this.step;
-        this.current = this.durations[idx];
-        return backoff;
-    }
-    reset(): void {
-        this.step = 1
-        this.current = this.durations[0]
+    shouldAbort(): boolean {
+        return this.currentStep <= this.maximumStep
     }
 }
+
+// export class ConstantRetryStrategy implements RetryStrategy {
+//     readonly duration: number
+//     constructor(duration: number) {
+//         this.duration = duration
+//     }
+//     next(): number {
+//         return this.duration
+//     }
+//     reset(): void { }
+// }
+
+// export class FixedRetryStrategy implements RetryStrategy {
+//     readonly durations: number[]
+//     readonly maxStep: number
+//     constructor(durations: number[]) {
+//         console.assert(durations.length > 0, "durations cannot be empty")
+//         this.durations = durations
+//         this.maxStep = this.durations.length - 1
+//         this.step = 1
+//         this.current = durations[0]
+//     }
+
+//     private step: number
+//     private current: number
+
+//     next(): number {
+//         const backoff = this.current;
+//         this.step += 1;
+//         const idx = this.step >= this.maxStep ? this.maxStep : this.step;
+//         this.current = this.durations[idx];
+//         return backoff;
+//     }
+//     reset(): void {
+//         this.step = 1
+//         this.current = this.durations[0]
+//     }
+// }

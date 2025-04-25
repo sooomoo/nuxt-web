@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { WebSocketClientBase } from "@/utils/websocket_client";
+import { DeadReason, WebSocketClientBase } from "@/utils/websocket_client";
 import {
     type IWebSocketCmd,
     isConnectCmd,
@@ -26,7 +26,6 @@ if (import.meta.client) {
         const port = e.ports[0]
         ports.push(port)
 
-
         port.onmessage = (e: MessageEvent<IWebSocketCmd<any>>) => {
             wlogger.debug(' 收到消息 ', e.data)
             if (isConnectCmd(e.data)) {
@@ -35,10 +34,15 @@ if (import.meta.client) {
                     return
                 }
                 websocket = new WebSocketClient(e.data.data)
+                websocket.onDead = (reason) => {
+                    websocket = undefined
+                    wlogger.debug('websocket 连接彻底关闭，原因:', reason)
+                }
                 websocket.connect()
             } else if (e.data.cmd === WebSocketCmdClose) {
-                websocket?.close()
+                const ws = websocket
                 websocket = undefined
+                ws?.close()
             }
         }
     }
@@ -48,6 +52,8 @@ export class WebSocketClient extends WebSocketClientBase {
     private readonly protocal: PacketProtocol
     private requestId = 0
     private readonly logger = logger.tag('WebSocketClient')
+
+    onDeadCallback?: (reason: DeadReason) => void;
 
     constructor(data: WebSocketConnectCmdData) {
         super(data.url, data.subprotocol, 'arraybuffer',
@@ -79,6 +85,10 @@ export class WebSocketClient extends WebSocketClientBase {
     }
     override onError(error: Event): void {
         this.logger.debug('error', error)
+    }
+    override onDead(reason: DeadReason): void {
+        this.logger.debug('onDead, reason: ', reason)
+        this.onDeadCallback?.(reason)
     }
 
     sendMsg<T>(msgType: WebSocketMsgType, payload?: T): number {
