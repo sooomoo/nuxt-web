@@ -5,29 +5,51 @@ const emit = defineEmits<{
     'status-update': [value: LoginStatus]
 }>()
 
-const mobile = ref('15900220222')
-const code = ref('1234')
-const password = ref('8888') 
-let csrfToken = ''
+const mobile = ref('')
+const imgCode = ref('')
+const msgCode = ref('')
+const csrfResp = ref<PrepareLoginResponse>()
 
 onMounted(() => {
     // 获取 csrf-token
+    doPrepareLogin()
 })
 
-const handleSubmit = async () => { 
-    if (!mobile.value || !code.value || !password.value) {
-        lvLogger.debug('请输入手机号、验证码和密码')
+/**
+ * 刷新 csrf-token
+ */
+const doPrepareLogin = async () => {
+    // 获取 csrf-token
+    const { data, error } = await apiAuth.prepareLogin()
+    if (error.value) {
+        lvLogger.debug('获取 csrf-token 失败')
         return
     }
-    if (!csrfToken) {
+    if (data.value && data.value.code === RespCode.succeed) {
+        csrfResp.value = data.value.data
+    }
+    lvLogger.debug('prepareLogin', data.value, error.value)
+}
+
+/**
+ * 发起登录请求
+ */
+const handleSubmit = async () => {
+    if (!mobile.value || !imgCode.value || !msgCode.value) {
+        lvLogger.debug('请输入手机号、验证码和密码', mobile.value, imgCode.value, msgCode.value)
+        return
+    }
+    if (!csrfResp.value?.csrf_token) {
         lvLogger.debug('请先获取 csrf-token')
         return
     }
     const { data, error } = await apiAuth.login({
         phone: mobile.value,
-        code: code.value,
-        secure_code: password.value
+        img_code: imgCode.value,
+        msg_code: msgCode.value,
+        csrf_token: csrfResp.value.csrf_token,
     })
+    lvLogger.debug('login result', data.value, error.value)
     if (error.value) {
         emit('status-update', 'error')
         return
@@ -41,26 +63,28 @@ const handleSubmit = async () => {
 
 </script>
 <template>
-    <form class="nlogin-view" method="dialog">
+    <div class="nlogin-view">
         <div class="row">
             <label for="mobile">手机号</label>
-            <input :value="mobile" type="text" id="mobile" name="mobile" autocomplete="mobile" placeholder="请输入手机号"
+            <input v-model="mobile" type="text" id="mobile" name="mobile" autocomplete="mobile" placeholder="请输入手机号"
                 required>
         </div>
         <div class="row">
-            <label for="code">验证码</label>
+            <label for="imgCode">人机检测</label>
             <div class="row-code">
-                <input :value="code" type="text" id="code" name="code" placeholder="请输入验证码" required>
-                <button class="primary-button">获取验证码</button>
+                <input v-model="imgCode" type="text" id="imgCode" name="imgCode" placeholder="请输入图中的数字" required>
+                <img :src="csrfResp?.image_data" draggable="false" class="img-code" alt="" @click="doPrepareLogin" />
             </div>
         </div>
         <div class="row">
-            <label for="password">密码</label>
-            <input :value="password" type="password" id="password" name="password" autocomplete="current-password"
-                placeholder="请输入密码" required>
+            <label for="msgCode">验证码</label>
+            <div class="row-code">
+                <input v-model="msgCode" type="text" id="msgCode" name="msgCode" placeholder="请输入短信验证码" required>
+                <button type="button" class="primary-button">获取验证码</button>
+            </div>
         </div>
-        <button class="primary-button submit-button" @click="handleSubmit">登录</button>
-    </form>
+        <button type="submit" class="primary-button submit-button" @click="handleSubmit">登录</button>
+    </div>
 </template>
 
 <style lang="scss" scoped>
@@ -84,6 +108,14 @@ const handleSubmit = async () => {
             flex: 1;
             margin-right: 8px;
         }
+    }
+
+    .img-code {
+        width: auto;
+        height: 30px;
+        background-color: #0000001d;
+        border-radius: 4px;
+        cursor: pointer;
     }
 
     .submit-button {
