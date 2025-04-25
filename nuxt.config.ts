@@ -7,6 +7,12 @@ export default defineNuxtConfig({
     '@/assets/css/reset.css',
     '@/assets/css/main.css',
   ],
+  app: {
+    rootAttrs: {
+      id: 'app',
+    },
+    rootTag: 'body',
+  },
   typescript:{
     typeCheck: true
   },

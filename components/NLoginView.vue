@@ -1,11 +1,13 @@
 <script setup lang="ts">
+const lvLogger = useTagLogger('LoginView')
+
 const emit = defineEmits<{
     'status-update': [value: LoginStatus]
 }>()
 
-const mobile = ref('')
-const code = ref('')
-const password = ref('') 
+const mobile = ref('15900220222')
+const code = ref('1234')
+const password = ref('8888') 
 let csrfToken = ''
 
 onMounted(() => {
@@ -14,10 +16,11 @@ onMounted(() => {
 
 const handleSubmit = async () => { 
     if (!mobile.value || !code.value || !password.value) {
+        lvLogger.debug('请输入手机号、验证码和密码')
         return
     }
     if (!csrfToken) {
-        // 刷新页面重试
+        lvLogger.debug('请先获取 csrf-token')
         return
     }
     const { data, error } = await apiAuth.login({
@@ -38,10 +41,10 @@ const handleSubmit = async () => {
 
 </script>
 <template>
-    <form class="nlogin-view">
+    <form class="nlogin-view" method="dialog">
         <div class="row">
             <label for="mobile">手机号</label>
-            <input :value="mobile" type="text" id="mobile" name="mobile" autocomplete="mobile" placeholder="请输入用户名"
+            <input :value="mobile" type="text" id="mobile" name="mobile" autocomplete="mobile" placeholder="请输入手机号"
                 required>
         </div>
         <div class="row">

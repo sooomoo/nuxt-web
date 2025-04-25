@@ -25,7 +25,12 @@ const handleLoginStatusUpdated = (status: LoginStatus) => {
 
 <style lang="scss" scoped>
 .page-login {
-    position: relative;
-    margin: auto;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    height: fit-content;
+    margin: auto;  
 }
 </style>
