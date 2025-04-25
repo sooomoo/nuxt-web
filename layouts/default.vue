@@ -1,24 +1,30 @@
-<script setup lang="ts"> 
+<script setup lang="ts">
+const log = logger.tag('LAYOUT')
+const route = useRoute()
+watchEffect(() => { 
+    log.debug('routing...path is : ', route.fullPath)
+})
+
+const handleLogout =async () => {
+    await apiAuth.logout()
+}
+
 </script>
 <template>
     <header class="default-layout__header flex flex-align-center gap-l">
-        <slot name="header">
-            <NuxtLink to="/">
-                <span>LOGO</span>
-            </NuxtLink>
-            <span class="spacer"></span>
-            <span>Header1</span>
-            <span>Header1</span>
-            <span>Header1</span>
-        </slot>
+        <NuxtLink to="/">
+            <span>LOGO</span>
+        </NuxtLink>
+        <span class="spacer"></span>
+        <span>Header1</span>
+        <span>Header1</span>
+        <button type="button" @click="handleLogout">Logout</button>
     </header>
     <main class="default-layout__body">
         <slot />
     </main>
     <footer class="default-layout__footer flex-center">
-        <slot name="footer">
-            Copyright &copy; 2023
-        </slot>
+        Copyright &copy; 2023
     </footer>
 </template>
 
@@ -30,18 +36,20 @@
     left: 0;
     right: 0;
     height: var(--header-height);
-    z-index: 10; 
+    z-index: 10;
     background-color: #fffb;
     box-shadow: 0 0 1px rgba(0, 0, 0, 0.25);
     padding: 0 16px;
     gap: 32px;
 }
+
 .default-layout__body {
     margin: 0;
     padding-top: var(--header-height);
     min-height: calc(100vh - var(--footer-height));
 }
-.default-layout__footer { 
-    height: var(--footer-height); 
+
+.default-layout__footer {
+    height: var(--footer-height);
 }
 </style>
