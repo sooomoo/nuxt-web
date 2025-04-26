@@ -44,6 +44,7 @@ const handleSubmit = async () => {
         return
     }
     const { data, error } = await apiAuth.login({
+        country_code: '086',
         phone: mobile.value,
         img_code: imgCode.value,
         msg_code: msgCode.value,
