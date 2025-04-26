@@ -16,6 +16,30 @@ export default defineNuxtConfig({
       id: 'app',
     },
     rootTag: 'body',
+    // layoutTransition: { name: 'layout', mode: 'out-in' },
+    // pageTransition: { name: 'page', mode: 'out-in' },
+    head:{
+      title: 'Nuxt3 测试',
+      meta: [
+        { name: 'description', content: 'Nuxt3 测试' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        // 字体懒加载
+        // {
+        //   rel: 'preload',
+        //   as: 'font',
+        //   href: '/fonts/iconfont.woff2',
+        //   crossorigin: 'anonymous',
+        // },
+        // 预获取资源
+        // {
+        //   rel: 'prefetch',
+        //   as: 'image',
+        //   href: '/logo.png',
+        // },
+      ]
+    }
   },
   typescript: {
     typeCheck: true

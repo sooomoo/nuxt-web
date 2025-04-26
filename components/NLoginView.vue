@@ -127,5 +127,11 @@ const handleSubmit = async () => {
         width: 120px;
         margin: 0 auto;
     }
+
+    @media (prefers-color-scheme: dark) {
+        .img-code {
+            background-color: #ffffff8d;
+        }
+    }
 }
 </style>

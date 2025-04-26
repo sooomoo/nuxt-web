@@ -1,11 +1,36 @@
 :root {
-  --color-primary: #1068ff;
-  --color-primary-50: #1068ff80;
-  --color-selection: #1068ff80;
-  --color-placeholder: #0004;
-
+  color-scheme: light dark;
   --header-height: 56px;
   --footer-height: 40px;
+}
+/* 
+html[data-theme='dark'] {  
+} */
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background-color: white;
+    --color-header-background: #fffb;
+    --color-input-background: #f0f0f0;
+    --color-text: #000;
+    --color-primary: #1068ff;
+    --color-primary-50: #1068ff80;
+    --color-selection: #1068ff80;
+    --color-placeholder: #0004;
+  }
+}
+/* 暗黑模式的样式：dark */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: #121212;
+    --color-header-background: #222b;
+    --color-input-background: #222b;
+    --color-text: #eee;
+    --color-primary: #1068ff;
+    --color-primary-50: #1068ff80;
+    --color-selection: #1068ff80;
+    --color-placeholder: #fff4;
+  }
 }
 
 ::selection {
@@ -27,6 +52,7 @@ select {
   border: none;
   background: none;
   outline: none;
+  background-color: var(--color-input-background);
 }
 
 input {
@@ -92,6 +118,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  background-color: var(--background-color);
+  color: var(--color-text);
 }
 
 .flex {
