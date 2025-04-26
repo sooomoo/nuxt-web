@@ -1,0 +1,56 @@
+@font-face {
+    font-family: 'MiSans';
+    src: url(../fonts/MiSans-Thin.woff2);
+    font-weight: 100;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'MiSans';
+    src: url(../fonts/MiSans-ExtraLight.woff2);
+    font-weight: 200;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'MiSans';
+    src: url(../fonts/MiSans-Light.woff2);
+    font-weight: 300;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'MiSans';
+    src: url(../fonts/MiSans-Regular.woff2);
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'MiSans';
+    src: url(../fonts/MiSans-Medium.woff2);
+    font-weight: 500;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'MiSans';
+    src: url(../fonts/MiSans-Semibold.woff2);
+    font-weight: 600;   
+    font-display: swap; 
+}
+@font-face {
+    font-family: 'MiSans';
+    src: url(../fonts/MiSans-Bold.woff2);
+    font-weight: 700;   
+    font-display: swap; 
+}
+
+@font-face {
+    font-family: 'MiSans';
+    src: url(../fonts/MiSans-Demibold.woff2);
+    font-weight: 800;   
+    font-display: swap; 
+}
+
+@font-face {
+    font-family: 'MiSans';
+    src: url(../fonts/MiSans-Heavy.woff2);
+    font-weight: 900;   
+    font-display: swap; 
+}

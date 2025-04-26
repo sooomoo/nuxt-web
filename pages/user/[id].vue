@@ -22,5 +22,6 @@ log.debug('user id is : ', route.params.id)
   <div>
     <pre>{{ authStore.user }}</pre>
   </div>
+  <span>&#x1F600;</span>
 </template>
 <style lang="scss" scoped></style>
