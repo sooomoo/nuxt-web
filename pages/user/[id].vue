@@ -13,15 +13,14 @@ definePageMeta({
 })
 
 const log = logger.tag('USER')
+const authStore = useAuthStore()
 const route = useRoute()
 
-log.debug('user id is : ', route.params.id)
-const { data: loginResp } = await apiUser.getUserInfo()
-
+log.debug('user id is : ', route.params.id) 
 </script>
 <template>
   <div>
-    <pre>{{ loginResp }}</pre>
+    <pre>{{ authStore.user }}</pre>
   </div>
 </template>
 <style lang="scss" scoped></style>

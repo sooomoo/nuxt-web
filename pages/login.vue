@@ -1,4 +1,11 @@
 <script setup lang="ts">
+
+const authStore = useAuthStore() 
+if (authStore.user) {
+    // 登录成功，跳转到首页
+    navigateTo('/', { replace: true })
+}
+
 const route = useRoute()
 
 const handleLoginStatusUpdated = (status: LoginStatus) => {
@@ -31,6 +38,6 @@ const handleLoginStatusUpdated = (status: LoginStatus) => {
     top: 0;
     bottom: 0;
     height: fit-content;
-    margin: auto;  
+    margin: auto;
 }
 </style>

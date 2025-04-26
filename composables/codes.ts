@@ -2,10 +2,10 @@
 
 export enum RespCode {
     succeed = "succeed",
-    invalidArgs = "invalid_args",
-    invalidPhone = "invalid_phone",
-    invalidMsgCode = "invalid_msg_code",
-    invalidSecureCode = "invalid_secure_code",
+    invalidArgs = "invalidArgs",
+    invalidPhone = "invalidPhone",
+    invalidMsgCode = "invalidMsgCode",
+    invalidSecureCode = "invalidSecureCode",
     fail = "fail",
 }
 

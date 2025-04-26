@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { openWebSocket, startWebSocket } from './workers/websocket'; 
+import { openWebSocket, startWebSocket } from './workers/websocket';
 
-onMounted(() => {
-  startWebSocket() 
+const authStore = useAuthStore()
+
+onMounted(async () => {
+  startWebSocket()
   openWebSocket()
+  await authStore.getUserInfo()
 })
 </script>
 

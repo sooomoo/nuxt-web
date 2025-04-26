@@ -1,5 +1,6 @@
 <script setup lang="ts">
-const lvLogger = useTagLogger('LoginView')
+const lvLogger = logger.tag('LoginView')
+const authStore = useAuthStore()
 
 const emit = defineEmits<{
     'status-update': [value: LoginStatus]
@@ -39,16 +40,16 @@ const handleSubmit = async () => {
         lvLogger.debug('请输入手机号、验证码和密码', mobile.value, imgCode.value, msgCode.value)
         return
     }
-    if (!csrfResp.value?.csrf_token) {
+    if (!csrfResp.value?.csrfToken) {
         lvLogger.debug('请先获取 csrf-token')
         return
     }
     const { data, error } = await apiAuth.login({
-        country_code: '086',
+        countryCode: '086',
         phone: mobile.value,
-        img_code: imgCode.value,
-        msg_code: msgCode.value,
-        csrf_token: csrfResp.value.csrf_token,
+        imgCode: imgCode.value,
+        msgCode: msgCode.value,
+        csrfToken: csrfResp.value.csrfToken,
     })
     lvLogger.debug('login result', data.value, error.value)
     if (error.value) {
@@ -56,6 +57,8 @@ const handleSubmit = async () => {
         return
     }
     if (data.value && data.value.code === RespCode.succeed) {
+        // 登录成功，获取一下用户数据
+        authStore.getUserInfo()
         emit('status-update', 'success')
     } else {
         emit('status-update', 'fail')
@@ -74,7 +77,7 @@ const handleSubmit = async () => {
             <label for="imgCode">人机检测</label>
             <div class="row-code">
                 <input v-model="imgCode" type="text" id="imgCode" name="imgCode" placeholder="请输入图中的数字" required>
-                <img :src="csrfResp?.image_data" draggable="false" class="img-code" alt="" @click="doPrepareLogin" />
+                <img :src="csrfResp?.imageData" draggable="false" class="img-code" alt="" @click="doPrepareLogin" />
             </div>
         </div>
         <div class="row">

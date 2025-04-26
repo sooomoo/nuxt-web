@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { AsyncData, AsyncDataRequestStatus, NuxtApp } from 'nuxt/app';
-import { FetchError } from 'ofetch';
+import { FetchError, type FetchResponse } from 'ofetch';
 
 const signHeaderTimestamp = "x-timestamp";
 const signHeaderNonce = "x-nonce";
@@ -185,25 +185,16 @@ const doRawFetch = async <TResp>(
 
 const isStatusError = (error: unknown, status: number) => error instanceof FetchError && (error.status === status || error.statusCode === status);
 
-export const reportAuthRefreshedEvent = (ctx?: NuxtApp) => {
-    if (import.meta.server) {
-        if (!ctx) {
-            logger.tag('reportAuthRefreshedEvent').error('ctx is null or undefined')
-            return
-        }
-        ctx.hooks.hookOnce('app:rendered', () => {
-            const event = new Event('auth-refreshed')
-            window.dispatchEvent(event)
-        })
-    } else if (import.meta.client) {
-        setTimeout(() => {
-            const event = new Event('auth-refreshed')
-            window.dispatchEvent(event)
-        }, 100);
-    } else {
-        logger.tag('reportAuthRefreshedEvent').error('not running on client or server')
-    }
+interface RefreshTokenArgs {
+    ctx?: NuxtApp
+    options?: HttpOptions
 }
+
+const onceRefreshTokenTask = callOncePromise<FetchResponse<unknown> | undefined, RefreshTokenArgs>((args) => {
+    const { ctx, options } = args!
+    const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH
+    return doRawFetch("POST", refreshPath, undefined, undefined, ctx, options)
+});
 
 const doFetch = async <TResp>(
     method: string,
@@ -214,13 +205,15 @@ const doFetch = async <TResp>(
     options?: HttpOptions,
 ) => {
     logger.newlines('\n\n')
-    let pagePath = '/'
+    let redirect = ''
     if (import.meta.client) {
-        pagePath = window.location.pathname + window.location.search
+        const pagePath = window.location.pathname + window.location.search
+        redirect = pagePath === '/' || pagePath.startsWith('/login') ? '' : `?redirect=${encodeURIComponent(pagePath)}`
     } else if (import.meta.server && ctx) {
-        pagePath = ctx?._route?.fullPath ?? (ctx?.ssrContext?.event.node.req.url ?? '/')
-    }
-    logger.tag('doFetch').debug('redirect path is :', pagePath)
+        const pagePath = ctx?._route?.fullPath ?? (ctx?.ssrContext?.event.node.req.url ?? '/')
+        redirect =pagePath === '/' || pagePath.startsWith('/login') ? '' :  `?redirect=${encodeURIComponent(pagePath)}`
+    } 
+    logger.tag('doFetch').debug('redirect path is :', redirect)
     try {
         const res = await doRawFetch<TResp>(method, path, body, query, ctx, options)
         return res?._data as TResp
@@ -229,29 +222,30 @@ const doFetch = async <TResp>(
             const refLog = logger.tag(`Handle 401: ${method} ${path}`)
             if (!isRefreshTokenAvailable(ctx)) {
                 refLog.debug(`refresh token is not available.`)
-                await navigateTo(import.meta.env.VITE_LOGIN_PAGE + `?redirect=${encodeURIComponent(pagePath)}`, { redirectCode: 302 })
+                await navigateTo(import.meta.env.VITE_LOGIN_PAGE + redirect, { redirectCode: 302 })
                 throw new Error('refresh token not available')
             }
             try {
                 refLog.newlines('\n')
                 refLog.debug(`start refresh token.`)
-                const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH
-                const resRefresh = await doRawFetch("POST", refreshPath, undefined, undefined, ctx, options)
+                const resRefresh = await onceRefreshTokenTask({ ctx: ctx })
                 logger.tag('Handle 401').debug(`refresh token response.`, resRefresh)
-                if (resRefresh && resRefresh.status === 200) {
-                    logger.tag('Handle 401').debug(`refresh token success.`)
-                    // 重新发起请求
-                    const res = await doRawFetch<TResp>(method, path, body, query, ctx, {
-                        ...options,
-                        // 此处需要手动传递新的 cookie，因为在 ssr 时，刷新 token 返回的 cookie 还未同步到上下文中
-                        cookie: resRefresh.headers.getSetCookie().join(';')
-                    })
-                    return res?._data as TResp
+                if (!resRefresh || resRefresh.status !== 200) {
+                    throw error
                 }
+
+                logger.tag('Handle 401').debug(`refresh token success.`)
+                // 重新发起请求
+                const res = await doRawFetch<TResp>(method, path, body, query, ctx, {
+                    ...options,
+                    // 此处需要手动传递新的 cookie，因为在 ssr 时，刷新 token 返回的 cookie 还未同步到上下文中
+                    cookie: resRefresh.headers.getSetCookie().join(';')
+                })
+                return res?._data as TResp
             } catch (error2) {
                 refLog.error(`refresh token failed.`, error2)
                 if (isStatusError(error2, 401)) {
-                    await navigateTo(import.meta.env.VITE_LOGIN_PAGE + `?redirect=${encodeURIComponent(pagePath)}`, { redirectCode: 302 })
+                    await navigateTo(import.meta.env.VITE_LOGIN_PAGE + redirect, { redirectCode: 302 })
                     throw new Error('refresh token failed')
                 }
             } finally {

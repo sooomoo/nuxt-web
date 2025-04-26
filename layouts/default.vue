@@ -1,13 +1,11 @@
 <script setup lang="ts">
 const log = logger.tag('LAYOUT')
 const route = useRoute()
-watchEffect(() => { 
+const authStore = useAuthStore()
+watchEffect(() => {
     log.debug('routing...path is : ', route.fullPath)
+    log.debug('authStore.user is : ', authStore.user)
 })
-
-const handleLogout =async () => {
-    await apiAuth.logout()
-}
 
 </script>
 <template>
@@ -17,8 +15,8 @@ const handleLogout =async () => {
         </NuxtLink>
         <span class="spacer"></span>
         <span>Header1</span>
-        <span>Header1</span>
-        <button type="button" @click="handleLogout">Logout</button>
+        <span>{{ authStore.user?.name ?? '' }}</span>
+        <button type="button" @click="authStore.logout(true)">Logout</button>
     </header>
     <main class="default-layout__body">
         <slot />
