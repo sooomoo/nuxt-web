@@ -19,10 +19,25 @@ export default defineNuxtConfig({
     rootTag: 'body',
     // layoutTransition: { name: 'layout', mode: 'out-in' },
     // pageTransition: { name: 'page', mode: 'out-in' },
-    head:{
+    head: {
       title: 'Nuxt3 测试',
       meta: [
-        { name: 'description', content: 'Nuxt3 测试' }
+        { name: 'description', content: 'Nuxt3 测试' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'format-detection', content: 'telephone=no' },
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'black' },
+        { name: 'apple-mobile-web-app-title', content: 'Nuxt3 测试' },
+        { name: 'msapplication-TileColor', content: '#da532c' },
+        { name: 'msapplication-TileImage', content: '/ms-icon-144x144.png' },
+        { name: 'theme-color', content: '#ffffff' },
+        { name: 'og:title', content: 'Nuxt3 测试' },
+        { name: 'og:description', content: 'Nuxt3 测试' },
+        { name: 'og:image', content: '/logo.png' },
+        { name: 'og:site_name', content: 'Nuxt3 测试' },
+        { name: 'og:type', content: 'website' },
+        { name: 'og:locale', content: 'zh_CN' },
+        
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
