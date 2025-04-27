@@ -34,7 +34,7 @@ export class ExponentialRetryStrategy implements RetryStrategy {
         this.currentStep = 1
     }
     shouldAbort(): boolean {
-        return this.currentStep <= this.maximumStep
+        return this.currentStep > this.maximumStep
     }
 }
 

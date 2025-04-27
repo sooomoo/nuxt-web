@@ -26,7 +26,6 @@ export abstract class WebSocketClientBase {
     private openTimes: number = 0
 
     connect() {
-        this.openTimes = 0
         try {
             this.socket = new WebSocket(this.url, this.protocols)
             this.socket.binaryType = this.binaryType
