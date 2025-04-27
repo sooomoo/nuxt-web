@@ -16,7 +16,7 @@ export interface ResponsePacket<T> extends ResponsePacketMetaData {
 }
 
 export class PacketProtocol {
-    readonly protocolStartTime = 1735660800 // 2025-01-01 00:00:00 的unix时间戳：单位为秒
+    readonly protocolStartTime = 1735660800  // 2025-01-01 00:00:00 的unix时间戳：单位为秒
     readonly metaLength = 9
     readonly responseMetaLength = 10
     private _marshaler: Marshaler
@@ -76,9 +76,9 @@ export class PacketProtocol {
      * @returns 返回打包后的消息
      */
     encodeReq<T = unknown>(msgType: number, requestId: number, payload?: T): Uint8Array {
-        const ts = Number((Date.now() / 1000 - this.protocolStartTime).toFixed(0))
-        const reqIdBuf = [requestId >> 24 & 0x000F, requestId >> 16 & 0x000F, requestId >> 8 & 0x000F, requestId & 0x000F]
-        const tsBuf = [ts >> 24 & 0x000F, ts >> 16 & 0x000F, ts >> 8 & 0x000F, ts & 0x000F]
+        const reqIdBuf = [requestId >> 24 & 0x00FF, requestId >> 16 & 0x00FF, requestId >> 8 & 0x00FF, requestId & 0x00FF]
+        const ts = unixNow() - this.protocolStartTime
+        const tsBuf = [ts >> 24 & 0x00FF, ts >> 16 & 0x00FF, ts >> 8 & 0x00FF, ts & 0x00FF]
         const outArr = [msgType, ...reqIdBuf, ...tsBuf]
         let body = payload ? this._marshaler.marshal<T>(payload) : undefined
         if (body) {
