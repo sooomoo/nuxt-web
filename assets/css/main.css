@@ -12,7 +12,7 @@ html[data-theme='dark'] {
   :root {
     --background-color: white;
     --color-header-background: #fffb;
-    --color-input-background: #f0f0f0;
+    --color-input-background: #f8f8f8;
     --color-text: #000;
     --color-primary: #1068ff;
     --color-primary-50: #1068ff80;
