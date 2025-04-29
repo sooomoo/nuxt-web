@@ -18,6 +18,7 @@ export default defineNuxtPlugin((nuxtApp) => {
             httpOnly:true,
             sameSite:'strict',
             secure: import.meta.dev? false : true,
+            expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
         })
         if (!clientId.value || clientId.value.length != 32) {
             clientId.value = generateUUID()
