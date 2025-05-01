@@ -24,8 +24,10 @@ export default defineNuxtConfig({
       meta: [
         { name: 'description', content: 'Nuxt3 测试' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        // // for production
+        // { 'http-equiv': 'content-security-policy', content:"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"},
         { name: 'format-detection', content: 'telephone=no' },
-        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black' },
         { name: 'apple-mobile-web-app-title', content: 'Nuxt3 测试' },
         { name: 'msapplication-TileColor', content: '#da532c' },
