@@ -13,12 +13,13 @@ export default defineNuxtPlugin((nuxtApp) => {
             secure: import.meta.dev ? false : true,
         })
         platform.value = '8'
+        // client id 先由插件生成，后由服务端续期
         const clientId = useCookie('cli',{
             path:'/',
             httpOnly:true,
             sameSite:'strict',
-            secure: import.meta.dev? false : true,
-            expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+            secure: import.meta.dev? false : true, 
+            maxAge: 60 * 60 * 24 * 60,
         })
         if (!clientId.value || clientId.value.length != 32) {
             clientId.value = generateUUID()
