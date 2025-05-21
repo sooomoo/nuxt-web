@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
 
- defineProps({
-  error: Object as () => NuxtError
+defineProps({
+  error: Object as () => NuxtError,
 })
 
 const handleError = () => clearError({ redirect: '/' })
@@ -12,6 +12,8 @@ const handleError = () => clearError({ redirect: '/' })
   <div>
     <h2>{{ error?.statusCode }}</h2>
     <h3>{{ error?.message }}</h3>
-    <button @click="handleError">Clear errors</button>
+    <button @click="handleError">
+      Clear errors
+    </button>
   </div>
 </template>

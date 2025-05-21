@@ -1,22 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-05-15',
-  devtools: { enabled: true },
   modules: [
     '@nuxt/test-utils',
     '@nuxt/eslint',
-    '@pinia/nuxt'
-  ], 
-  eslint: {
-    config: {
-      stylistic: true   // 使用 ESLint 进行格式化
-    }
-  },
-  css: [
-    '@/assets/css/reset.css',
-    '@/assets/css/font.css',
-    '@/assets/css/main.css',
-  ],
+    '@pinia/nuxt',
+  ], devtools: { enabled: true },
   app: {
     rootAttrs: {
       id: 'app',
@@ -44,7 +32,7 @@ export default defineNuxtConfig({
         { name: 'og:site_name', content: 'Nuxt3 测试' },
         { name: 'og:type', content: 'website' },
         { name: 'og:locale', content: 'zh_CN' },
-        
+
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
@@ -61,12 +49,15 @@ export default defineNuxtConfig({
         //   as: 'image',
         //   href: '/logo.png',
         // },
-      ]
-    }
+      ],
+    },
   },
-  typescript: {
-    typeCheck: true
-  },
+  css: [
+    '@/assets/css/reset.css',
+    '@/assets/css/font.css',
+    '@/assets/css/main.css',
+  ],
+  compatibilityDate: '2025-05-15',
   nitro: {
     // // websocket 的代理不起作用
     // devProxy: {
@@ -74,8 +65,11 @@ export default defineNuxtConfig({
     //     target: 'ws://localhost:8001',
     //     ws: true,
     //     secure: false,
-    //     changeOrigin: true, 
+    //     changeOrigin: true,
     //   }
     // }
-  }
-})
+  },
+  typescript: {
+    typeCheck: true,
+  },
+});

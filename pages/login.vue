@@ -1,33 +1,36 @@
 <script setup lang="ts">
-
 const authStore = useAuthStore() 
 if (authStore.user) {
-    // 登录成功，跳转到首页
-    navigateTo('/', { replace: true })
+  // 登录成功，跳转到首页
+  navigateTo('/', { replace: true })
 }
 
 const route = useRoute()
 
 const handleLoginStatusUpdated = (status: LoginStatus) => {
-    switch (status) {
-        case 'success':
-            // 登录成功，跳转到首页
-            navigateTo(decodeURIComponent(route.query.redirect as string || '/'), {
-                replace: true,
-            })
-            break
-        case 'error':
-            // 登录失败，显示错误信息
-            break
-        case 'fail':
-            // 登录失败，显示错误信息
-            break
-    }
+  switch (status) {
+    case 'success':
+      // 登录成功，跳转到首页
+      navigateTo(decodeURIComponent(route.query.redirect as string || '/'), {
+        replace: true,
+      })
+      break
+    case 'error':
+      // 登录失败，显示错误信息
+      break
+    case 'fail':
+      // 登录失败，显示错误信息
+      break
+  }
 }
 
 </script>
+
 <template>
-    <NLoginView @status-update="handleLoginStatusUpdated" class="page-login" />
+  <NLoginView
+    class="page-login"
+    @status-update="handleLoginStatusUpdated"
+  />
 </template>
 
 <style lang="scss" scoped>

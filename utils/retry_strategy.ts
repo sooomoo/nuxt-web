@@ -1,41 +1,42 @@
-
 export interface RetryStrategy {
-    /// Get the next duration in the series.
-    next(): number
+  /// Get the next duration in the series.
+  next(): number
 
-    /// Reset the backoff to its initial state.
-    reset(): void
+  /// Reset the backoff to its initial state.
+  reset(): void
 
-    shouldAbort(): boolean
+  shouldAbort(): boolean
 }
 
 export class ExponentialRetryStrategy implements RetryStrategy {
-    readonly initial: number
-    readonly maximumStep: number
+  readonly initial: number;
+  readonly maximumStep: number;
 
-    constructor(initial: number, maximumStep: number) {
-        this.initial = initial
-        this.maximumStep = maximumStep
-        this.currentDur = initial
-        this.currentStep = 1
-    }
+  constructor(initial: number, maximumStep: number) {
+    this.initial = initial;
+    this.maximumStep = maximumStep;
+    this.currentDur = initial;
+    this.currentStep = 1;
+  }
 
-    private currentStep: number = 1
-    private currentDur: number
+  private currentStep: number = 1;
+  private currentDur: number;
 
-    next(): number {
-        const backoff = this.currentDur
-        this.currentStep++
-        if (this.maximumStep > this.currentStep) this.currentDur = this.currentDur * 2
-        return backoff
-    }
-    reset(): void {
-        this.currentDur = this.initial
-        this.currentStep = 1
-    }
-    shouldAbort(): boolean {
-        return this.currentStep > this.maximumStep
-    }
+  next(): number {
+    const backoff = this.currentDur;
+    this.currentStep++;
+    if (this.maximumStep > this.currentStep) this.currentDur = this.currentDur * 2;
+    return backoff;
+  }
+
+  reset(): void {
+    this.currentDur = this.initial;
+    this.currentStep = 1;
+  }
+
+  shouldAbort(): boolean {
+    return this.currentStep > this.maximumStep;
+  }
 }
 
 // export class ConstantRetryStrategy implements RetryStrategy {

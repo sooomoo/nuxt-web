@@ -1,5 +1,4 @@
 <script setup lang="ts">
- 
 const doTask = async (val: number) => {
   await sleep(1000)
   console.log(val)
@@ -10,13 +9,14 @@ const singleExecutionTask = callOncePromise(() => doTask(1));
 onMounted(() => {
   singleExecutionTask().then((res) => {
     console.log(res, 1)
-  })
+  });
   singleExecutionTask().then((res) => {
     console.log(res, 2)
-  }) 
+  });
 })
 
 </script>
+
 <template>
   <div>
     home

@@ -4,7 +4,7 @@
  * @returns Promise
  */
 export const sleep = (ms: number): Promise<void> => {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
@@ -15,17 +15,17 @@ export const sleep = (ms: number): Promise<void> => {
  * @returns 执行结果
  */
 export const callOncePromise = <T, TIn>(promiseFn: (args?: TIn) => Promise<T>): (args?: TIn) => Promise<T> => {
-    let isExecuting = false;
-    let resultPromise: Promise<T> | null = null;
+  let isExecuting = false;
+  let resultPromise: Promise<T> | null = null;
 
-    return (args?: TIn): Promise<T> => {
-        if (isExecuting) {
-            return resultPromise!;
-        }
-        isExecuting = true;
-        resultPromise = promiseFn(args).finally(() => {
-            isExecuting = false;
-        });
-        return resultPromise;
-    };
+  return (args?: TIn): Promise<T> => {
+    if (isExecuting) {
+      return resultPromise!;
+    }
+    isExecuting = true;
+    resultPromise = promiseFn(args).finally(() => {
+      isExecuting = false;
+    })
+    return resultPromise;
+  }
 }

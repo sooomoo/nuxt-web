@@ -3,8 +3,8 @@ import withNuxt from './.nuxt/eslint.config.mjs'
 
 export default withNuxt(
   // Your custom configs here
-
   {
+    files: ['./**/*.{js,ts,vue}'],
     rules: {
       'nuxt/prefer-import-meta': 'off',
       'vue/no-multiple-template-roots': 'off',
@@ -15,7 +15,6 @@ export default withNuxt(
       'no-console': 'error',
       'vue/quote-props': 'error',
       'vue/block-tag-newline': 'error',
-      'vue/block-tag-spacing': 'error',
       'vue/block-order': 'error',
       'semi': ['error', 'always'],
       'vue/key-spacing': ['error', { beforeColon: false, afterColon: true }],
@@ -24,7 +23,7 @@ export default withNuxt(
       'vue/prop-name-casing': ['error', 'camelCase'],
       'vue/max-attributes-per-line': ['error', {
         singleline: { max: 1 },
-        multiline: { max: 1 }
+        multiline: { max: 1 },
       }],
       'vue/max-len': ['error', {
         code: 120,
@@ -36,8 +35,7 @@ export default withNuxt(
       'vue/no-unused-components': 'error',
       'no-unused-private-class-members': 'error',
       'no-useless-catch': 'error',
-      'vue/script-setup-uses-vars': 'error',
       'vue/no-export-in-script-setup': 'error',
-    }
-  }
+    },
+  },
 )
