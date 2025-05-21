@@ -3,5 +3,5 @@
  * @returns 当前时间戳，单位为秒
  */
 export const unixNow = () => {
-  return Math.floor(new Date().getTime() / 1000)
-}
+  return Math.floor(new Date().getTime() / 1000);
+};

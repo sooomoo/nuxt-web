@@ -1,11 +1,11 @@
 export interface RetryStrategy {
   /// Get the next duration in the series.
-  next(): number
+  next(): number;
 
   /// Reset the backoff to its initial state.
-  reset(): void
+  reset(): void;
 
-  shouldAbort(): boolean
+  shouldAbort(): boolean;
 }
 
 export class ExponentialRetryStrategy implements RetryStrategy {
@@ -25,7 +25,8 @@ export class ExponentialRetryStrategy implements RetryStrategy {
   next(): number {
     const backoff = this.currentDur;
     this.currentStep++;
-    if (this.maximumStep > this.currentStep) this.currentDur = this.currentDur * 2;
+    if (this.maximumStep > this.currentStep)
+      this.currentDur = this.currentDur * 2;
     return backoff;
   }
 

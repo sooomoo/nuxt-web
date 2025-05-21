@@ -1,8 +1,8 @@
-import * as msgpack from '@msgpack/msgpack'
+import * as msgpack from "@msgpack/msgpack";
 
 export interface Marshaler {
-  marshal<T = unknown>(obj: T): Uint8Array
-  unmarshal<T = unknown>(data: Uint8Array): T
+  marshal<T = unknown>(obj: T): Uint8Array;
+  unmarshal<T = unknown>(data: Uint8Array): T;
 }
 
 class JsonMarshaler implements Marshaler {
@@ -28,4 +28,4 @@ class MsgPackMarshaler implements Marshaler {
 }
 
 export const jsonMarshaler = new JsonMarshaler();
-export const msgPackMarshaler = new MsgPackMarshaler()
+export const msgPackMarshaler = new MsgPackMarshaler();

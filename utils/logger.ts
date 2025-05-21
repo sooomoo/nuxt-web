@@ -1,28 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export enum LogLevel {
   /**
-     * 未制定日志级别
-     */
+   * 未制定日志级别
+   */
   UNSPECIFY = 0,
   /**
-     * 打印调试日志及以上
-     */
+   * 打印调试日志及以上
+   */
   DEBUG = 1,
   /**
-     * 仅信息日志及以上
-     */
+   * 仅信息日志及以上
+   */
   INFO = 2,
   /**
-     * 仅警告日志及以上
-     */
+   * 仅警告日志及以上
+   */
   WARN = 3,
   /**
-     * 仅错误日志
-     */
+   * 仅错误日志
+   */
   ERROR = 4,
   /**
-     * 不打印任何日志
-     */
+   * 不打印任何日志
+   */
   NONE = 999,
 }
 
@@ -33,7 +33,7 @@ const commonStyle = `
     line-height: 1;
     padding:4px;  
     border-radius: 2px; 
-`
+`;
 
 const tagStyle = `
     font-weight:bold;
@@ -51,24 +51,22 @@ const warnStyle = `background-color: #ff9900;${commonStyle}`;
 const errorStyle = `background-color: #fc4545;${commonStyle}`;
 
 class Logger {
-  private _minLevel: LogLevel
-  private _tag?: string
+  private _minLevel: LogLevel;
+  private _tag?: string;
 
   constructor(tag?: string, level?: LogLevel) {
     if (level !== undefined && level !== LogLevel.UNSPECIFY) {
-      this._minLevel = level
-    }
-    else {
-      const env = process.env.NODE_ENV
-      if (env === 'development') {
-        this._minLevel = LogLevel.DEBUG
-      }
-      else {
-        this._minLevel = LogLevel.WARN
+      this._minLevel = level;
+    } else {
+      const env = process.env.NODE_ENV;
+      if (env === "development") {
+        this._minLevel = LogLevel.DEBUG;
+      } else {
+        this._minLevel = LogLevel.WARN;
       }
     }
 
-    this._tag = tag ?? this._tag
+    this._tag = tag ?? this._tag;
   }
 
   public level(level: LogLevel): Logger {
@@ -76,12 +74,12 @@ class Logger {
   }
 
   public tag(tag: string): Logger {
-    return new Logger(tag, this._minLevel)
+    return new Logger(tag, this._minLevel);
   }
 
   public newlines(...args: any[]) {
     if (import.meta.dev) {
-      console.log(...args)
+      console.log(...args);
     }
   }
 
@@ -91,17 +89,16 @@ class Logger {
     }
 
     if (this._tag) {
-      args.unshift(`%cDEBUG%c %c${this._tag}`, debugStyle, '', tagStyle)
-    }
-    else {
-      args.unshift(`%cDEBUG`, debugStyle)
+      args.unshift(`%cDEBUG%c %c${this._tag}`, debugStyle, "", tagStyle);
+    } else {
+      args.unshift(`%cDEBUG`, debugStyle);
     }
 
-    const lines = new Error().stack?.split('\n') ?? [];
+    const lines = new Error().stack?.split("\n") ?? [];
     if (lines.length >= 3) {
-      args.push(`\n${lines[2]}`)
+      args.push(`\n${lines[2]}`);
     }
-    console.log(...args)
+    console.log(...args);
   }
 
   public info(...args: any[]) {
@@ -110,17 +107,16 @@ class Logger {
     }
 
     if (this._tag) {
-      args.unshift(`%cINFO%c %c${this._tag}`, infoStyle, '', tagStyle)
-    }
-    else {
-      args.unshift(`%cINFO`, infoStyle)
+      args.unshift(`%cINFO%c %c${this._tag}`, infoStyle, "", tagStyle);
+    } else {
+      args.unshift(`%cINFO`, infoStyle);
     }
 
-    const lines = new Error().stack?.split('\n') ?? [];
+    const lines = new Error().stack?.split("\n") ?? [];
     if (lines.length >= 3) {
-      args.push(`\n${lines[2]}`)
+      args.push(`\n${lines[2]}`);
     }
-    console.info(...args)
+    console.info(...args);
   }
 
   public warn(...args: any[]) {
@@ -128,17 +124,16 @@ class Logger {
       return;
     }
     if (this._tag) {
-      args.unshift(`%cWARN%c %c${this._tag}`, warnStyle, '', tagStyle)
-    }
-    else {
-      args.unshift(`%cWARN`, warnStyle)
+      args.unshift(`%cWARN%c %c${this._tag}`, warnStyle, "", tagStyle);
+    } else {
+      args.unshift(`%cWARN`, warnStyle);
     }
 
-    const lines = new Error().stack?.split('\n') ?? [];
+    const lines = new Error().stack?.split("\n") ?? [];
     if (lines.length >= 3) {
-      args.push(`\n\n${lines[2]}`)
+      args.push(`\n\n${lines[2]}`);
     }
-    console.warn(...args)
+    console.warn(...args);
   }
 
   public error(...args: any[]) {
@@ -147,17 +142,16 @@ class Logger {
     }
 
     if (this._tag) {
-      args.unshift(`%cERROR%c %c${this._tag}`, errorStyle, '', tagStyle)
-    }
-    else {
-      args.unshift(`%cERROR`, errorStyle)
+      args.unshift(`%cERROR%c %c${this._tag}`, errorStyle, "", tagStyle);
+    } else {
+      args.unshift(`%cERROR`, errorStyle);
     }
 
-    const lines = new Error().stack?.split('\n') ?? [];
+    const lines = new Error().stack?.split("\n") ?? [];
     if (lines.length >= 3) {
-      args.push(`\n\n${lines[2]}`)
+      args.push(`\n\n${lines[2]}`);
     }
-    console.error(...args)
+    console.error(...args);
   }
 }
 

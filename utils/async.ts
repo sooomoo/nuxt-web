@@ -4,8 +4,8 @@
  * @returns Promise
  */
 export const sleep = (ms: number): Promise<void> => {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
 
 /**
  * 保证某一个Promise函数在同一时间只执行一次，多次调用时返回第一次的Promise结果
@@ -14,7 +14,9 @@ export const sleep = (ms: number): Promise<void> => {
  * @param promiseFn 需要执行的Promise函数
  * @returns 执行结果
  */
-export const callOncePromise = <T, TIn>(promiseFn: (args?: TIn) => Promise<T>): (args?: TIn) => Promise<T> => {
+export const callOncePromise = <T, TIn>(
+  promiseFn: (args?: TIn) => Promise<T>,
+): ((args?: TIn) => Promise<T>) => {
   let isExecuting = false;
   let resultPromise: Promise<T> | null = null;
 
@@ -25,7 +27,7 @@ export const callOncePromise = <T, TIn>(promiseFn: (args?: TIn) => Promise<T>): 
     isExecuting = true;
     resultPromise = promiseFn(args).finally(() => {
       isExecuting = false;
-    })
+    });
     return resultPromise;
-  }
-}
+  };
+};

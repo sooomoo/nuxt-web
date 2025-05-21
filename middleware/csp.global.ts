@@ -15,7 +15,6 @@ export default defineNuxtRouteMiddleware((to, from) => {
   //     "block-all-mixed-content; " +
   //     "upgrade-insecure-requests; ";// +
   //     // "report-uri /csp-report;";
-
   // const csp = useResponseHeader('Content-Security-Policy');
   // csp.value = cspHeader;
-})
+});

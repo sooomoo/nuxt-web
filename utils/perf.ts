@@ -9,8 +9,8 @@ export const debounce = (func: Function, delayMs: number) => {
   return (...args: any) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), delayMs);
-  }
-}
+  };
+};
 
 /**
  * 用于缓存函数的执行结果，避免重复计算。当计算任务比较耗时时，使用该函数可以提高性能。
@@ -23,5 +23,5 @@ export const memoize = (fn: Function) => {
     const key = JSON.stringify(args);
     if (!cache.get(key)) cache.set(key, fn(...args));
     return cache.get(key);
-  }
+  };
 };

@@ -1,11 +1,10 @@
-export const useAuthStore = defineStore('auth', () => {
+export const useAuthStore = defineStore("auth", () => {
   const user = ref<GetUserInfoResponse | null>(null);
   const getUserInfo = async () => {
     const { data } = await apiUser.getUserInfo();
     if (data.value?.code === RespCode.succeed) {
       user.value = data.value.data;
-    }
-    else {
+    } else {
       user.value = null;
     }
   };

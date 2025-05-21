@@ -1,46 +1,42 @@
 <script setup lang="ts">
-const authStore = useAuthStore() 
+const authStore = useAuthStore();
 if (authStore.user) {
   // 登录成功，跳转到首页
-  navigateTo('/', { replace: true })
+  navigateTo("/", { replace: true });
 }
 
-const route = useRoute()
+const route = useRoute();
 
 const handleLoginStatusUpdated = (status: LoginStatus) => {
   switch (status) {
-    case 'success':
+    case "success":
       // 登录成功，跳转到首页
-      navigateTo(decodeURIComponent(route.query.redirect as string || '/'), {
+      navigateTo(decodeURIComponent((route.query.redirect as string) || "/"), {
         replace: true,
-      })
-      break
-    case 'error':
+      });
+      break;
+    case "error":
       // 登录失败，显示错误信息
-      break
-    case 'fail':
+      break;
+    case "fail":
       // 登录失败，显示错误信息
-      break
+      break;
   }
-}
-
+};
 </script>
 
 <template>
-  <NLoginView
-    class="page-login"
-    @status-update="handleLoginStatusUpdated"
-  />
+  <NLoginView class="page-login" @status-update="handleLoginStatusUpdated" />
 </template>
 
 <style lang="scss" scoped>
 .page-login {
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    height: fit-content;
-    margin: auto;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  height: fit-content;
+  margin: auto;
 }
 </style>
