@@ -1,6 +1,4 @@
 
-const authLog = logger.tag('AuthStore')
-
 export const useAuthStore = defineStore('auth', () => {
     const user = ref<GetUserInfoResponse | null>(null)
     const getUserInfo = async () => {
@@ -12,7 +10,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
     const logout = async (redirectToLogin?: boolean) => {
-        await apiAuth.logout(redirectToLogin)
+         await apiAuth.logout(redirectToLogin)
         user.value = null
     }
     return { user, getUserInfo, logout }

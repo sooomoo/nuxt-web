@@ -1,12 +1,17 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2024-11-01',
+  compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
   modules: [
     '@nuxt/test-utils',
     '@nuxt/eslint',
     '@pinia/nuxt'
-  ],
+  ], 
+  eslint: {
+    config: {
+      stylistic: true   // 使用 ESLint 进行格式化
+    }
+  },
   css: [
     '@/assets/css/reset.css',
     '@/assets/css/font.css',
@@ -61,9 +66,6 @@ export default defineNuxtConfig({
   },
   typescript: {
     typeCheck: true
-  },
-  eslint: {
-
   },
   nitro: {
     // // websocket 的代理不起作用
