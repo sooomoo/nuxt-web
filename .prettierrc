@@ -11,5 +11,7 @@
     "jsxSingleQuote": false,
     "jsxBracketSameLine": false,
     "htmlWhitespaceSensitivity": "css",
+    "vueIndentScriptAndStyle": false,
+    "rangeStart": 0,
     "endOfLine": "lf"
 }
