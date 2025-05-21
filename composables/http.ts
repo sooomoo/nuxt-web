@@ -370,11 +370,11 @@ export const usePost = <TResp>(
   }
   return options?.cacheKey && options?.cacheKey.length > 0
     ? useAsyncData<TResp>(options?.cacheKey, (ctx) =>
-        doFetch<TResp>("POST", path, body, query, ctx, options),
-      )
+      doFetch<TResp>("POST", path, body, query, ctx, options),
+    )
     : useAsyncData<TResp>((ctx) =>
-        doFetch<TResp>("POST", path, body, query, ctx, options),
-      );
+      doFetch<TResp>("POST", path, body, query, ctx, options),
+    );
 };
 
 /**
@@ -441,9 +441,9 @@ export const useGet = <TResp>(
   }
   return options?.cacheKey && options?.cacheKey.length > 0
     ? useAsyncData<TResp>(options?.cacheKey, (ctx) =>
-        doFetch<TResp>("GET", path, undefined, query, ctx, options),
-      )
+      doFetch<TResp>("GET", path, undefined, query, ctx, options),
+    )
     : useAsyncData<TResp>((ctx) =>
-        doFetch<TResp>("GET", path, undefined, query, ctx, options),
-      );
+      doFetch<TResp>("GET", path, undefined, query, ctx, options),
+    );
 };

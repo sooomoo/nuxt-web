@@ -49,7 +49,7 @@ export const apiAuth = {
     }
     navigateTo(
       import.meta.env.VITE_LOGIN_PAGE +
-        `?redirect=${encodeURIComponent(pagePath)}`,
+      `?redirect=${encodeURIComponent(pagePath)}`,
       { redirectCode: 302 },
     );
   },
