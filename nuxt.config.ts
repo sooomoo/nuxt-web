@@ -69,7 +69,7 @@ export default defineNuxtConfig({
     },
     devServer: {
         port: 3000,
-        host: "localhost",
+        // host: "localhost",
         https: {
             cert: 'E:\\mkcert\\vite\\localhost+1.pem',
             key: 'E:\\mkcert\\vite\\localhost+1-key.pem',
