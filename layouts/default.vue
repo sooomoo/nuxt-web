@@ -16,7 +16,7 @@ watchEffect(() => {
         <span class="spacer" />
         <span>Header1</span>
         <span>{{ authStore.user?.name ?? "" }}</span>
-        <button type="button" @click="authStore.logout(true)">Logout</button>
+        <button v-if="authStore.user" type="button" @click="authStore.logout(true)">Logout</button>
     </header>
     <main class="default-layout__body">
         <slot />
