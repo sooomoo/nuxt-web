@@ -70,10 +70,12 @@ export default defineNuxtConfig({
     devServer: {
         port: 3000,
         host: "127.0.0.1",
-        https: {
-            cert: 'E:\\mkcert\\vite\\localhost+1.pem',
-            key: 'E:\\mkcert\\vite\\localhost+1-key.pem',
-        },
+        // https: {
+        //     // cert: 'E:\\mkcert\\vite\\localhost+1.pem',
+        //     // key: 'E:\\mkcert\\vite\\localhost+1-key.pem',
+        //    // cert: '/Users/muro/work/certs/localhost+2.pem',
+        //    // key: '/Users/muro/work/certs/localhost+2-key.pem',
+        // },
     },
     typescript: {
         typeCheck: true,
