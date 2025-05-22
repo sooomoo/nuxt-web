@@ -4,12 +4,12 @@
  * @param delayMs 防抖的时间间隔，单位为毫秒
  * @returns 返回一个新的函数，该函数在被调用时会延迟执行原函数
  */
-export const debounce = (func: Function, delayMs: number) => {
-  let timeout: NodeJS.Timeout | undefined = undefined;
-  return (...args: any) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), delayMs);
-  };
+export const debounce = <TArgs>(func: (...args: TArgs[]) => void, delayMs: number) => {
+    let timeout: NodeJS.Timeout | undefined = undefined;
+    return (...args: TArgs[]) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), delayMs);
+    };
 };
 
 /**
@@ -17,11 +17,11 @@ export const debounce = (func: Function, delayMs: number) => {
  * @param fn 需要缓存结果的函数
  * @returns 返回函数的执行结果，或缓存的结果
  */
-export const memoize = (fn: Function) => {
-  const cache = new Map<string, any>();
-  return (...args: any) => {
-    const key = JSON.stringify(args);
-    if (!cache.get(key)) cache.set(key, fn(...args));
-    return cache.get(key);
-  };
+export const memoize = <TArgs, TRes>(fn: (...args: TArgs[]) => TRes) => {
+    const cache = new Map<string, TRes>();
+    return async (...args: TArgs[]) => {
+        const key = JSON.stringify(args);
+        if (!cache.get(key)) cache.set(key, fn(...args));
+        return cache.get(key);
+    };
 };

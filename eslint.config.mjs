@@ -33,6 +33,8 @@ export default withNuxt(
                     ignores: ["Index", "Header", "App", "pages/**"], // 允许例外的组件名
                 },
             ],
+            "vue/first-attribute-linebreak": "off",
+            "vue/html-closing-bracket-newline": "off",
             "vue/no-multiple-template-root": "off", // 允许多个根节点
             "vue/no-unused-vars": "error", // 关闭 Vue 未使用变量检查
             "vue/no-template-shadow": "warn", // 允许模板变量遮蔽

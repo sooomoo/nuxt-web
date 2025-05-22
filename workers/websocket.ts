@@ -1,44 +1,44 @@
 import { ref } from "vue";
 import {
-  WebSocketCmdConnect,
-  WebSocketCmdClose,
-  type IWebSocketCmd,
+    WebSocketCmdClose,
+    WebSocketCmdConnect,
+    type IWebSocketCmd,
 } from "./websocket_cmd";
 
 const sharedWorker = ref<SharedWorker>();
 
 export const startWebSocket = () => {
-  sharedWorker.value = new SharedWorker(
-    new URL("./websocket_worker.ts", import.meta.url),
-    { type: "module", name: "niu_websocket_worker", credentials: "include" },
-  );
-  sharedWorker.value?.port.start();
+    sharedWorker.value = new SharedWorker(
+        new URL("./websocket_worker.ts", import.meta.url),
+        { type: "module", name: "niu_websocket_worker", credentials: "include" },
+    );
+    sharedWorker.value?.port.start();
 };
 
 export const onWebSocketMessage = (callback: (event: MessageEvent) => void) => {
-  if (sharedWorker.value) {
-    sharedWorker.value.port.onmessage = callback;
-  }
+    if (sharedWorker.value) {
+        sharedWorker.value.port.onmessage = callback;
+    }
 };
 
 export const closeWebSocket = () => {
-  sharedWorker.value?.port.postMessage({ cmd: WebSocketCmdClose });
+    sharedWorker.value?.port.postMessage({ cmd: WebSocketCmdClose });
 };
 
 export const openWebSocket = () => {
-  sharedWorker.value?.port.postMessage({
-    cmd: WebSocketCmdConnect,
-    data: {
-      url: "ws://localhost:8001/hub/chat",
-      subprotocol: ["niu-v1"],
-      heartbeatInterval: 10000,
-      maxRetryAttempts: 10,
-    },
-  });
+    sharedWorker.value?.port.postMessage({
+        cmd: WebSocketCmdConnect,
+        data: {
+            url: "ws://localhost:8001/hub/chat",
+            subprotocol: ["niu-v1"],
+            heartbeatInterval: 10000,
+            maxRetryAttempts: 10,
+        },
+    });
 };
 
 export const postMessageToWebSocket = <T>(message: IWebSocketCmd<T>) => {
-  sharedWorker.value?.port.postMessage(message);
+    sharedWorker.value?.port.postMessage(message);
 };
 
 // 跨标签页通信可以使用： BroadcastChannel，sharedWorker，localStorage触发storage事件
