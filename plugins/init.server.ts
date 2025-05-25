@@ -8,7 +8,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         const platform = useCookie("pla", {
             path: "/",
             httpOnly: true,
-            sameSite: import.meta.dev ? "none" : "strict",
+            sameSite: "none",
             secure: true,
         });
         platform.value = "8";
@@ -16,7 +16,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         const clientId = useCookie("cli", {
             path: "/",
             httpOnly: true,
-            sameSite: import.meta.dev ? "none" : "strict",
+            sameSite: "none",
             secure: true,
             maxAge: 60 * 60 * 24 * 60,
         });

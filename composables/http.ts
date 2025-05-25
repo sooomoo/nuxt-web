@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { AsyncData, AsyncDataRequestStatus, NuxtApp } from "nuxt/app";
 import { FetchError, type FetchResponse } from "ofetch";
@@ -7,7 +8,7 @@ const signHeaderNonce = "x-nonce";
 const signHeaderSignature = "x-signature";
 const signHeaderPlatform = "x-platform";
 const signHeaderSession = "x-session";
-const contentTypeEncrypted = "application/x-encrypted;charset=utf-8";
+const contentTypeEncrypted = "application/x-encrypted";
 
 const platform = "8";
 
@@ -29,45 +30,33 @@ const defaultFetchOptions: Record<string, any> = {
     retryDelay: 1000,
 };
 
+const splitCookies = (cookie: string) => {
+    const cookies = cookie.split(";").map((c) => c.trim());
+    return cookies.filter((c) => c.length > 0);
+};
+
 const isRefreshTokenAvailable = (ctx?: NuxtApp): boolean => {
     if (!import.meta.server || ctx === null || ctx === undefined) {
         return true;
     }
     const ctxHeaders = ctx?.ssrContext?.event.node.req.headers;
-    const cookie = ctxHeaders?.cookie ?? "";
-    const cookies = cookie
-        .split(";")
-        .map((c) => c.trim())
-        .filter((c) => c.length > 0);
+    const cookies = splitCookies(ctxHeaders?.cookie ?? "");
     const parsedCookies = parseCookies(cookies);
-    const refreshToken =
-        parsedCookies.find(
-            (c) => c.name === import.meta.env.VITE_COOKIE_REFRESH_TOKEN_NAME,
-        )?.value ?? "";
-    logger
-        .tag("isRefreshTokenAvailable")
-        .debug(`refreshToken is: ${refreshToken}`);
+    const refreshName = import.meta.env.VITE_COOKIE_REFRESH_TOKEN_NAME;
+    const refreshToken = parsedCookies.find((c) => c.name === refreshName)?.value ?? "";
+    logger.tag("isRefreshTokenAvailable").debug(`refreshToken is: ${refreshToken}`);
     return refreshToken.length > 0;
 };
 
-const getUserAgentAndCookies = (
-    ctx?: NuxtApp,
-): { userAgent: string; cookies: string[] } => {
+const getUserAgentAndCookies = (ctx?: NuxtApp): { userAgent: string; cookies: string[] } => {
     let cookies: string[] = [];
     let userAgent: string = "";
     if (import.meta.server) {
         const ctxHeaders = ctx?.ssrContext?.event.node.req.headers;
-        const cookie = ctxHeaders?.cookie ?? "";
         userAgent = ctxHeaders?.["user-agent"] ?? "";
-        cookies = cookie
-            .split(";")
-            .map((c) => c.trim())
-            .filter((c) => c.length > 0);
+        cookies = splitCookies(ctxHeaders?.cookie ?? "");
     } else if (import.meta.client) {
-        cookies = document.cookie
-            .split(";")
-            .map((c) => c.trim())
-            .filter((c) => c.length > 0);
+        cookies = splitCookies(document.cookie);
         userAgent = navigator.userAgent;
     }
     return { userAgent, cookies };
@@ -82,9 +71,7 @@ const doRawFetch = async <TResp>(
     options?: HttpOptions,
 ) => {
     const fetchLogger = logger.tag(`doFetchInternal: ${method} ${path}`);
-    fetchLogger.debug(
-        `ctx has value ? ${ctx !== null && ctx !== undefined}, running on ${import.meta.client ? "CLIENT" : "SERVER"}\n`,
-    );
+    fetchLogger.debug(`ctx has value ? ${ctx !== null && ctx !== undefined}, running on ${import.meta.client ? "CLIENT" : "SERVER"}\n`);
 
     const headers = new Headers({ "Content-Type": "application/json" });
     const { userAgent, cookies } = getUserAgentAndCookies(ctx);
@@ -121,15 +108,10 @@ const doRawFetch = async <TResp>(
 
     let finalBody = body as any;
     // 1. 加密请求体（仅针对 POST/PUT 请求）
-    if (["post", "put"].includes(method.toLowerCase())) {
-        let reqData = "";
+    if (body && ["post", "put"].includes(method.toLowerCase()) && import.meta.env.VITE_ENABLE_CRYPTO === "true") {
         // 先加密
-        if (body) {
-            reqData = JSON.stringify(body);
-            if (import.meta.env.VITE_ENABLE_CRYPTO === "true") {
-                reqData = useEncrypt(boxKeyPair, reqData);
-            }
-        }
+        let reqData = JSON.stringify(body);
+        reqData = useEncrypt(boxKeyPair, reqData);
         finalBody = reqData; // 替换原始数据为加密后的数据
         signData["body"] = reqData;
         headers.set("Content-Type", contentTypeEncrypted);
@@ -179,7 +161,7 @@ const doRawFetch = async <TResp>(
     }
 
     const contentType = response.headers.get("content-type") ?? "";
-    if (contentType == contentTypeEncrypted) {
+    if (contentType.startsWith(contentTypeEncrypted)) {
         respData = useDecrypt(boxKeyPair, respData);
         const rawType = response.headers.get("x-raw-type") ?? "";
         if (rawType) {
@@ -189,11 +171,7 @@ const doRawFetch = async <TResp>(
 
     saveCookies(ctx ?? undefined, response.headers.getSetCookie());
 
-    if (
-        (options?.responseType ?? "json") === "json" &&
-        typeof respData === "string" &&
-        respData.length > 0
-    ) {
+    if ((options?.responseType ?? "json") === "json" && typeof respData === "string" && respData.length > 0) {
         try {
             response._data = JSON.parse(respData);
         } catch (error) {
@@ -206,18 +184,14 @@ const doRawFetch = async <TResp>(
 };
 
 const isStatusError = (error: unknown, status: number) =>
-    error instanceof FetchError &&
-    (error.status === status || error.statusCode === status);
+    error instanceof FetchError && (error.status === status || error.statusCode === status);
 
 interface RefreshTokenArgs {
     ctx?: NuxtApp;
     options?: HttpOptions;
 }
 
-const onceRefreshTokenTask = callOncePromise<
-    FetchResponse<unknown> | undefined,
-    RefreshTokenArgs
->((args) => {
+const onceRefreshTokenTask = callOncePromise<FetchResponse<unknown> | undefined, RefreshTokenArgs>((args) => {
     const { ctx, options } = args!;
     const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH;
     return doRawFetch("POST", refreshPath, undefined, undefined, ctx, options);
@@ -235,28 +209,14 @@ const doFetch = async <TResp>(
     let redirect = "";
     if (import.meta.client) {
         const pagePath = window.location.pathname + window.location.search;
-        redirect =
-            pagePath === "/" || pagePath.startsWith("/login")
-                ? ""
-                : `?redirect=${encodeURIComponent(pagePath)}`;
+        redirect = pagePath === "/" || pagePath.startsWith("/login") ? "" : `?redirect=${encodeURIComponent(pagePath)}`;
     } else if (import.meta.server && ctx) {
-        const pagePath =
-            ctx?._route?.fullPath ?? ctx?.ssrContext?.event.node.req.url ?? "/";
-        redirect =
-            pagePath === "/" || pagePath.startsWith("/login")
-                ? ""
-                : `?redirect=${encodeURIComponent(pagePath)}`;
+        const pagePath = ctx?._route?.fullPath ?? ctx?.ssrContext?.event.node.req.url ?? "/";
+        redirect = pagePath === "/" || pagePath.startsWith("/login") ? "" : `?redirect=${encodeURIComponent(pagePath)}`;
     }
     logger.tag("doFetch").debug("redirect path is :", redirect);
     try {
-        const res = await doRawFetch<TResp>(
-            method,
-            path,
-            body,
-            query,
-            ctx,
-            options,
-        );
+        const res = await doRawFetch<TResp>(method, path, body, query, ctx, options);
         return res?._data as TResp;
     } catch (error) {
         if (isStatusError(error, 401) && (options?.autoHandle401 ?? true)) {
@@ -308,12 +268,7 @@ const doFetch = async <TResp>(
 /**
  * 推荐调用此方法
  */
-export const usePost = <TResp>(
-    path: string,
-    body?: Record<string, any>,
-    query?: Record<string, any>,
-    options?: HttpOptions,
-) => {
+export const usePost = <TResp>(path: string, body?: Record<string, any>, query?: Record<string, any>, options?: HttpOptions) => {
     if (import.meta.client) {
         const res: AsyncData<TResp | null, FetchError> = {
             data: ref<TResp | null>(),
@@ -322,14 +277,7 @@ export const usePost = <TResp>(
             refresh: async () => {
                 try {
                     res.status.value = "pending";
-                    res.data.value = await doFetch<TResp>(
-                        "POST",
-                        path,
-                        body,
-                        query,
-                        undefined,
-                        options,
-                    );
+                    res.data.value = await doFetch<TResp>("POST", path, body, query, undefined, options);
                     res.status.value = "success";
                 } catch (error) {
                     res.status.value = "error";
@@ -339,14 +287,7 @@ export const usePost = <TResp>(
             execute: async () => {
                 try {
                     res.status.value = "pending";
-                    res.data.value = await doFetch<TResp>(
-                        "POST",
-                        path,
-                        body,
-                        query,
-                        undefined,
-                        options,
-                    );
+                    res.data.value = await doFetch<TResp>("POST", path, body, query, undefined, options);
                     res.status.value = "success";
                 } catch (error) {
                     res.status.value = "error";
@@ -359,32 +300,21 @@ export const usePost = <TResp>(
                 res.status.value = "idle";
             },
         } as AsyncData<TResp | null, FetchError>;
-        return new Promise<AsyncData<TResp | null, FetchError>>(
-            (resolve, reject) => {
-                res
-                    .execute()
-                    .then(() => resolve(res))
-                    .catch((err) => reject(err));
-            },
-        );
+        return new Promise<AsyncData<TResp | null, FetchError>>((resolve, reject) => {
+            res.execute()
+                .then(() => resolve(res))
+                .catch((err) => reject(err));
+        });
     }
     return options?.cacheKey && options?.cacheKey.length > 0
-        ? useAsyncData<TResp>(options?.cacheKey, (ctx) =>
-            doFetch<TResp>("POST", path, body, query, ctx, options),
-        )
-        : useAsyncData<TResp>((ctx) =>
-            doFetch<TResp>("POST", path, body, query, ctx, options),
-        );
+        ? useAsyncData<TResp>(options?.cacheKey, (ctx) => doFetch<TResp>("POST", path, body, query, ctx, options))
+        : useAsyncData<TResp>((ctx) => doFetch<TResp>("POST", path, body, query, ctx, options));
 };
 
 /**
  * 推荐调用此方法
  */
-export const useGet = <TResp>(
-    path: string,
-    query?: Record<string, any>,
-    options?: HttpOptions,
-) => {
+export const useGet = <TResp>(path: string, query?: Record<string, any>, options?: HttpOptions) => {
     if (import.meta.client) {
         const res: AsyncData<TResp | null, FetchError> = {
             data: ref<TResp | null>(),
@@ -393,14 +323,7 @@ export const useGet = <TResp>(
             refresh: async () => {
                 try {
                     res.status.value = "pending";
-                    res.data.value = await doFetch<TResp>(
-                        "GET",
-                        path,
-                        undefined,
-                        query,
-                        undefined,
-                        options,
-                    );
+                    res.data.value = await doFetch<TResp>("GET", path, undefined, query, undefined, options);
                     res.status.value = "success";
                 } catch (error) {
                     res.status.value = "error";
@@ -410,14 +333,7 @@ export const useGet = <TResp>(
             execute: async () => {
                 try {
                     res.status.value = "pending";
-                    res.data.value = await doFetch<TResp>(
-                        "GET",
-                        path,
-                        undefined,
-                        query,
-                        undefined,
-                        options,
-                    );
+                    res.data.value = await doFetch<TResp>("GET", path, undefined, query, undefined, options);
                     res.status.value = "success";
                 } catch (error) {
                     res.status.value = "error";
@@ -430,20 +346,13 @@ export const useGet = <TResp>(
                 res.status.value = "idle";
             },
         } as AsyncData<TResp | null, FetchError>;
-        return new Promise<AsyncData<TResp | null, FetchError>>(
-            (resolve, reject) => {
-                res
-                    .execute()
-                    .then(() => resolve(res))
-                    .catch((err) => reject(err));
-            },
-        );
+        return new Promise<AsyncData<TResp | null, FetchError>>((resolve, reject) => {
+            res.execute()
+                .then(() => resolve(res))
+                .catch((err) => reject(err));
+        });
     }
     return options?.cacheKey && options?.cacheKey.length > 0
-        ? useAsyncData<TResp>(options?.cacheKey, (ctx) =>
-            doFetch<TResp>("GET", path, undefined, query, ctx, options),
-        )
-        : useAsyncData<TResp>((ctx) =>
-            doFetch<TResp>("GET", path, undefined, query, ctx, options),
-        );
+        ? useAsyncData<TResp>(options?.cacheKey, (ctx) => doFetch<TResp>("GET", path, undefined, query, ctx, options))
+        : useAsyncData<TResp>((ctx) => doFetch<TResp>("GET", path, undefined, query, ctx, options));
 };

@@ -1,4 +1,3 @@
-
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
     modules: ["@nuxt/test-utils", "@nuxt/eslint", "@pinia/nuxt"],
@@ -50,11 +49,7 @@ export default defineNuxtConfig({
             ],
         },
     },
-    css: [
-        "@/assets/css/reset.css",
-        "@/assets/css/font.css",
-        "@/assets/css/main.css",
-    ],
+    css: ["@/assets/css/reset.css", "@/assets/css/font.css", "@/assets/css/main.css"],
     compatibilityDate: "2025-05-15",
     nitro: {
         // // websocket 的代理不起作用
@@ -70,12 +65,12 @@ export default defineNuxtConfig({
     devServer: {
         port: 3000,
         host: "127.0.0.1",
-        // https: {
-        //     // cert: 'E:\\mkcert\\vite\\localhost+1.pem',
-        //     // key: 'E:\\mkcert\\vite\\localhost+1-key.pem',
-        //    // cert: '/Users/muro/work/certs/localhost+2.pem',
-        //    // key: '/Users/muro/work/certs/localhost+2-key.pem',
-        // },
+        https: {
+            cert: "E:\\mkcert\\vite\\localhost+1.pem",
+            key: "E:\\mkcert\\vite\\localhost+1-key.pem",
+            // cert: '/Users/muro/work/certs/localhost+2.pem',
+            // key: '/Users/muro/work/certs/localhost+2-key.pem',
+        },
     },
     typescript: {
         typeCheck: true,

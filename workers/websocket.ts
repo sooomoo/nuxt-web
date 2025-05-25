@@ -1,17 +1,14 @@
 import { ref } from "vue";
-import {
-    WebSocketCmdClose,
-    WebSocketCmdConnect,
-    type IWebSocketCmd,
-} from "./websocket_cmd";
+import { WebSocketCmdClose, WebSocketCmdConnect, type IWebSocketCmd } from "./websocket_cmd";
 
 const sharedWorker = ref<SharedWorker>();
 
 export const startWebSocket = () => {
-    sharedWorker.value = new SharedWorker(
-        new URL("./websocket_worker.ts", import.meta.url),
-        { type: "module", name: "niu_websocket_worker", credentials: "include" },
-    );
+    sharedWorker.value = new SharedWorker(new URL("./websocket_worker.ts", import.meta.url), {
+        type: "module",
+        name: "niu_websocket_worker",
+        credentials: "include",
+    });
     sharedWorker.value?.port.start();
 };
 
@@ -29,7 +26,7 @@ export const openWebSocket = () => {
     sharedWorker.value?.port.postMessage({
         cmd: WebSocketCmdConnect,
         data: {
-            url: "ws://localhost:8001/hub/chat",
+            url: "wss://localhost:8001/hub/chat",
             subprotocol: ["niu-v1"],
             heartbeatInterval: 10000,
             maxRetryAttempts: 10,
