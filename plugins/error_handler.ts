@@ -1,3 +1,4 @@
+import { logger } from "vuepkg";
 /**
  * 用于处理全局错误
  */

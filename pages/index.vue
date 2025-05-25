@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { callOncePromise, sleep } from "vuepkg";
 const doTask = async (val: number) => {
     await sleep(1000);
     console.log(val);

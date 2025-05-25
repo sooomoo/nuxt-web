@@ -1,4 +1,4 @@
-import { closeWebSocket, openWebSocket } from "~/workers/websocket";
+import { closeWebSocket, openWebSocket } from "~/composables/workers/websocket";
 
 export interface LoginParam {
     countryCode: string; // 国家码，如 +86
@@ -17,9 +17,7 @@ export interface PrepareLoginResponse {
 
 export const apiAuth = {
     prepareLogin: async () => {
-        return await usePost<ResponseDto<PrepareLoginResponse>>(
-            "/v1/auth/login/prepare",
-        );
+        return await usePost<ResponseDto<PrepareLoginResponse>>("/v1/auth/login/prepare");
     },
     login: async (param: LoginParam) => {
         const res = await usePost<ResponseDto<null>>("/v1/auth/login/do", param);
@@ -47,10 +45,6 @@ export const apiAuth = {
         if (import.meta.client) {
             pagePath = window.location.pathname + window.location.search;
         }
-        navigateTo(
-            import.meta.env.VITE_LOGIN_PAGE +
-            `?redirect=${encodeURIComponent(pagePath)}`,
-            { redirectCode: 302 },
-        );
+        navigateTo(import.meta.env.VITE_LOGIN_PAGE + `?redirect=${encodeURIComponent(pagePath)}`, { redirectCode: 302 });
     },
 };

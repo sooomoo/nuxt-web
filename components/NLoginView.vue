@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { logger } from "vuepkg";
+
 const lvLogger = logger.tag("LoginView");
 const authStore = useAuthStore();
 

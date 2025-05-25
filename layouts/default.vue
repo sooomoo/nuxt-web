@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { logger } from 'vuepkg';
+
 const log = logger.tag("LAYOUT");
 const route = useRoute();
 const authStore = useAuthStore();

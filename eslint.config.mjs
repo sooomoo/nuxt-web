@@ -38,14 +38,14 @@ export default withNuxt(
             //  配置 Vue <script> 标签内的缩进规则
             "vue/script-indent": [
                 "error",
-                2,
+                4,
                 {
                     baseIndent: 0,
-                    switchCase: 0,
+                    switchCase: 1,
                     ignores: [],
                 },
             ],
-            "vue/block-lang": "error",
+            "vue/block-lang": "off",
             "vue/multi-word-component-names": "off", // 允许组件名不使用多词命名
             "vue/no-arrow-functions-in-watch": "error", // 禁止在 watch 中使用箭头函数
             "vue/no-async-in-computed-properties": "error", // 禁止在计算属性中使用 async
@@ -58,6 +58,7 @@ export default withNuxt(
             "vue/no-v-model-argument": "off", // 允许 v-model 使用自定义修饰符
             "vue/no-v-text-v-html-on-component": "off", // 允许 v-text 和 v-html 在组件上使用
             "vue/no-v-for-template-key": "off", // 允许 v-for 使用 template 标签
+            "vue/first-attribute-linebreak": "off",
         },
     },
 );

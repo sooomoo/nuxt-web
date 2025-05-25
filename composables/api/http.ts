@@ -3,6 +3,8 @@
 import type { AsyncData, AsyncDataRequestStatus, NuxtApp } from "nuxt/app";
 import { FetchError, type FetchResponse } from "ofetch";
 
+import { callOncePromise, generateUUID, logger, stringifyObj, useDecrypt, useEncrypt, useSignData, useSignVerify } from "vuepkg";
+
 const signHeaderTimestamp = "x-timestamp";
 const signHeaderNonce = "x-nonce";
 const signHeaderSignature = "x-signature";
@@ -111,7 +113,7 @@ const doRawFetch = async <TResp>(
     if (body && ["post", "put"].includes(method.toLowerCase()) && import.meta.env.VITE_ENABLE_CRYPTO === "true") {
         // 先加密
         let reqData = JSON.stringify(body);
-        reqData = useEncrypt(boxKeyPair, reqData);
+        reqData = useEncrypt(boxKeyPair, reqData, import.meta.env.VITE_SERVER_EX_PUB_KEY);
         finalBody = reqData; // 替换原始数据为加密后的数据
         signData["body"] = reqData;
         headers.set("Content-Type", contentTypeEncrypted);
@@ -155,14 +157,14 @@ const doRawFetch = async <TResp>(
         body: respData,
     });
 
-    if (!useSignVerify(respStr, respSignature)) {
+    if (!useSignVerify(respStr, respSignature, import.meta.env.VITE_SERVER_SIGN_PUB_KEY)) {
         fetchLogger.warn(`【FAILED】签名验证失败`, respData);
         throw new Error("签名验证失败");
     }
 
     const contentType = response.headers.get("content-type") ?? "";
     if (contentType.startsWith(contentTypeEncrypted)) {
-        respData = useDecrypt(boxKeyPair, respData);
+        respData = useDecrypt(boxKeyPair, respData, import.meta.env.VITE_SERVER_EX_PUB_KEY);
         const rawType = response.headers.get("x-raw-type") ?? "";
         if (rawType) {
             response.headers.set("content-type", rawType);

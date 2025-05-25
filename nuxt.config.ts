@@ -2,6 +2,9 @@
 export default defineNuxtConfig({
     modules: ["@nuxt/test-utils", "@nuxt/eslint", "@pinia/nuxt"],
     devtools: { enabled: true },
+    imports: {
+        dirs: ["stores/**", "composables/**", "utils/**"],
+    },
     app: {
         rootAttrs: {
             id: "app",

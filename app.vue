@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { openWebSocket, startWebSocket } from "./workers/websocket";
+import { logger, unixNow } from "vuepkg";
+import { openWebSocket, startWebSocket } from "./composables/workers/websocket";
 
 const authStore = useAuthStore();
 
