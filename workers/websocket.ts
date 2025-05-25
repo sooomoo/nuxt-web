@@ -3,13 +3,16 @@ import { WebSocketCmdClose, WebSocketCmdConnect, type IWebSocketCmd } from "./we
 
 const sharedWorker = ref<SharedWorker>();
 
-export const startWebSocket = () => {
+export const startWebSocket = (callback?: (event: MessageEvent) => void) => {
     sharedWorker.value = new SharedWorker(new URL("./websocket_worker.ts", import.meta.url), {
         type: "module",
         name: "niu_websocket_worker",
         credentials: "include",
     });
     sharedWorker.value?.port.start();
+    if (callback) {
+        sharedWorker.value.port.onmessage = callback;
+    }
 };
 
 export const onWebSocketMessage = (callback: (event: MessageEvent) => void) => {

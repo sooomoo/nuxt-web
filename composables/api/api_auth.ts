@@ -1,4 +1,4 @@
-import { closeWebSocket, openWebSocket } from "~/composables/workers/websocket";
+import { closeWebSocket, openWebSocket } from "~/workers/websocket";
 
 export interface LoginParam {
     countryCode: string; // 国家码，如 +86

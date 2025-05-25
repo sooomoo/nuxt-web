@@ -6,6 +6,7 @@ export default withNuxt(
     eslintConfigPrettier,
     // Your custom configs here
     {
+        ignores: ["**/*.d.ts", ".nuxt/**", ".output/**", ".vscode/**", "node_modules/**", "dist/**", "public/**"],
         rules: {
             semi: ["error", "always"], // 强制语句末尾使用分号
             indent: [

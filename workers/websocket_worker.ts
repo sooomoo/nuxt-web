@@ -6,12 +6,12 @@ import { isConnectCmd, type IWebSocketCmd, WebSocketCmdClose, type WebSocketConn
 const ports: MessagePort[] = [];
 let websocket: WebSocketClient | undefined;
 
+const wlogger = logger.tag("WebSocketWorker");
 if (import.meta.client) {
     const scope = self as unknown as SharedWorkerGlobalScope;
     if (!scope) {
         throw new Error("scope is not SharedWorkerGlobalScope");
     }
-    const wlogger = logger.tag("WebSocketWorker");
 
     scope.onconnect = (e: MessageEvent) => {
         const port = e.ports[0];
@@ -39,6 +39,21 @@ if (import.meta.client) {
     };
 }
 
+const notifyPorts = (data: unknown) => {
+    wlogger.debug("通知所有端口: ", data);
+    for (const port of ports) {
+        try {
+            port.postMessage(data);
+        } catch (error) {
+            wlogger.error("通知端口失败: ", error);
+            // 如果端口发送失败，可能是因为端口已经关闭，可以从 ports 中移除该端口
+            const index = ports.indexOf(port);
+            if (index !== -1) {
+                ports.splice(index, 1);
+            }
+        }
+    }
+};
 export class WebSocketClient extends WebSocketClientBase {
     private readonly protocal: PacketProtocol;
     private requestId = 0;
@@ -55,11 +70,16 @@ export class WebSocketClient extends WebSocketClientBase {
         if (typeof data == "string") {
             this.clog.debug("text message: ", data);
         } else if (data instanceof ArrayBuffer) {
-            const { msgType, requestId, timestamp, code } = this.protocal.getResponseMeta(new Uint8Array(data));
+            const dataArr = new Uint8Array(data);
+            const { msgType, requestId, timestamp, code } = this.protocal.getResponseMeta(dataArr);
             this.clog.debug("[META] recv message: ", msgType, requestId, timestamp, code);
             if (msgType == WebSocketMsgType.pong) {
                 this.clog.debug("pong message");
             }
+            notifyPorts({
+                type: "websocket_message",
+                data: this.protocal.decodeResp(dataArr),
+            });
         }
     }
 

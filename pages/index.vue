@@ -7,12 +7,19 @@ const doTask = async (val: number) => {
 };
 const singleExecutionTask = callOncePromise(() => doTask(1));
 
+const authStore = useAuthStore();
+const wsMsg = ref("");
+const bus = useAppEventBus();
 onMounted(() => {
     singleExecutionTask().then((res) => {
         console.log(res, 1);
     });
     singleExecutionTask().then((res) => {
         console.log(res, 2);
+    });
+    bus.on("websocketMessage", (message) => {
+        console.log("websocketMessage", message);
+        wsMsg.value = JSON.stringify(message, null, 2) + "\n" + Date.now().toString();
     });
 });
 </script>
@@ -21,8 +28,9 @@ onMounted(() => {
     <div>
         home
         <div>
-            <!-- <pre>{{ user2 }}</pre> -->
+            <pre>{{ authStore.user }}</pre>
         </div>
+        <pre>{{ wsMsg }}</pre>
         <!-- <button @click="handleClick">get</button> -->
         <div class="block" />
     </div>
