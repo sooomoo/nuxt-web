@@ -26,7 +26,7 @@ export const openWebSocket = () => {
     sharedWorker.value?.port.postMessage({
         cmd: WebSocketCmdConnect,
         data: {
-            url: "wss://localhost:8001/hub/chat",
+            url: import.meta.env.VITE_API_BASE_URL + "/hub/chat",
             subprotocol: ["niu-v1"],
             heartbeatInterval: 10000,
             maxRetryAttempts: 10,
