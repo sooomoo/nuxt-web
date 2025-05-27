@@ -11,6 +11,8 @@ const signHeaderSignature = "x-signature";
 const signHeaderPlatform = "x-platform";
 const signHeaderSession = "x-session";
 const contentTypeEncrypted = "application/x-encrypted";
+const headerRawType = "x-rawtype";
+const headerContentType = "Content-Type";
 
 const platform = "8";
 
@@ -116,7 +118,7 @@ const doRawFetch = async <TResp>(
         reqData = useEncrypt(boxKeyPair, reqData, import.meta.env.VITE_SERVER_EX_PUB_KEY);
         finalBody = reqData; // 替换原始数据为加密后的数据
         signData["body"] = reqData;
-        headers.set("Content-Type", contentTypeEncrypted);
+        headers.set(headerContentType, contentTypeEncrypted);
     }
     const str = stringifyObj(signData);
     const reqSignature = useSignData(signKeyPair, str);
@@ -162,12 +164,12 @@ const doRawFetch = async <TResp>(
         throw new Error("签名验证失败");
     }
 
-    const contentType = response.headers.get("content-type") ?? "";
+    const contentType = response.headers.get(headerContentType) ?? "";
     if (contentType.startsWith(contentTypeEncrypted)) {
         respData = useDecrypt(boxKeyPair, respData, import.meta.env.VITE_SERVER_EX_PUB_KEY);
-        const rawType = response.headers.get("x-raw-type") ?? "";
+        const rawType = response.headers.get(headerRawType) ?? "";
         if (rawType) {
-            response.headers.set("content-type", rawType);
+            response.headers.set(headerContentType, rawType);
         }
     }
 
