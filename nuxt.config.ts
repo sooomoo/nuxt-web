@@ -41,22 +41,14 @@ export default defineNuxtConfig({
                     rel: 'preload',
                     as: 'style',
                     href: '/fonts/regular/result.css',
+                    onload: "this.onload=null;this.rel=\"stylesheet\""
                     // crossorigin: 'anonymous',
                 },
                 {
                     rel: 'prefetch',
                     as: 'style',
                     href: '/fonts/bold/result.css',
-                    // crossorigin: 'anonymous',
-                },
-                {
-                    rel: 'stylesheet',
-                    href: '/fonts/regular/result.css',
-                    // crossorigin: 'anonymous',
-                },
-                {
-                    rel: 'stylesheet',
-                    href: '/fonts/bold/result.css',
+                    onload: "this.onload=null;this.rel=\"stylesheet\""
                     // crossorigin: 'anonymous',
                 },
                 // 预获取资源

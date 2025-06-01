@@ -1,7 +1,7 @@
 :root {
-  color-scheme: light dark;
-  --header-height: 56px;
-  --footer-height: 40px;
+    color-scheme: light dark;
+    --header-height: 56px;
+    --footer-height: 40px;
 }
 
 /* 
@@ -9,171 +9,171 @@ html[data-theme='dark'] {
 } */
 
 @media (prefers-color-scheme: light) {
-  :root {
-    --background-color: white;
-    --color-header-background: #fffb;
-    --color-input-background: #f8f8f8;
-    --color-text: #000;
-    --color-primary: #1068ff;
-    --color-primary-50: #1068ff80;
-    --color-selection: #1068ff80;
-    --color-placeholder: #0004;
-  }
+    :root {
+        --background-color: white;
+        --color-header-background: #fffb;
+        --color-input-background: #f8f8f8;
+        --color-text: #000;
+        --color-primary: #1068ff;
+        --color-primary-50: #1068ff80;
+        --color-selection: #1068ff80;
+        --color-placeholder: #0004;
+    }
 }
 
 /* 暗黑模式的样式：dark */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background-color: #121212;
-    --color-header-background: #222b;
-    --color-input-background: #222b;
-    --color-text: #eee;
-    --color-primary: #1068ff;
-    --color-primary-50: #1068ff80;
-    --color-selection: #1068ff80;
-    --color-placeholder: #fff4;
-  }
+    :root {
+        --background-color: #121212;
+        --color-header-background: #222b;
+        --color-input-background: #222b;
+        --color-text: #eee;
+        --color-primary: #1068ff;
+        --color-primary-50: #1068ff80;
+        --color-selection: #1068ff80;
+        --color-placeholder: #fff4;
+    }
 }
 
 ::selection {
-  background-color: var(--color-selection);
-  /* color: white; */
+    background-color: var(--color-selection);
+    /* color: white; */
 }
 
 /* 设置滚动条整体样式 */
 ::-webkit-scrollbar {
-  width: 6px;
-  /* 垂直滚动条宽度 */
-  height: 6px;
-  /* 水平滚动条高度 */
+    width: 6px;
+    /* 垂直滚动条宽度 */
+    height: 6px;
+    /* 水平滚动条高度 */
 }
 
 /* 设置滚动条轨道 */
 ::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 /* 设置滚动条滑块 */
 ::-webkit-scrollbar-thumb {
-  background: #999;
-  border-radius: 50px;
-  transition: background 0.3s ease;
+    background: #999;
+    border-radius: 50px;
+    transition: background 0.3s ease;
 }
 
 /* 鼠标悬停在滑块上时的样式 */
 ::-webkit-scrollbar-thumb:hover {
-  background: #777;
+    background: #777;
 }
 
 /* 设置滚动条角落（当同时有水平和垂直滚动条时） */
 ::-webkit-scrollbar-corner {
-  background: transparent;
+    background: transparent;
 }
 
 input {
-  width: 100%;
-  height: fit-content;
-  padding: 8px 12px;
-  border: 1px solid var(--color-primary);
-  outline: 1.5px solid transparent;
-  border-radius: 4px;
-  transition: outline-color 0.3s ease;
-  background-color: var(--color-input-background);
+    width: 100%;
+    height: fit-content;
+    padding: 8px 12px;
+    border: 1px solid var(--color-primary);
+    outline: 1.5px solid transparent;
+    border-radius: 4px;
+    transition: outline-color 0.3s ease;
+    background-color: var(--color-input-background);
 }
 
 input:focus {
-  outline-color: var(--color-primary-50);
+    outline-color: var(--color-primary-50);
 }
 
 input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 input::placeholder {
-  color: var(--color-placeholder);
+    color: var(--color-placeholder);
 }
 
 input:hover:not(:disabled) {
-  outline-color: var(--color-primary-50);
+    outline-color: var(--color-primary-50);
 }
 
 button {
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  padding: 8px 12px;
-  border-radius: 4px;
-  user-select: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    padding: 8px 12px;
+    border-radius: 4px;
+    user-select: none;
 }
 
 .primary-button {
-  background-color: var(--color-primary);
-  color: white;
+    background-color: var(--color-primary);
+    color: white;
 }
 
 body {
-  height: 100vh;
-  transition:
-    color 0.5s,
-    background-color 0.5s;
-  line-height: 1.15;
-  font-family:
-    "MiSans",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "PingFang SC",
-    "Microsoft YaHei",
-    "Segoe UI",
-    Roboto,
-    sans-serif;
-  font-size: 14px;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-  background-color: var(--background-color);
-  color: var(--color-text);
+    height: 100vh;
+    transition:
+        color 0.5s,
+        background-color 0.5s;
+    line-height: 1.5;
+    font-family:
+        "MiSans",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "PingFang SC",
+        "Microsoft YaHei",
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+    font-size: 14px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+    background-color: var(--background-color);
+    color: var(--color-text);
 }
 
 .flex {
-  display: flex;
+    display: flex;
 }
 
 .flex-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .flex-align-center {
-  align-items: center;
+    align-items: center;
 }
 
 .flex-between {
-  justify-content: space-between;
+    justify-content: space-between;
 }
 
 .flex-column {
-  flex-direction: column;
+    flex-direction: column;
 }
 
 .flex-justify-center {
-  justify-content: center;
+    justify-content: center;
 }
 
 .spacer {
-  flex: 1;
+    flex: 1;
 }
 
 .gap-s {
-  gap: 4px;
+    gap: 4px;
 }
 
 .gap-m {
-  gap: 6px;
+    gap: 6px;
 }
 
 .gap-l {
-  gap: 12px;
+    gap: 12px;
 }
