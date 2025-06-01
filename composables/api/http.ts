@@ -11,7 +11,7 @@ const signHeaderSignature = "x-signature";
 const signHeaderPlatform = "x-platform";
 const signHeaderSession = "x-session";
 const contentTypeEncrypted = "application/x-encrypted";
-const headerRawType = "x-rawtype";
+// const headerRawType = "x-rawtype";
 const headerContentType = "Content-Type";
 
 const platform = "8";
@@ -167,10 +167,10 @@ const doRawFetch = async <TResp>(
     const contentType = response.headers.get(headerContentType) ?? "";
     if (contentType.startsWith(contentTypeEncrypted)) {
         respData = useDecrypt(boxKeyPair, respData, import.meta.env.VITE_SERVER_EX_PUB_KEY);
-        const rawType = response.headers.get(headerRawType) ?? "";
-        if (rawType) {
-            response.headers.set(headerContentType, rawType);
-        }
+        // const rawType = response.headers.get(headerRawType) ?? "";
+        // if (rawType) {
+        //     response.headers.set(headerContentType, rawType);
+        // }
     }
 
     saveCookies(ctx ?? undefined, response.headers.getSetCookie());
