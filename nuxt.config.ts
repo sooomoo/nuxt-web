@@ -37,12 +37,28 @@ export default defineNuxtConfig({
             link: [
                 { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
                 // 字体懒加载
-                // {
-                //   rel: 'preload',
-                //   as: 'font',
-                //   href: '/fonts/iconfont.woff2',
-                //   crossorigin: 'anonymous',
-                // },
+                {
+                    rel: 'preload',
+                    as: 'style',
+                    href: '/fonts/regular/result.css',
+                    // crossorigin: 'anonymous',
+                },
+                {
+                    rel: 'prefetch',
+                    as: 'style',
+                    href: '/fonts/bold/result.css',
+                    // crossorigin: 'anonymous',
+                },
+                {
+                    rel: 'stylesheet',
+                    href: '/fonts/regular/result.css',
+                    // crossorigin: 'anonymous',
+                },
+                {
+                    rel: 'stylesheet',
+                    href: '/fonts/bold/result.css',
+                    // crossorigin: 'anonymous',
+                },
                 // 预获取资源
                 // {
                 //   rel: 'prefetch',
@@ -52,7 +68,7 @@ export default defineNuxtConfig({
             ],
         },
     },
-    css: ["@/assets/css/reset.css", "@/assets/css/font.css", "@/assets/css/main.css"],
+    css: ["@/assets/css/reset.css", "@/assets/css/main.css"],
     compatibilityDate: "2025-05-15",
     nitro: {
         // // websocket 的代理不起作用
