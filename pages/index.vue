@@ -41,8 +41,8 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .block {
-    width: 100px;
-    height: 100px;
+    width: 300px;
+    height: 600px;
     background-color: #ffa41d;
 }
 </style>

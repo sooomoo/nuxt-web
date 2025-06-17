@@ -11,7 +11,7 @@ watchEffect(() => {
 </script>
 
 <template>
-    <header class="default-layout__header flex flex-align-center gap-l">
+    <header class="flex flex-align-center gap-l default-layout__header">
         <NuxtLink to="/">
             <span>LOGO</span>
         </NuxtLink>
@@ -23,30 +23,33 @@ watchEffect(() => {
     <main class="default-layout__body">
         <slot />
     </main>
-    <footer class="default-layout__footer flex-center">
+    <footer class="flex-center default-layout__footer">
         Copyright &copy; 2023
     </footer>
 </template>
 
 <style lang="scss" scoped>
 .default-layout__header {
-    backdrop-filter: blur(8px);
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
+    width: 100%;
     height: var(--header-height);
+    min-height: var(--header-height);
     z-index: 10;
     background-color: var(--color-header-background);
+    backdrop-filter: blur(8px);
     box-shadow: 0 0 1px rgba(0, 0, 0, 0.25);
     padding: 0 16px;
     gap: 32px;
 }
 
 .default-layout__body {
+    flex: 1;
     margin: 0;
+    height: fit-content;
     padding-top: var(--header-height);
-    min-height: calc(100vh - var(--footer-height));
 }
 
 .default-layout__footer {

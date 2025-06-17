@@ -29,3 +29,11 @@ onMounted(async () => {
         <NuxtPage />
     </NuxtLayout>
 </template>
+
+<style lang="scss">
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+</style>
