@@ -9,7 +9,7 @@ const signHeaderTimestamp = "x-timestamp";
 const signHeaderNonce = "x-nonce";
 const signHeaderSignature = "x-signature";
 const signHeaderPlatform = "x-platform";
-const signHeaderSession = "x-session";
+// const signHeaderSession = "x-session";
 const contentTypeEncrypted = "application/x-encrypted";
 // const headerRawType = "x-rawtype";
 const headerContentType = "Content-Type";
@@ -123,7 +123,7 @@ const doRawFetch = async <TResp>(
     const str = stringifyObj(signData);
     const reqSignature = useSignData(signKeyPair, str);
     headers.set(signHeaderPlatform, platform);
-    headers.set(signHeaderSession, sessionId);
+    // headers.set(signHeaderSession, sessionId);
     headers.set(signHeaderTimestamp, timestamp);
     headers.set(signHeaderNonce, nonce);
     headers.set(signHeaderSignature, reqSignature);

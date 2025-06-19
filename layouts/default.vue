@@ -17,6 +17,7 @@ watchEffect(() => {
         </NuxtLink>
         <span class="spacer" />
         <span>Header1</span>
+        <span>{{ authStore.user?.id?.toString(36).toUpperCase() }}</span>
         <span>{{ authStore.user?.name ?? "" }}</span>
         <button v-if="authStore.user" type="button" @click="authStore.logout(true)">Logout</button>
     </header>

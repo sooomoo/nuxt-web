@@ -1,7 +1,7 @@
 import { callOncePromise } from "vuepkg";
 
 export interface GetUserInfoResponse {
-    id: string;
+    id: number;
     name: string;
     avatarUrl: string;
     role: string;

@@ -77,10 +77,8 @@ export default defineNuxtConfig({
         port: 3000,
         host: "127.0.0.1",
         https: {
-            cert: "E:\\mkcert\\vite\\localhost+1.pem",
-            key: "E:\\mkcert\\vite\\localhost+1-key.pem",
-            // cert: '/Users/muro/work/certs/localhost+2.pem',
-            // key: '/Users/muro/work/certs/localhost+2-key.pem',
+            cert: import.meta.env.VITE_HTTPS_CERT,
+            key: import.meta.env.VITE_HTTPS_KEY,
         },
     },
     typescript: {
