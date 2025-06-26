@@ -1,3 +1,5 @@
+import fs from "fs";
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
     modules: ["@nuxt/test-utils", "@nuxt/eslint", "@pinia/nuxt"],
@@ -77,8 +79,8 @@ export default defineNuxtConfig({
         port: 3000,
         host: "127.0.0.1",
         https: {
-            cert: import.meta.env.VITE_HTTPS_CERT,
-            key: import.meta.env.VITE_HTTPS_KEY,
+            cert: fs.readFileSync("/Users/muro/work/certs/cert.pem", "utf-8"),
+            key: fs.readFileSync("/Users/muro/work/certs/key.pem", "utf-8"),
         },
     },
     typescript: {

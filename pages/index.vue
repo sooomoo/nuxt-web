@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { JSONStringify } from "json-with-bigint";
 import { callOncePromise, sleep } from "vuepkg";
 const doTask = async (val: number) => {
     await sleep(1000);
@@ -10,6 +11,9 @@ const singleExecutionTask = callOncePromise(() => doTask(1));
 const authStore = useAuthStore();
 const wsMsg = ref("");
 const bus = useAppEventBus();
+
+const userJson = computed(() => JSONStringify(authStore.user, undefined, 2));
+
 onMounted(() => {
     singleExecutionTask().then((res) => {
         console.log(res, 1);
@@ -19,7 +23,7 @@ onMounted(() => {
     });
     bus.on("websocketMessage", (message) => {
         console.log("websocketMessage", message);
-        wsMsg.value = JSON.stringify(message, null, 2) + "\n" + Date.now().toString();
+        wsMsg.value = JSONStringify(message, null, 2) + "\n" + Date.now().toString();
     });
 });
 </script>
@@ -32,7 +36,7 @@ onMounted(() => {
     </p>
     home
     <div>
-        <pre>{{ authStore.user }}</pre>
+        <pre>{{ userJson }}</pre>
     </div>
     <pre>{{ wsMsg }}</pre>
     <!-- <button @click="handleClick">get</button> -->

@@ -2,6 +2,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { AsyncData, AsyncDataRequestStatus, NuxtApp } from "nuxt/app";
 import { FetchError, type FetchResponse } from "ofetch";
+// 备选:
+// json-with-bigint
+// json-bigint
+// lossless-json
+// import { isInteger, parse, stringify } from 'lossless-json';
+import { JSONParse, JSONStringify } from 'json-with-bigint';
 
 import { callOncePromise, generateUUID, logger, stringifyObj, useDecrypt, useEncrypt, useSignData, useSignVerify } from "vuepkg";
 
@@ -114,7 +120,7 @@ const doRawFetch = async <TResp>(
     // 1. 加密请求体（仅针对 POST/PUT 请求）
     if (body && ["post", "put"].includes(method.toLowerCase()) && import.meta.env.VITE_ENABLE_CRYPTO === "true") {
         // 先加密
-        let reqData = JSON.stringify(body);
+        let reqData = JSONStringify(body);
         reqData = useEncrypt(boxKeyPair, reqData, import.meta.env.VITE_SERVER_EX_PUB_KEY);
         finalBody = reqData; // 替换原始数据为加密后的数据
         signData["body"] = reqData;
@@ -177,7 +183,7 @@ const doRawFetch = async <TResp>(
 
     if ((options?.responseType ?? "json") === "json" && typeof respData === "string" && respData.length > 0) {
         try {
-            response._data = JSON.parse(respData);
+            response._data = JSONParse(respData);
         } catch (error) {
             fetchLogger.error(`【FAILED】解析响应数据失败`, respData, error);
         }
