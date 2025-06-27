@@ -13,6 +13,10 @@ const wsMsg = ref("");
 const bus = useAppEventBus();
 
 const userJson = computed(() => JSONStringify(authStore.user, undefined, 2));
+const userIDStr = computed(() => {
+    const t = 1602107439422259216021074394222592n
+    return `${t}`
+})
 
 onMounted(() => {
     singleExecutionTask().then((res) => {
@@ -34,7 +38,8 @@ onMounted(() => {
         是一种底层的网络通信机制，提供更灵活的使用方式。选择使用哪种技术取决于具体的应用场景和需求。对于需要实时交互的 Web 应用，WebSocket 是更合适的选择；而对于底层或高性能要求的网络通信，Socket
         提供了更多的控制和灵活性。333
     </p>
-    home
+    <div>UserID: {{ authStore.user?.id }}</div>
+    <div>UserIDStr: {{ userIDStr }}</div>
     <div>
         <pre>{{ userJson }}</pre>
     </div>
