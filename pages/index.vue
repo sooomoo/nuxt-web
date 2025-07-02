@@ -14,9 +14,9 @@ const bus = useAppEventBus();
 
 const userJson = computed(() => JSONStringify(authStore.user, undefined, 2));
 const userIDStr = computed(() => {
-    const t = 1602107439422259216021074394222592n
-    return `${t}`
-})
+    const t = 1602107439422259216021074394222592n;
+    return `${t}`;
+});
 
 onMounted(() => {
     singleExecutionTask().then((res) => {
