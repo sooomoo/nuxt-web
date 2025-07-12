@@ -1,11 +1,13 @@
+@use "./ui.scss";
+
 :root {
     color-scheme: light dark;
     --header-height: 56px;
     --footer-height: 40px;
 }
 
-/* 
-html[data-theme='dark'] {  
+/*
+html[data-theme='dark'] {
 } */
 
 @media (prefers-color-scheme: light) {
@@ -112,7 +114,6 @@ button {
 }
 
 body {
-    height: 100vh;
     transition:
         color 0.5s,
         background-color 0.5s;

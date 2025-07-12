@@ -11,7 +11,7 @@ export default defineNuxtConfig({
         rootAttrs: {
             id: "app",
         },
-        rootTag: "body",
+        // rootTag: "body",
         // layoutTransition: { name: 'layout', mode: 'out-in' },
         // pageTransition: { name: 'page', mode: 'out-in' },
         head: {
@@ -40,17 +40,17 @@ export default defineNuxtConfig({
                 { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
                 // 字体懒加载
                 {
-                    rel: 'preload',
-                    as: 'style',
-                    href: '/fonts/regular/result.css',
-                    onload: "this.onload=null;this.rel=\"stylesheet\""
+                    rel: "preload",
+                    as: "style",
+                    href: "/fonts/regular/result.css",
+                    onload: 'this.onload=null;this.rel="stylesheet"',
                     // crossorigin: 'anonymous',
                 },
                 {
-                    rel: 'prefetch',
-                    as: 'style',
-                    href: '/fonts/bold/result.css',
-                    onload: "this.onload=null;this.rel=\"stylesheet\""
+                    rel: "prefetch",
+                    as: "style",
+                    href: "/fonts/bold/result.css",
+                    onload: 'this.onload=null;this.rel="stylesheet"',
                     // crossorigin: 'anonymous',
                 },
                 // 预获取资源
@@ -62,7 +62,7 @@ export default defineNuxtConfig({
             ],
         },
     },
-    css: ["@/assets/css/reset.css", "@/assets/css/main.css"],
+    css: ["@/assets/css/reset.css", "@/assets/css/main.scss"],
     compatibilityDate: "2025-05-15",
     nitro: {
         // // websocket 的代理不起作用
