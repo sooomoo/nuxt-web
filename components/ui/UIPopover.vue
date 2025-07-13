@@ -121,6 +121,12 @@ const onMouseLeave = (evt: MouseEvent) => {
 const onContentMouseLeave = (evt: MouseEvent) => {
     if (props.trigger !== 'hover') return;
     logger.debug('onContentMouseLeave', evt);
+    if (popoverRef.value) {
+        const isInPopover = popoverRef.value === evt.relatedTarget || popoverRef.value.contains(evt.relatedTarget as HTMLElement);
+        if (isInPopover) {
+            return; // 离开进入了 popoverRef 里面
+        }
+    }
     popoverVisible.value = false;
 };
 

@@ -35,6 +35,74 @@
     // transform: translateY(-4px);
 }
 
+//-------base style
+.ui-flex {
+    display: flex;
+}
+.ui-flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.ui-flex-column {
+    flex-direction: column;
+}
+.ui-flex-row {
+    flex-direction: row;
+}
+.ui-flex-align-start {
+    align-items: flex-start;
+}
+.ui-flex-align-center {
+    align-items: center;
+}
+.ui-flex-align-end {
+    align-items: flex-end;
+}
+.ui-flex-align-baseline {
+    align-items: baseline;
+}
+.ui-flex-align-stretch {
+    align-items: stretch;
+}
+.ui-flex-justify-start {
+    justify-content: flex-start;
+}
+.ui-flex-justify-center {
+    justify-content: center;
+}
+.ui-flex-justify-end {
+    justify-content: flex-end;
+}
+.ui-flex-justify-stretch {
+    justify-content: stretch;
+}
+.ui-flex-justify-space-between {
+    justify-content: space-between;
+}
+.ui-flex-justify-space-around {
+    justify-content: space-around;
+}
+.ui-flex-justify-space-evenly {
+    justify-content: space-evenly;
+}
+.ui-flex-one {
+    flex: 1;
+}
+.ui-flex-fill-remain-x {
+    min-width: 0;
+}
+.ui-flex-fill-remain-y {
+    min-height: 0;
+}
+.ui-scroll-x {
+    overflow-x: auto;
+}
+.ui-scroll-y {
+    overflow-y: auto;
+}
+
+// ----- components styles
 .ui-tooltip {
     position: relative;
     display: inline-block;
