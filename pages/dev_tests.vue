@@ -1,10 +1,23 @@
 <script setup lang="ts">
+const activeTab = ref(0);
+const tabList = [
+    { title: '报告模', id: 0 },
+    { title: '报告报告模', id: 1 },
+    { title: '建模', id: 2 },
+];
+const vtabList = [
+    { title: '报', id: 0 },
+    { title: '模', id: 1 },
+    { title: '建', id: 2 },
+];
 
 </script>
 
 <template>
     <div>
         <h1>Dev Tests</h1>
+        <UITab v-model:active-index="activeTab" class="tab-test" :items="tabList"></UITab>
+        <UITab v-model:active-index="activeTab" class="vtab-test" :items="vtabList" orientation="vertical"></UITab>
         <UITooltiop tooltip="This is a tooltip" class="tooltip-test" anchor="rightCenter">
             <button>Hover me</button>
             <template #content>
@@ -43,12 +56,26 @@
                 <div class="sub">234</div>
             </UIFlexFillRemain>
         </UIFlex>
+        <div class="collapse-test">
+            <UICollapse>
+                <template #header>
+                    Header
+                </template>
+                <template #content>
+                    <div class="flex-test"></div>
+                </template>
+            </UICollapse>
+        </div>
         <div style="height: 1000px;"></div>
 
     </div>
 </template>
 
 <style lang="scss" scoped>
+.tab {
+    margin-left: 20px;
+}
+
 .tooltip-test {
     margin: 10px 40px;
     background-color: #f0f0f0;
@@ -91,5 +118,22 @@
 .popover-content {
     width: 100px;
     height: 70px;
+}
+
+.tab-test {
+    margin: 0 20px;
+    background-color: #f0f0f0;
+}
+
+.vtab-test {
+    margin: 10px 20px;
+    background-color: #f0f0f0;
+    width: 48px;
+}
+
+.collapse-test {
+    width: 100px;
+    background: skyblue;
+    overflow: hidden;
 }
 </style>
