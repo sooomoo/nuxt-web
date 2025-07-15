@@ -69,8 +69,7 @@ const collapseItems = [{
             <div class="sub">234</div>
         </UIFlexFillRemain>
     </UIFlex>
-    <UICollapse class="collapse-test" header-class="collapse-test-header"
-        content-open-class="collapse-test-content-open" content-class="collapse-test-content">
+    <UICollapse class="collapse-test" header-class="collapse-test-header" content-class="collapse-test-content">
         <template #header="{ contentOpen }">
             Header, open {{ contentOpen }}
         </template>
@@ -79,7 +78,8 @@ const collapseItems = [{
             welcome guest in many households across the world.
         </template>
     </UICollapse>
-    <UICollapseGroup :items="collapseItems" class="ui-flex ui-flex-column ui-flex-align-stretch collapse-group-test">
+    <UICollapseGroup :items="collapseItems" class="ui-flex ui-flex-column ui-flex-align-stretch collapse-group-test"
+        item-class="collapse-item" item-header-class="item-header" item-content-class="item-content">
         <template #itemHeader="{ item }">
             {{ item.header }}
         </template>
@@ -159,23 +159,47 @@ $backcolor: #444444;
     margin: 10px 20px;
     line-height: 1.25;
     border-radius: 4px;
+
+    :deep(.collapse-test-header) {
+        padding: 8px 12px;
+    }
+
+    :deep(.collapse-test-content) {
+        padding: 0 12px;
+    }
 }
 
-:deep(.collapse-test-header) {
-    padding: 8px 12px;
-}
-
-:deep(.collapse-test-content) {
-    padding: 0 12px;
-}
-
-:deep(.collapse-test-content-open) {
-    padding: 0 12px 8px 12px;
+.collapse-test[data-open="true"] {
+    :deep(.collapse-test-content) {
+        padding: 0 12px 8px 12px;
+    }
 }
 
 .collapse-group-test {
     width: 200px;
     gap: 8px;
     margin: 10px 20px;
+    line-height: 1.25;
+}
+
+// deep 里面不能再次使用 deep
+// 里面的类不使用 deep 也能达到效果，因为外部 deep已经起作用了
+:deep(.collapse-item) {
+    background: skyblue;
+    border-radius: 4px;
+
+    .item-header {
+        padding: 8px 12px;
+    }
+
+    .item-content {
+        padding: 0 12px;
+    }
+}
+
+:deep(.collapse-item[data-open="true"]) {
+    .item-content {
+        padding: 0 12px 8px 12px;
+    }
 }
 </style>

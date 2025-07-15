@@ -2,9 +2,7 @@
 
 const props = defineProps<{
     headerClass?: string
-    headerOpenClass?: string
     contentClass?: string
-    contentOpenClass?: string
 }>();
 
 const contentOpen = defineModel("contentOpen", {
@@ -12,26 +10,23 @@ const contentOpen = defineModel("contentOpen", {
     default: false
 });
 
+const emit = defineEmits<{
+    (e: 'change', open: boolean): void
+}>();
+
+watch(contentOpen, (v) => {
+    emit('change', v);
+});
+
 const finalHeaderClass = computed(() => {
     const clsArr = ['ui-collapse-header'];
-    if (contentOpen.value) {
-        if (props.headerOpenClass) clsArr.push(props.headerOpenClass);
-        else if (props.headerClass) clsArr.push(props.headerClass);
-    } else {
-        if (props.headerClass) clsArr.push(props.headerClass);
-    }
+    if (props.headerClass) clsArr.push(props.headerClass);
     return clsArr.join(' ');
 });
 
 const finalContentClass = computed(() => {
     const clsArr = ['ui-collapse-content'];
-    if (contentOpen.value) {
-        clsArr.push('ui-collapse-content-open');
-        if (props.contentOpenClass) clsArr.push(props.contentOpenClass);
-        else if (props.contentClass) clsArr.push(props.contentClass);
-    } else {
-        if (props.contentClass) clsArr.push(props.contentClass);
-    }
+    if (props.contentClass) clsArr.push(props.contentClass);
     return clsArr.join(' ');
 });
 </script>

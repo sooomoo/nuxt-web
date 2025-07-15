@@ -240,16 +240,16 @@
 
     .ui-collapse-content {
         height: 0;
-        padding-top: 0;
-        padding-bottom: 0;
         overflow: hidden;
         interpolate-size: allow-keywords;
         transition:
             height 0.3s,
             padding 0.3s ease;
     }
+}
 
-    .ui-collapse-content-open {
+.ui-collapse[data-open="true"] {
+    .ui-collapse-content {
         height: auto;
     }
 }
