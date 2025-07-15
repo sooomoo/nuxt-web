@@ -144,60 +144,60 @@
     padding: 0 24px;
     overflow: hidden;
     // box-shadow: inset 0 -4px 8px #0002;
-}
 
-.ui-tabitem {
-    height: 40px;
-    color: #121212;
-    position: relative;
-    padding: 0 8px;
-    cursor: pointer;
-    user-select: none;
-    transition:
-        color 0.3s ease,
-        background 0.3s ease;
-    &:hover {
+    .ui-tabitem {
+        height: 40px;
+        color: #121212;
+        position: relative;
+        padding: 0 8px;
+        cursor: pointer;
+        user-select: none;
+        transition:
+            color 0.3s ease,
+            background 0.3s ease;
+        &:hover {
+            color: #1354ed;
+        }
+        &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -30px;
+            height: 100%;
+            width: 30px;
+            z-index: 1;
+            background: transparent;
+            transition: background 0.3s ease;
+            clip-path: path("M 0,40 C 20,40 10,0 30,0 L 30,40 Z");
+        }
+
+        &::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: -30px;
+            height: 100%;
+            width: 30px;
+            z-index: 1;
+            background: transparent;
+            transition: background 0.3s ease;
+            clip-path: path("M 0,0 C 20,0 10,40 30,40 L 0, 40 Z");
+        }
+    }
+
+    .ui-tabitem-active {
+        background: white;
         color: #1354ed;
-    }
-    &::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -30px;
-        height: 100%;
-        width: 30px;
-        z-index: 1;
-        background: transparent;
-        transition: background 0.3s ease;
-        clip-path: path("M 0,40 C 20,40 10,0 30,0 L 30,40 Z");
-    }
+        // filter: drop-shadow(0 0 8px #0002);
+        filter: drop-shadow(0 0 4px #0001);
 
-    &::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: -30px;
-        height: 100%;
-        width: 30px;
-        z-index: 1;
-        background: transparent;
-        transition: background 0.3s ease;
-        clip-path: path("M 0,0 C 20,0 10,40 30,40 L 0, 40 Z");
-    }
-}
+        &::before {
+            background: white;
+        }
 
-.ui-tabitem-active {
-    background: white;
-    color: #1354ed;
-    // filter: drop-shadow(0 0 8px #0002);
-    filter: drop-shadow(0 0 4px #0001);
-
-    &::before {
-        background: white;
-    }
-
-    &::after {
-        background: white;
+        &::after {
+            background: white;
+        }
     }
 }
 
@@ -205,44 +205,54 @@
     gap: 4px;
     overflow: hidden;
     padding: 8px 0;
-}
 
-.ui-vtabitem {
-    width: 32px;
-    height: 32px;
-    color: #121212;
-    position: relative;
-    border-radius: 4px;
-    cursor: pointer;
-    user-select: none;
-    transition:
-        color 0.3s ease,
-        background 0.3s ease;
-    &:hover {
-        background: rgba(0, 0, 0, 0.05);
+    .ui-vtabitem {
+        width: 32px;
+        height: 32px;
+        color: #121212;
+        position: relative;
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+        transition:
+            color 0.3s ease,
+            background 0.3s ease;
+        &:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
     }
-}
 
-.ui-vtabitem-active {
-    background: white;
-    color: #1354ed;
-    box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
-    &:hover {
+    .ui-vtabitem-active {
         background: white;
+        color: #1354ed;
+        box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
+        &:hover {
+            background: white;
+        }
     }
 }
 
-.ui-collapse-header {
-    user-select: none;
-    cursor: pointer;
+.ui-collapse {
+    .ui-collapse-header {
+        user-select: none;
+        cursor: pointer;
+    }
+
+    .ui-collapse-content {
+        height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+        interpolate-size: allow-keywords;
+        transition:
+            height 0.3s,
+            padding 0.3s ease;
+    }
+
+    .ui-collapse-content-open {
+        height: auto;
+    }
 }
 
-.ui-collapse-content {
-    height: 0;
-    overflow: hidden;
-    interpolate-size: allow-keywords;
-    transition: height 0.3s;
-}
-.ui-collapse-content-open {
-    height: auto;
+.ui-collapse-group {
 }
