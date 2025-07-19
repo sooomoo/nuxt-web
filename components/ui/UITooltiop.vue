@@ -19,8 +19,7 @@ const finalAnchor = computed(() => {
 
 const tooltipStyle = computed(() => {
     if (!rootRect.value || !tooltipRef.value) return {};
-    const rect = rootRect.value.shrink(1);
-    const tooltipRect = rect.anchorOutside(finalAnchor.value, Rect.fromDOMRect(tooltipRef.value.getBoundingClientRect()));
+    const tooltipRect = rootRect.value.anchorOutside(finalAnchor.value, Rect.fromDOMRect(tooltipRef.value.getBoundingClientRect()));
     return {
         // transform: `translate(${tooltipRect.x}px, ${tooltipRect.y}px)`,
         left: tooltipRect.x + 'px',

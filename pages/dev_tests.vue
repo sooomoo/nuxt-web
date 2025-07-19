@@ -40,6 +40,16 @@ const defaultOpenedItems = ['2'];
             </div>
         </template>
     </UITooltiop>
+    <UITooltiop tooltip="This is a tooltip" class="tooltip-test" anchor="bottomLeft">
+        <button>Hover me</button>
+        <template #content>
+            <div>
+                <p>This is a tooltip</p>
+                <p>This is a tooltiptooltip</p>
+                <p>This is a tooltip</p>
+            </div>
+        </template>
+    </UITooltiop>
     <UIPopover class="tooltip-test" trigger="hover" anchor="rightCenter">
         <button>Hover me</button>
         <template #content>
