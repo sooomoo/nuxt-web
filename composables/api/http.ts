@@ -7,7 +7,7 @@ import { FetchError, type FetchResponse } from "ofetch";
 // json-bigint
 // lossless-json
 // import { isInteger, parse, stringify } from 'lossless-json';
-import { JSONParse, JSONStringify } from 'json-with-bigint';
+import { JSONParse, JSONStringify } from "json-with-bigint";
 
 import { callOncePromise, generateUUID, logger, stringifyObj, useDecrypt, useEncrypt, useSignData, useSignVerify } from "vuepkg";
 
@@ -80,7 +80,7 @@ const doRawFetch = async <TResp>(
     ctx?: NuxtApp,
     options?: HttpOptions,
 ) => {
-    const fetchLogger = logger.tag(`doFetchInternal: ${method} ${path}`);
+    const fetchLogger = logger.tag(`doRawFetch: ${method} ${path}`);
     fetchLogger.debug(`ctx has value ? ${ctx !== null && ctx !== undefined}, running on ${import.meta.client ? "CLIENT" : "SERVER"}\n`);
 
     const headers = new Headers({ "Content-Type": "application/json" });
@@ -144,6 +144,7 @@ const doRawFetch = async <TResp>(
         responseType: options?.responseType ?? "json",
         signal: options?.signal,
         timeout: options?.timeout ?? defaultFetchOptions.timeout,
+        credentials: "include",
     });
     // fetchLogger.debug('response', response)
     if (response.status !== 200) {
