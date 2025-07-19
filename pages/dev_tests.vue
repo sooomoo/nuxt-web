@@ -61,6 +61,17 @@ const defaultOpenedItems = ['2'];
             </div>
         </template>
     </UIPopover>
+    <UIPopover class="tooltip-test" trigger="click" anchor="rightCenter">
+        <button>Click me</button>
+        <template #content>
+            <div class="popover-content">
+                <p>This is a tooltip</p>
+                <UITooltiop tooltip="Clikc ME">
+                    <button>click</button>
+                </UITooltiop>
+            </div>
+        </template>
+    </UIPopover>
     <UIScrollable direction="vertical" class="scroll-test">
         <div>
             <UIPopover class="tooltip-test">
