@@ -24,6 +24,7 @@ const collapseItems = [{
     header: 'This is panel header 3',
     content: 'A dog is a type of domesticated animal.Known for its loyalty and faithfulness,it can be found as a welcome guest in many households across the world.',
 }];
+const defaultOpenedItems = ['2'];
 
 </script>
 
@@ -31,7 +32,7 @@ const collapseItems = [{
     <h1>Dev Tests</h1>
     <UITab v-model:active-index="activeTab" class="tab-test" :items="tabList"></UITab>
     <UITab v-model:active-index="activeTab" class="vtab-test" :items="vtabList" orientation="vertical"></UITab>
-    <UITooltiop tooltip="This is a tooltip" class="tooltip-test" anchor="rightCenter">
+    <UITooltiop tooltip="This is a tooltip" class="tooltip-test">
         <button>Hover me</button>
         <template #content>
             <div>
@@ -69,18 +70,22 @@ const collapseItems = [{
             <div class="sub">234</div>
         </UIFlexFillRemain>
     </UIFlex>
-    <UICollapse class="collapse-test" header-class="collapse-test-header" content-class="collapse-test-content">
-        <template #header="{ contentOpen }">
-            Header, open {{ contentOpen }}
+    <UICollapse class="collapse-test" header-class="ui-flex ui-flex-align-center collapse-test-header"
+        content-class="collapse-test-content">
+        <template #header>
+            <UIIconArrowFill></UIIconArrowFill>
+            a type of domesticated
         </template>
         <template #content>
             A dog is a type of domesticated animal.Known for its loyalty and faithfulness,it can be found as a
             welcome guest in many households across the world.
         </template>
     </UICollapse>
-    <UICollapseGroup :items="collapseItems" class="ui-flex ui-flex-column ui-flex-align-stretch collapse-group-test"
-        item-class="collapse-item" item-header-class="item-header" item-content-class="item-content">
+    <UICollapseGroup :items="collapseItems" mutex :default-opened-items="defaultOpenedItems"
+        class="ui-flex ui-flex-column ui-flex-align-stretch collapse-group-test" item-class="collapse-item"
+        item-header-class="ui-flex ui-flex-align-center item-header" item-content-class="item-content">
         <template #itemHeader="{ item }">
+            <UIIconArrowFill></UIIconArrowFill>
             {{ item.header }}
         </template>
         <template #itemContent="{ item }">
@@ -91,7 +96,7 @@ const collapseItems = [{
 </template>
 
 <style lang="scss" scoped>
-$backcolor: #444444;
+$backcolor: #f0f0f0;
 
 .tab {
     margin-left: 20px;
@@ -114,7 +119,7 @@ $backcolor: #444444;
     }
 
     .sub {
-        background-color: #363333;
+        background-color: $backcolor;
         width: 100%;
         height: 500px;
     }
@@ -154,7 +159,7 @@ $backcolor: #444444;
 
 .collapse-test {
     width: 200px;
-    background: skyblue;
+    background: rgb(199, 221, 255);
     overflow: hidden;
     margin: 10px 20px;
     line-height: 1.25;
@@ -162,6 +167,15 @@ $backcolor: #444444;
 
     :deep(.collapse-test-header) {
         padding: 8px 12px;
+        gap: 8px;
+
+        & svg {
+            width: 8px;
+            height: 8px;
+            transform: rotate(0);
+            transition: transform 0.3s;
+            fill: #666;
+        }
     }
 
     :deep(.collapse-test-content) {
@@ -170,6 +184,12 @@ $backcolor: #444444;
 }
 
 .collapse-test[data-open="true"] {
+    :deep(.collapse-test-header) {
+        & svg {
+            transform: rotate(90deg);
+        }
+    }
+
     :deep(.collapse-test-content) {
         padding: 0 12px 8px 12px;
     }
@@ -185,11 +205,20 @@ $backcolor: #444444;
 // deep 里面不能再次使用 deep
 // 里面的类不使用 deep 也能达到效果，因为外部 deep已经起作用了
 :deep(.collapse-item) {
-    background: skyblue;
+    background: $backcolor;
     border-radius: 4px;
 
     .item-header {
         padding: 8px 12px;
+        gap: 8px;
+
+        & svg {
+            width: 8px;
+            height: 8px;
+            transform: rotate(0);
+            transition: transform 0.3s;
+            fill: #666;
+        }
     }
 
     .item-content {
@@ -198,6 +227,12 @@ $backcolor: #444444;
 }
 
 :deep(.collapse-item[data-open="true"]) {
+    .item-header {
+        & svg {
+            transform: rotate(90deg);
+        }
+    }
+
     .item-content {
         padding: 0 12px 8px 12px;
     }

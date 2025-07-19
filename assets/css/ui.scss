@@ -109,6 +109,7 @@
 }
 
 .ui-tooltip-content {
+    contain: content;
     position: fixed;
     left: 0;
     top: 0;
@@ -254,5 +255,6 @@
     }
 }
 
-.ui-collapse-group {
-}
+// .ui-collapse-group {
+//     display: flex;
+// }

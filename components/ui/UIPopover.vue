@@ -66,7 +66,9 @@ const popoverContentStyle = computed(() => {
     const rect = rootRect.value.shrink(1);
     const tooltipRect = rect.anchorOutside(finalAnchor.value, Rect.fromDOMRect(popoverContentRef.value.getBoundingClientRect()));
     return {
-        transform: `translate(${tooltipRect.x}px, ${tooltipRect.y}px)`,
+        // transform: `translate(${tooltipRect.x}px, ${tooltipRect.y}px)`,
+        left: tooltipRect.x + 'px',
+        top: tooltipRect.y + 'px',
     };
 });
 

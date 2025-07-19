@@ -7,6 +7,13 @@ export default defineNuxtConfig({
     imports: {
         dirs: ["stores/**", "composables/**", "utils/**"],
     },
+    components: [
+        {
+            path: "components/",
+            global: true,
+            pathPrefix: false,
+        },
+    ],
     app: {
         rootAttrs: {
             id: "app",
