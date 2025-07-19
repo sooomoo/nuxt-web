@@ -18,7 +18,7 @@ export default defineNuxtConfig({
         rootAttrs: {
             id: "app",
         },
-        // rootTag: "body",
+        rootTag: "body",
         // layoutTransition: { name: 'layout', mode: 'out-in' },
         // pageTransition: { name: 'page', mode: 'out-in' },
         head: {

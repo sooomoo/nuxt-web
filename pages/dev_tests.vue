@@ -73,7 +73,10 @@ const defaultOpenedItems = ['2'];
             </UIPopover>
         </div>
     </UIScrollable>
-    <UICenter class="align-test">align</UICenter>
+    <div class="ui-flex">
+        <UICenter class="align-test">center</UICenter>
+        <UIAlign vertical="top" horizontal="center" class="align-test">Align</UIAlign>
+    </div>
     <UIFlex direction="column" class="flex-test">
         <UIAlign vertical='center' horizontal='center' class="size">124</UIAlign>
         <UIFlexFillRemain direction="vertical" scroll-if-need>
@@ -102,7 +105,6 @@ const defaultOpenedItems = ['2'];
             {{ item.content }}
         </template>
     </UICollapseGroup>
-    <div style="height: 1000px;"></div>
 </template>
 
 <style lang="scss" scoped>
