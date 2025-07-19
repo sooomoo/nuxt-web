@@ -52,7 +52,8 @@ html[data-theme='dark'] {
 
 /* 设置滚动条轨道 */
 ::-webkit-scrollbar-track {
-    background: transparent;
+    background: #e8e8e8;
+    border-radius: 50px;
 }
 
 /* 设置滚动条滑块 */
@@ -60,11 +61,9 @@ html[data-theme='dark'] {
     background: #999;
     border-radius: 50px;
     transition: background 0.3s ease;
-}
-
-/* 鼠标悬停在滑块上时的样式 */
-::-webkit-scrollbar-thumb:hover {
-    background: #777;
+    &:hover {
+        background: #777;
+    }
 }
 
 /* 设置滚动条角落（当同时有水平和垂直滚动条时） */
