@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { logger } from 'vuepkg';
+
 const activeTab = ref(0);
 const tabList = [
     { title: '报告模', id: 0 },
@@ -26,10 +28,29 @@ const collapseItems = [{
 }];
 const defaultOpenedItems = ['2'];
 
+const onClickStartSSE = () => {
+    const id = Date.now();
+    const url = import.meta.env.VITE_API_BASE_URL + '/sse/ai/ask?id=' + id;
+    logger.debug('Start SSE', url);
+    const source = new EventSource(url, {
+        withCredentials: true,
+    });
+    source.onopen = (event) => {
+        logger.info('sse open', event);
+    };
+    source.onmessage = (event) => {
+        logger.info('sse message', event.data);
+    };
+    source.onerror = (event) => {
+        logger.error('sse error', event);
+    };
+};
+
 </script>
 
 <template>
     <h1>Dev Tests</h1>
+    <button @click="onClickStartSSE">Start SSE</button>
     <UITab v-model:active-index="activeTab" class="tab-test" :items="tabList"></UITab>
     <UITab v-model:active-index="activeTab" class="vtab-test" :items="vtabList" orientation="vertical"></UITab>
     <UITooltiop tooltip="This is a tooltip" class="tooltip-test">
