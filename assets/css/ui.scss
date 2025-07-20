@@ -259,3 +259,16 @@
 // .ui-collapse-group {
 //     display: flex;
 // }
+
+.ui-virtual-list {
+    overflow-y: auto;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    & .ui-virtual-content {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+    }
+}
