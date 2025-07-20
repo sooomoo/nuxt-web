@@ -13,6 +13,13 @@ const listItemsRef = ref<HTMLDivElement[]>([]);
 
 const scrollTop = ref(0);
 const measuredHeights = ref<{ [key: string]: number }>({});// 存储实际高度
+
+watch(() => props.items, () => {
+    measuredHeights.value = {};
+    listItemsRef.value = [];
+    scrollTop.value = 0;
+}, { deep: true });
+
 // 动态总高度
 const totalHeight = computed(() => {
     let height = 0;
@@ -66,9 +73,8 @@ const handleScroll = () => {
         return;
     }
     scrollTop.value = containerRef.value.scrollTop;
-    requestAnimationFrame(() => {
-        updateMeasuredHeights();
-    });
+
+    scheduleMeasureHeights();
 };
 
 // 偏移量计算
@@ -81,27 +87,32 @@ const offset = computed(() => {
     return sum;
 });
 
-// 测量元素高度
-const updateMeasuredHeights = () => {
-    listItemsRef.value.forEach((el) => {
-        const height = el.offsetHeight;
-        const itemId = el.dataset.itemId || '';
-        if (height !== measuredHeights.value[itemId]) {
-            measuredHeights.value[itemId] = height;
-        }
-    });
+// 测量元素高度 
+let pendingUpdate = false;
+const scheduleMeasureHeights = () => {
+    if (!pendingUpdate) {
+        pendingUpdate = true;
+        requestAnimationFrame(() => {
+            listItemsRef.value.forEach((el) => {
+                const height = el.offsetHeight;
+                const itemId = el.dataset.itemId || '';
+                if (height !== measuredHeights.value[itemId]) {
+                    measuredHeights.value[itemId] = height;
+                }
+            });
+            pendingUpdate = false;
+        });
+    }
 };
 
 // 元素尺寸变化监听
 const onItemResize = () => {
-    nextTick(() => {
-        updateMeasuredHeights();
-    });
+    scheduleMeasureHeights();
 };
 
 onMounted(() => {
     // 初始测量
-    nextTick(updateMeasuredHeights);
+    scheduleMeasureHeights();
 });
 
 </script>
