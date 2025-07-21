@@ -8,6 +8,9 @@ watchEffect(() => {
     log.debug("routing...path is : ", route.fullPath);
     log.debug("authStore.user is : ", authStore.user);
 });
+const showFooter = computed(() => {
+    return !route.path.includes('/virtual_list_tests');
+});
 </script>
 
 <template>
@@ -23,9 +26,7 @@ watchEffect(() => {
     <main class="default-layout__body">
         <slot />
     </main>
-    <footer class="flex-center default-layout__footer">
-        Copyright &copy; 2023
-    </footer>
+    <Footer v-if="showFooter" />
 </template>
 
 <style lang="scss" scoped>

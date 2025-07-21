@@ -9,37 +9,37 @@ const items = Array.from({ length: 1000 }, (_, i) => ({
 
 <template>
     <ClientOnly>
-        <div class="scroller-container">
-            <UIVirtualList :items="items" :item-height="50" :buffer="20" :gap="{ row: 10, column: 10 }" :column="1">
-                <template #item="{ item, index }">
-                    <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
-                </template>
-            </UIVirtualList>
-        </div>
+        <UIVirtualList class="virtual-list" :items="items" :item-height="50" :buffer="20" :gap="{ row: 10, column: 10 }"
+            :column="2">
+            <template #header>
+                <h1>Header</h1>
+            </template>
+            <template #footer>
+                <Footer></Footer>
+            </template>
+            <template #item="{ item, index }">
+                <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
+            </template>
+        </UIVirtualList>
     </ClientOnly>
 </template>
 
 <style lang="scss" scoped>
-.scroller-container {
-    height: 500px;
-
-    .before {
-        height: 50px;
-        line-height: 50px;
-        position: sticky;
-        top: 100px;
-    }
+.virtual-list {
+    height: calc(100vh - var(--header-height));
 }
 
 .item {
     height: 50px;
     line-height: 50px;
     border: 1px solid #ccc;
+    align-content: center;
 }
 
 .item-even {
     height: 80px;
     line-height: 50px;
     border: 1px solid #ccc;
+    align-content: center;
 }
 </style>

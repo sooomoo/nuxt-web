@@ -14,6 +14,32 @@ const props = defineProps<{
 
 const containerRef = ref<HTMLDivElement | null>(null);
 const listItemsRef = ref<HTMLDivElement[]>([]);
+const itemResizeObserver = new ResizeObserver((entries) => {
+    logger.debug('itemResizeObserver', entries);
+    for (const entry of entries) {
+        if (!(entry.target instanceof HTMLDivElement)) {
+            continue;
+        }
+
+        const height = entry.contentRect.height;
+        const itemId = entry.target.dataset.itemId || '';
+        if (!itemId) {
+            continue;
+        }
+        if (height !== measuredHeights.value[itemId]) {
+            measuredHeights.value[itemId] = height;
+        }
+    }
+});
+watch(listItemsRef, (newVal, oldVal) => {
+    logger.debug('listItemsRef', newVal, oldVal);
+    oldVal.forEach((item) => {
+        itemResizeObserver.unobserve(item);
+    });
+    newVal.forEach((item) => {
+        itemResizeObserver.observe(item);
+    });
+}, { deep: true });
 
 const containerSize = shallowRef<{ width: number, height: number }>({ width: 0, height: 0 });
 
@@ -23,9 +49,14 @@ const measuredHeights = ref<{ [key: string]: number }>({});// 存储实际高度
 const finalColumn = computed(() => props.column || 1);
 const finalGap = computed(() => props.gap || { row: 0, column: 0 });
 
+const headerRef = ref<HTMLDivElement | null>(null);
+const headerHeight = ref(0);
+const footerRef = ref<HTMLDivElement | null>(null);
+const footerHeight = ref(0);
+
 // 动态总高度
 const totalHeight = computed(() => {
-    let height = 0;
+    let height = headerHeight.value + footerHeight.value;
     for (let i = 0; i < props.items.length; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -39,11 +70,10 @@ const totalHeight = computed(() => {
     return height;
 });
 
-
 // 核心计算属性：可见项范围
 const visibleRange = computed(() => {
     let start = 0;
-    let offset = 0;
+    let offset = headerHeight.value;
     for (let i = 0; i < props.items.length; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -102,6 +132,11 @@ const visibleItems = computed(() => {
         offset += Math.max(...rowHeights);
         offset += finalGap.value.row;
     }
+    // footer 始终在最后 
+    if (footerRef.value) {
+        footerRef.value!.style.transform = `translateY(${offset}px)`;
+    }
+
     return items;
 });
 
@@ -120,7 +155,7 @@ const handleScroll = () => {
 
 // 偏移量计算
 const getStartOffset = () => {
-    let sum = 0;
+    let sum = headerHeight.value;
     for (let i = 0; i < visibleRange.value.start; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -134,47 +169,53 @@ const getStartOffset = () => {
     return sum;
 };
 
-// 测量元素高度 
-let pendingUpdate = false;
-const scheduleMeasureHeights = () => {
-    if (pendingUpdate) return;
-    pendingUpdate = true;
-    requestAnimationFrame(() => {
-        listItemsRef.value.forEach((el) => {
-            const height = el.offsetHeight;
-            const itemId = el.dataset.itemId || '';
-            if (height !== measuredHeights.value[itemId]) {
-                measuredHeights.value[itemId] = height;
-            }
-        });
-        pendingUpdate = false;
-    });
-};
-
-// 元素尺寸变化监听
-const onItemResize = () => {
-    scheduleMeasureHeights();
-};
+// // 测量元素高度 
+// let pendingUpdate = false;
+// const scheduleMeasureHeights = () => {
+//     if (pendingUpdate) return;
+//     pendingUpdate = true;
+//     requestAnimationFrame(() => {
+//         listItemsRef.value.forEach((el) => {
+//             const height = el.offsetHeight;
+//             const itemId = el.dataset.itemId || '';
+//             if (height !== measuredHeights.value[itemId]) {
+//                 measuredHeights.value[itemId] = height;
+//             }
+//         });
+//         pendingUpdate = false;
+//     });
+// };
 
 const resizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
-        containerSize.value = entry.contentRect;
+        if (entry.target === headerRef.value) {
+            headerHeight.value = entry.contentRect.height;
+        } else if (entry.target === footerRef.value) {
+            footerHeight.value = entry.contentRect.height;
+        } else {
+            containerSize.value = entry.contentRect;
+        }
     }
 });
 
 onMounted(() => {
     // 初始测量
-    scheduleMeasureHeights();
-    if (containerRef.value) {
+    // scheduleMeasureHeights();
+    if (containerRef.value && headerRef.value && footerRef.value) {
         resizeObserver.observe(containerRef.value);
+        resizeObserver.observe(headerRef.value);
+        resizeObserver.observe(footerRef.value);
         containerSize.value = {
             width: containerRef.value.clientWidth,
             height: containerRef.value.clientHeight,
         };
+        headerHeight.value = headerRef.value?.clientHeight || 0;
+        footerHeight.value = footerRef.value?.clientHeight || 0;
     }
 });
 onUnmounted(() => {
     resizeObserver.disconnect();
+    itemResizeObserver.disconnect();
 });
 
 </script>
@@ -183,9 +224,15 @@ onUnmounted(() => {
     <div ref="containerRef" class="ui-virtual-list" @scroll="handleScroll">
         <!-- 撑开滚动条的占位元素 -->
         <div :style="{ height: totalHeight + 'px' }"></div>
+        <div ref="headerRef" class="ui-virtual-list-header">
+            <slot name="header"></slot>
+        </div>
         <div v-for="(item, index) in visibleItems" :key="item.id" ref="listItemsRef" class="ui-virtual-list-item"
-            :data-item-id="item.id" :style="item.__style__" @resize="onItemResize">
+            :data-item-id="item.id" :style="item.__style__">
             <slot name="item" :item="item" :index="visibleRange.start + index"></slot>
+        </div>
+        <div ref="footerRef" class="ui-virtual-list-footer">
+            <slot name="footer"></slot>
         </div>
     </div>
 </template>

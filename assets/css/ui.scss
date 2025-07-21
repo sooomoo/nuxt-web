@@ -271,6 +271,18 @@
         left: 0;
         width: 100%;
     }
+    & .ui-virtual-list-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+    }
+    & .ui-virtual-list-footer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+    }
     & .ui-virtual-list-item {
         position: absolute;
         top: 0;
