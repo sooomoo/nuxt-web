@@ -1,10 +1,14 @@
-<script setup lang="ts" generic="T extends { id: string  }">
+<script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
 import { logger } from 'vuepkg';
-
 
 const props = defineProps<{
     items: T[]
     itemHeight: number
+    column?: number
+    gap?: {
+        row: number
+        column: number
+    }
     buffer: number
 }>();
 
@@ -14,11 +18,14 @@ const listItemsRef = ref<HTMLDivElement[]>([]);
 const scrollTop = ref(0);
 const measuredHeights = ref<{ [key: string]: number }>({});// 存储实际高度
 
-watch(() => props.items, () => {
-    measuredHeights.value = {};
-    listItemsRef.value = [];
-    scrollTop.value = 0;
-}, { deep: true });
+const finalColumn = computed(() => props.column || 1);
+const finalGap = computed(() => props.gap || { row: 0, column: 0 });
+
+// watch(() => props.items, () => {
+//     measuredHeights.value = {};
+//     listItemsRef.value = [];
+//     scrollTop.value = 0;
+// }, { deep: true });
 
 // 动态总高度
 const totalHeight = computed(() => {
@@ -64,6 +71,21 @@ const visibleRange = computed(() => {
 const visibleItems = computed(() => {
     const items = props.items.slice(visibleRange.value.start, visibleRange.value.end);
     logger.debug('visibleItems', items);
+    // 计算每个项的偏移量
+    let offset = getStartOffset();
+    for (let i = 0; i < items.length; i += finalColumn.value) {
+        const element = items[i];
+        items[i] = {
+            ...items[i],
+            __style__: {
+                transform: `translateY(${offset}px)`,
+                width: '100%',
+            },
+        };
+        const rowHeight = measuredHeights.value[element.id] || props.itemHeight;
+        offset += rowHeight;
+        offset += finalGap.value.row;
+    }
     return items;
 });
 
@@ -78,14 +100,14 @@ const handleScroll = () => {
 };
 
 // 偏移量计算
-const offset = computed(() => {
+const getStartOffset = () => {
     let sum = 0;
     for (let i = 0; i < visibleRange.value.start; i++) {
         sum += measuredHeights.value[props.items[i].id] || props.itemHeight;
     }
     logger.debug('offset', sum, measuredHeights.value);
     return sum;
-});
+};
 
 // 测量元素高度 
 let pendingUpdate = false;
@@ -121,11 +143,15 @@ onMounted(() => {
     <div ref="containerRef" class="ui-virtual-list" @scroll="handleScroll">
         <!-- 撑开滚动条的占位元素 -->
         <div :style="{ height: totalHeight + 'px' }"></div>
-        <div class="ui-virtual-content" :style="{ transform: `translateY(${offset}px)` }">
+        <!-- <div class="ui-virtual-content" :style="{ transform: `translateY(${offset}px)` }">
             <div v-for="(item, index) in visibleItems" :key="item.id" ref="listItemsRef" :data-item-id="item.id"
                 @resize="onItemResize">
                 <slot name="item" :item="item" :index="visibleRange.start + index"></slot>
             </div>
+        </div> -->
+        <div v-for="(item, index) in visibleItems" :key="item.id" ref="listItemsRef" class="ui-virtual-list-item"
+            :data-item-id="item.id" :style="item.__style__" @resize="onItemResize">
+            <slot name="item" :item="item" :index="visibleRange.start + index"></slot>
         </div>
     </div>
 </template>
