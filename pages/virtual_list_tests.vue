@@ -10,7 +10,7 @@ const items = Array.from({ length: 1000 }, (_, i) => ({
 <template>
     <ClientOnly>
         <div class="scroller-container">
-            <UIVirtualList :items="items" :item-height="50" :buffer="20" :gap="{ row: 10, column: 10 }">
+            <UIVirtualList :items="items" :item-height="50" :buffer="20" :gap="{ row: 10, column: 10 }" :column="1">
                 <template #item="{ item, index }">
                     <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
                 </template>
