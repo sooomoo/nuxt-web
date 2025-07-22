@@ -4,6 +4,7 @@ import { logger } from 'vuepkg';
 const props = defineProps<{
     items: T[]
     itemHeight: number
+    contentWidth?: number
     column?: number
     gap?: {
         row: number
@@ -111,10 +112,16 @@ const visibleItems = computed(() => {
         let itemWidth = '100%';
         let itemWidthVal = 0;
         if (finalColumn.value > 1) {
-            itemWidthVal = (containerSize.value.width - finalGap.value.column * (finalColumn.value - 1)) / finalColumn.value;
+            itemWidthVal = ((props.contentWidth || containerSize.value.width) - finalGap.value.column * (finalColumn.value - 1)) / finalColumn.value;
             itemWidth = `${itemWidthVal}px`;
         }
         let offsetX = 0;
+        if (props.contentWidth && props.contentWidth > 0) {
+            offsetX = (containerSize.value.width - props.contentWidth) / 2;
+        }
+        if (offsetX < 0) {
+            offsetX = 0;
+        }
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
             const item = items[i + j];
@@ -168,23 +175,6 @@ const getStartOffset = () => {
     logger.debug('offset', sum, measuredHeights.value);
     return sum;
 };
-
-// // 测量元素高度 
-// let pendingUpdate = false;
-// const scheduleMeasureHeights = () => {
-//     if (pendingUpdate) return;
-//     pendingUpdate = true;
-//     requestAnimationFrame(() => {
-//         listItemsRef.value.forEach((el) => {
-//             const height = el.offsetHeight;
-//             const itemId = el.dataset.itemId || '';
-//             if (height !== measuredHeights.value[itemId]) {
-//                 measuredHeights.value[itemId] = height;
-//             }
-//         });
-//         pendingUpdate = false;
-//     });
-// };
 
 const resizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
