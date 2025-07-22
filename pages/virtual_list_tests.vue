@@ -10,7 +10,7 @@ const items = Array.from({ length: 1000 }, (_, i) => ({
 <template>
     <ClientOnly>
         <UIVirtualList class="virtual-list" :items="items" :item-height="50" :buffer="20" :gap="{ row: 10, column: 10 }"
-            :column="2" :content-width="1000">
+            :column="1" :content-width="1000">
             <template #header>
                 <h1>Header</h1>
             </template>
@@ -31,14 +31,12 @@ const items = Array.from({ length: 1000 }, (_, i) => ({
 
 .item {
     height: 50px;
-    line-height: 50px;
     border: 1px solid #ccc;
     align-content: center;
 }
 
 .item-even {
-    height: 80px;
-    line-height: 50px;
+    height: 50px;
     border: 1px solid #ccc;
     align-content: center;
 }
