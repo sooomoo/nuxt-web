@@ -172,7 +172,12 @@ const visibleItems = computed(() => {
     }
     // footer 始终在最后 
     if (footerRef.value) {
-        footerRef.value!.style.transform = `translateY(${offset}px)`;
+        if (visibleRange.value.end >= props.items.length - 1) {
+            footerRef.value!.style.transform = `translateY(${offset}px)`;
+            footerRef.value!.style.visibility = 'visible';
+        } else {
+            footerRef.value!.style.visibility = 'hidden';
+        }
     }
 
     return items;
