@@ -1,5 +1,6 @@
 <script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
 import { logger } from 'vuepkg';
+import { getScrollParent } from './scripts/ScrollParent';
 
 const props = defineProps<{
     items: T[]
@@ -104,7 +105,7 @@ const visibleRange = computed(() => {
             rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
         }
         offset += Math.max(...rowHeights);
-        if (offset >= scrollTop.value) {
+        if (offset >= Math.ceil(scrollTop.value)) {
             start = i;
             break;
         }
@@ -115,7 +116,7 @@ const visibleRange = computed(() => {
         end = props.items.length;
     }
 
-    let sum = padding.top + headerHeight.value;
+    let sum = padding.top + headerHeight.value + (props.gap?.row ?? 0);
     for (let i = 0; i < start; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -126,6 +127,9 @@ const visibleRange = computed(() => {
         sum += Math.max(...rowHeights);
     }
     logger.debug('offsets', sum, scrollTop.value);
+    if (sum > totalHeight.value) {
+        sum = totalHeight.value;
+    }
 
     return { start, end, startOffset: sum };
 });
@@ -175,13 +179,44 @@ const visibleItems = computed(() => {
 });
 
 // 滚动事件处理（防抖优化）
-const handleScroll = () => {
+let scrollHandling = false;
+const handleScroll = (e: Event) => {
+    logger.debug('scrollTop', e.target);
+    if (scrollHandling) return;
+    scrollHandling = true;
     requestAnimationFrame(() => {
-        if (!containerRef.value) {
+        if (!scrollParent.value) {
+            scrollHandling = false;
             return;
         }
-        scrollTop.value = containerRef.value.scrollTop;
+        if (scrollParent.value instanceof Window) {
+            scrollTop.value = scrollParent.value.scrollY;
+        } else {
+            scrollTop.value = scrollParent.value.scrollTop;
+        }
+        scrollHandling = false;
     });
+};
+
+const updateScrollParentSize = () => {
+    if (!scrollParent.value) {
+        return;
+    }
+    if (scrollParent.value instanceof Window) {
+        containerSize.value = {
+            width: scrollParent.value.innerWidth,
+            height: scrollParent.value.innerHeight,
+        };
+    } else {
+        containerSize.value = {
+            width: scrollParent.value.clientWidth,
+            height: scrollParent.value.clientHeight,
+        };
+    }
+};
+const handleResize = (e: Event) => {
+    logger.debug('resize', e.target);
+    updateScrollParentSize();
 };
 
 const resizeObserver = new ResizeObserver(entries => {
@@ -190,22 +225,28 @@ const resizeObserver = new ResizeObserver(entries => {
             headerHeight.value = entry.contentRect.height;
         } else if (entry.target === footerRef.value) {
             footerHeight.value = entry.contentRect.height;
-        } else {
+        } else if (entry.target === scrollParent.value) {
             containerSize.value = entry.contentRect;
         }
     }
 });
 
+const scrollParent = ref<Window | Element | null>(null);
+
 onMounted(() => {
+    // 滚动父元素
+    scrollParent.value = getScrollParent(containerRef.value);
+    if (scrollParent.value) {
+        scrollParent.value.addEventListener('scroll', handleScroll, { passive: true });
+        logger.debug('scrollParent', scrollParent.value);
+        scrollParent.value.addEventListener('resize', handleResize, { passive: true });
+
+        updateScrollParentSize();
+    }
     // 初始测量
-    if (containerRef.value && headerRef.value && footerRef.value) {
-        resizeObserver.observe(containerRef.value);
+    if (headerRef.value && footerRef.value) {
         resizeObserver.observe(headerRef.value);
         resizeObserver.observe(footerRef.value);
-        containerSize.value = {
-            width: containerRef.value.clientWidth,
-            height: containerRef.value.clientHeight,
-        };
         headerHeight.value = headerRef.value?.clientHeight || 0;
         footerHeight.value = footerRef.value?.clientHeight || 0;
     }
@@ -213,14 +254,19 @@ onMounted(() => {
 onUnmounted(() => {
     resizeObserver.disconnect();
     itemResizeObserver.disconnect();
+
+    if (scrollParent.value) {
+        scrollParent.value.removeEventListener('scroll', handleScroll);
+        scrollParent.value.removeEventListener('resize', handleResize);
+    }
 });
 
 </script>
 
 <template>
-    <div ref="containerRef" class="ui-virtual-list" @scroll="handleScroll">
+    <div ref="containerRef" class="ui-virtual-list">
         <!-- 撑开滚动条的占位元素 -->
-        <div :style="{ height: totalHeight + 'px' }"></div>
+        <div :style="{ minHeight: totalHeight + 'px' }"></div>
         <div ref="headerRef" class="ui-virtual-list-header">
             <slot name="header"></slot>
         </div>

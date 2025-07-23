@@ -8,25 +8,52 @@ const items = Array.from({ length: 1000 }, (_, i) => ({
 </script>
 
 <template>
+    <div class="sth-big-header">
+
+    </div>
+    <div class="sth-sticky">
+        <h1>Sth sticky</h1>
+    </div>
     <ClientOnly>
-        <UIVirtualList class="virtual-list" :items="items" :item-height="50" :buffer="20" :gap="{ row: 10, column: 10 }"
-            :column="1" :content-width="1000">
+        <!-- <div class="virtual-list"> -->
+        <UIVirtualList :items="items" :item-height="50" :buffer="20" :gap="{ row: 10, column: 10 }" :column="2"
+            :content-width="1000">
             <template #header>
-                <h1>Header</h1>
+                <h1 style="background-color: blanchedalmond;">Header</h1>
             </template>
             <template #footer>
-                <Footer></Footer>
+                <Footer style="background-color: aquamarine;"></Footer>
             </template>
             <template #item="{ item, index }">
                 <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
             </template>
         </UIVirtualList>
+        <!-- </div> -->
     </ClientOnly>
 </template>
 
 <style lang="scss" scoped>
+.sth-big-header {
+    height: 200px;
+    background-color: azure;
+}
+
+h1 {
+    margin: 0;
+}
+
+.sth-sticky {
+    position: sticky;
+    top: var(--header-height);
+    background-color: #f00;
+    z-index: 2;
+    margin: 24px 0;
+    height: 70px;
+}
+
 .virtual-list {
     height: calc(100vh - var(--header-height));
+    overflow-y: auto;
 }
 
 .item {
