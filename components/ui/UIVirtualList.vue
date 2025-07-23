@@ -2,6 +2,18 @@
 import { logger } from 'vuepkg';
 import { getScrollParent } from './scripts/ScrollParent';
 
+class FallbackResizeObserver implements ResizeObserver {
+    disconnect(): void {
+        logger.debug('disconnect');
+    }
+    observe(target: Element, options?: ResizeObserverOptions): void {
+        logger.debug('observe', target, options);
+    }
+    unobserve(target: Element): void {
+        logger.debug('unobserve', target);
+    }
+}
+
 const props = defineProps<{
     items: T[]
     itemHeight: number
@@ -30,7 +42,7 @@ const headerHeight = ref(0);
 const footerRef = ref<HTMLDivElement | null>(null);
 const footerHeight = ref(0);
 
-const itemResizeObserver = new ResizeObserver((entries) => {
+const itemResizeObserver = typeof ResizeObserver === 'undefined' ? new FallbackResizeObserver() : new ResizeObserver((entries) => {
     // logger.debug('itemResizeObserver', entries);
     for (const entry of entries) {
         if (!(entry.target instanceof HTMLDivElement)) {
@@ -185,8 +197,8 @@ const visibleItems = computed(() => {
 
 // 滚动事件处理（防抖优化）
 let scrollHandling = false;
-const handleScroll = (e: Event) => {
-    logger.debug('scrollTop', e.target);
+const handleScroll = () => {
+    // logger.debug('scrollTop', e);
     if (scrollHandling) return;
     scrollHandling = true;
     requestAnimationFrame(() => {
@@ -224,7 +236,7 @@ const handleResize = (e: Event) => {
     updateScrollParentSize();
 };
 
-const resizeObserver = new ResizeObserver(entries => {
+const resizeObserver = typeof ResizeObserver === 'undefined' ? new FallbackResizeObserver() : new ResizeObserver(entries => {
     for (const entry of entries) {
         if (entry.target === headerRef.value) {
             headerHeight.value = entry.contentRect.height;
@@ -238,7 +250,17 @@ const resizeObserver = new ResizeObserver(entries => {
 
 const scrollParent = ref<Window | Element | null>(null);
 
-onMounted(() => {
+const doRelease = () => {
+    resizeObserver.disconnect();
+    itemResizeObserver.disconnect();
+
+    if (scrollParent.value) {
+        scrollParent.value.removeEventListener('scroll', handleScroll);
+        scrollParent.value.removeEventListener('resize', handleResize);
+    }
+};
+const doInit = () => {
+    doRelease();
     // 滚动父元素
     scrollParent.value = getScrollParent(containerRef.value);
     if (scrollParent.value) {
@@ -247,6 +269,9 @@ onMounted(() => {
         scrollParent.value.addEventListener('resize', handleResize, { passive: true });
 
         updateScrollParentSize();
+        handleScroll();
+        // scrollTop.value = 0;
+        // scrollParent.value.scrollTo({ left: 0, top: 0, behavior: 'instant' });
     }
     // 初始测量
     if (headerRef.value && footerRef.value) {
@@ -255,15 +280,14 @@ onMounted(() => {
         headerHeight.value = headerRef.value?.clientHeight || 0;
         footerHeight.value = footerRef.value?.clientHeight || 0;
     }
+};
+
+onMounted(() => {
+    // 滚动父元素
+    doInit();
 });
 onUnmounted(() => {
-    resizeObserver.disconnect();
-    itemResizeObserver.disconnect();
-
-    if (scrollParent.value) {
-        scrollParent.value.removeEventListener('scroll', handleScroll);
-        scrollParent.value.removeEventListener('resize', handleResize);
-    }
+    doRelease();
 });
 
 </script>
@@ -279,7 +303,7 @@ onUnmounted(() => {
             :data-item-id="item.id" :style="item.__style__">
             <slot name="item" :item="item" :index="visibleRange.start + index"></slot>
         </div>
-        <div ref="footerRef" class="ui-virtual-list-footer">
+        <div ref="footerRef" class="ui-virtual-list-footer" style="visibility: hidden;">
             <slot name="footer"></slot>
         </div>
     </div>
