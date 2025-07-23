@@ -36,7 +36,7 @@ const nowSeconds = Date.now() / 1000;
 <style lang="scss" scoped>
 .sth-big-header {
     height: 200px;
-    background-color: rgb(54, 54, 54);
+    background-color: rgb(174, 248, 228);
 }
 
 h1 {
