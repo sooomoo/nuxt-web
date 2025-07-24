@@ -1,18 +1,8 @@
 <script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
 import { logger } from 'vuepkg';
+import { FallbackResizeObserver, useElementSizes } from './scripts/Elements';
 import { useScrollParent } from './scripts/ScrollParent';
 
-class FallbackResizeObserver implements ResizeObserver {
-    disconnect(): void {
-        logger.debug('disconnect');
-    }
-    observe(target: Element, options?: ResizeObserverOptions): void {
-        logger.debug('observe', target, options);
-    }
-    unobserve(target: Element): void {
-        logger.debug('unobserve', target);
-    }
-}
 
 interface Padding {
     left: number;
@@ -42,9 +32,8 @@ const finalColumn = computed(() => props.column || 1);
 const finalGap = computed(() => props.gap || { row: 0, column: 0 });
 
 const headerRef = ref<HTMLDivElement | null>(null);
-const headerHeight = ref(0);
 const footerRef = ref<HTMLDivElement | null>(null);
-const footerHeight = ref(0);
+const { elemSizeArray, elemRelease } = useElementSizes(headerRef, footerRef);
 
 const itemResizeObserver = typeof ResizeObserver === 'undefined' ? new FallbackResizeObserver() : new ResizeObserver((entries) => {
     // logger.debug('itemResizeObserver', entries);
@@ -92,7 +81,7 @@ const getContainerPadding = (): Padding => {
 };
 
 const getHeightToIndex = (index: number, padding: Padding) => {
-    let height = padding.top + headerHeight.value + finalRowGap.value;
+    let height = padding.top + elemSizeArray.value[0] + finalRowGap.value;
     for (let i = 0; i < index; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -108,7 +97,7 @@ const getHeightToIndex = (index: number, padding: Padding) => {
 
 const getStartIndex = (padding: Padding) => {
     let start = 0;
-    let offset = padding.top + headerHeight.value + finalRowGap.value;
+    let offset = padding.top + elemSizeArray.value[0] + finalRowGap.value;
     for (let i = 0; i < props.items.length; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -133,7 +122,7 @@ const finalRowGap = computed(() => props.gap?.row ?? 0);
 const totalHeight = computed(() => {
     const padding = getContainerPadding();
     let height = getHeightToIndex(props.items.length, padding);
-    height += footerHeight.value + padding.bottom;
+    height += elemSizeArray.value[1] + padding.bottom;
     logger.debug('totalHeight', height);
     return height;
 });
@@ -204,29 +193,9 @@ const visibleItems = computed(() => {
     return { items, offset: visibleRange.value.startOffset };
 });
 
-const resizeObserver = typeof ResizeObserver === 'undefined' ? new FallbackResizeObserver() : new ResizeObserver(entries => {
-    for (const entry of entries) {
-        if (entry.target === headerRef.value) {
-            headerHeight.value = entry.contentRect.height;
-        } else if (entry.target === footerRef.value) {
-            footerHeight.value = entry.contentRect.height;
-        }
-    }
-});
-
-onMounted(() => {
-    // 初始测量
-    if (headerRef.value && footerRef.value) {
-        resizeObserver.observe(headerRef.value);
-        resizeObserver.observe(footerRef.value);
-        headerHeight.value = headerRef.value?.clientHeight || 0;
-        footerHeight.value = footerRef.value?.clientHeight || 0;
-    }
-});
-
 onUnmounted(() => {
-    resizeObserver.disconnect();
     itemResizeObserver.disconnect();
+    elemRelease();
     releaseScrollParent();
 });
 
