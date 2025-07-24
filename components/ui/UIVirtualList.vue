@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
 import { logger } from 'vuepkg';
-import { getScrollParent } from './scripts/ScrollParent';
+import { useScrollParent } from './scripts/ScrollParent';
 
 class FallbackResizeObserver implements ResizeObserver {
     disconnect(): void {
@@ -21,11 +21,6 @@ interface Padding {
     bottom: number;
 }
 
-interface Size {
-    width: number
-    height: number
-}
-
 const props = defineProps<{
     items: T[]
     itemHeight: number
@@ -40,12 +35,9 @@ const props = defineProps<{
 
 const containerRef = ref<HTMLDivElement | null>(null);
 const listItemsRef = ref<HTMLDivElement[]>([]);
+const { scrollTop, scrollParentSize, releaseScrollParent } = useScrollParent(containerRef);
 
-const scrollParentSize = shallowRef<Size>({ width: 0, height: 0 });
-
-const scrollTop = ref(0);
 const measuredHeights = ref<{ [key: string]: number }>({});// 存储实际高度
-
 const finalColumn = computed(() => props.column || 1);
 const finalGap = computed(() => props.gap || { row: 0, column: 0 });
 
@@ -146,7 +138,6 @@ const totalHeight = computed(() => {
     return height;
 });
 
-
 // 核心计算属性：可见项范围
 const visibleRange = computed(() => {
     const padding = getContainerPadding();
@@ -213,71 +204,17 @@ const visibleItems = computed(() => {
     return { items, offset: visibleRange.value.startOffset };
 });
 
-// 滚动事件处理（防抖优化）
-let scrollHandling = false;
-const handleScrollParentScroll = () => {
-    if (scrollHandling) return;
-    scrollHandling = true;
-    requestAnimationFrame(() => {
-        scrollHandling = false;
-        if (!scrollParent.value) {
-            return;
-        }
-        if (scrollParent.value instanceof Window) {
-            scrollTop.value = scrollParent.value.scrollY;
-        } else {
-            scrollTop.value = scrollParent.value.scrollTop;
-        }
-    });
-};
-
-const updateScrollParentSize = () => {
-    if (!scrollParent.value) {
-        return;
-    }
-    if (scrollParent.value instanceof Window) {
-        scrollParentSize.value = {
-            width: scrollParent.value.innerWidth,
-            height: scrollParent.value.innerHeight,
-        };
-    } else {
-        scrollParentSize.value = {
-            width: scrollParent.value.clientWidth,
-            height: scrollParent.value.clientHeight,
-        };
-    }
-};
-
-const handleScrollParentResize = (e: Event) => {
-    logger.debug('resize', e.target);
-    updateScrollParentSize();
-};
-
 const resizeObserver = typeof ResizeObserver === 'undefined' ? new FallbackResizeObserver() : new ResizeObserver(entries => {
     for (const entry of entries) {
         if (entry.target === headerRef.value) {
             headerHeight.value = entry.contentRect.height;
         } else if (entry.target === footerRef.value) {
             footerHeight.value = entry.contentRect.height;
-        } else if (entry.target === scrollParent.value) {
-            scrollParentSize.value = entry.contentRect;
         }
     }
 });
 
-const scrollParent = ref<Window | Element | null>(null);
-
 onMounted(() => {
-    // 滚动父元素
-    scrollParent.value = getScrollParent(containerRef.value);
-    if (scrollParent.value) {
-        scrollParent.value.addEventListener('scroll', handleScrollParentScroll, { passive: true });
-        logger.debug('scrollParent', scrollParent.value);
-        scrollParent.value.addEventListener('resize', handleScrollParentResize, { passive: true });
-
-        updateScrollParentSize();
-        handleScrollParentScroll();
-    }
     // 初始测量
     if (headerRef.value && footerRef.value) {
         resizeObserver.observe(headerRef.value);
@@ -290,11 +227,7 @@ onMounted(() => {
 onUnmounted(() => {
     resizeObserver.disconnect();
     itemResizeObserver.disconnect();
-
-    if (scrollParent.value) {
-        scrollParent.value.removeEventListener('scroll', handleScrollParentScroll);
-        scrollParent.value.removeEventListener('resize', handleScrollParentResize);
-    }
+    releaseScrollParent();
 });
 
 </script>
