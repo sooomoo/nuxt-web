@@ -14,6 +14,13 @@ class FallbackResizeObserver implements ResizeObserver {
     }
 }
 
+interface Padding {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+}
+
 const props = defineProps<{
     items: T[]
     itemHeight: number
@@ -69,7 +76,7 @@ watch(listItemsRef, (newVal, oldVal) => {
     });
 }, { deep: true });
 
-const getContainerPadding = () => {
+const getContainerPadding = (): Padding => {
     if (!containerRef.value) {
         return { top: 0, bottom: 0, right: 0, left: 0 };
     }
@@ -86,10 +93,27 @@ const getContainerPadding = () => {
     };
 };
 
+const getHeightToIndex = (index: number, padding: Padding) => {
+    let height = padding.top + headerHeight.value + finalRowGap.value;
+    for (let i = 0; i < index; i += finalColumn.value) {
+        const rowHeights: number[] = [];
+        for (let j = 0; j < finalColumn.value; j++) {
+            const item = props.items[i + j];
+            if (!item) continue; // 超出索引范围
+            rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
+        }
+        height += Math.max(...rowHeights);
+        height += finalRowGap.value;
+    }
+    return height;
+};
+
+const finalRowGap = computed(() => props.gap?.row ?? 0);
+
 // 动态总高度
 const totalHeight = computed(() => {
     const padding = getContainerPadding();
-    let height = padding.top + headerHeight.value + footerHeight.value + padding.bottom;
+    let height = padding.top + headerHeight.value + finalRowGap.value;
     for (let i = 0; i < props.items.length; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -98,17 +122,20 @@ const totalHeight = computed(() => {
             rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
         }
         height += Math.max(...rowHeights);
+        height += finalRowGap.value;
     }
-    height = Math.ceil(height);
+    height += footerHeight.value + padding.bottom;
+    // height = Math.ceil(height);
     logger.debug('totalHeight', height);
     return height;
 });
+
 
 // 核心计算属性：可见项范围
 const visibleRange = computed(() => {
     const padding = getContainerPadding();
     let start = 0;
-    let offset = padding.top + headerHeight.value;
+    let offset = padding.top + headerHeight.value + finalRowGap.value;
     for (let i = 0; i < props.items.length; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -117,18 +144,20 @@ const visibleRange = computed(() => {
             rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
         }
         offset += Math.max(...rowHeights);
-        if (offset >= Math.ceil(scrollTop.value)) {
+        offset += finalRowGap.value;
+        if (offset >= scrollTop.value) {
             start = i;
             break;
         }
     }
+
     start = Math.max(0, start - props.buffer * finalColumn.value);
     let end = start + Math.ceil(containerSize.value.height / props.itemHeight) + 2 * props.buffer * finalColumn.value;
     if (end > props.items.length) {
         end = props.items.length;
     }
 
-    let sum = padding.top + headerHeight.value + (props.gap?.row ?? 0);
+    let startOffset = padding.top + headerHeight.value + finalRowGap.value;
     for (let i = 0; i < start; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -136,22 +165,23 @@ const visibleRange = computed(() => {
             if (!item) continue; // 超出索引范围
             rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
         }
-        sum += Math.max(...rowHeights);
+        startOffset += Math.max(...rowHeights);
+        startOffset += finalRowGap.value;
     }
-    logger.debug('offsets', sum, scrollTop.value);
-    if (sum > totalHeight.value) {
-        sum = totalHeight.value;
+    // logger.debug('offsets', startOffset, scrollTop.value);
+    if (startOffset > totalHeight.value) {
+        startOffset = totalHeight.value;
     }
 
-    return { start, end, startOffset: sum };
+    return { start, end, startOffset };
 });
 
 // 可见项列表
 const visibleItems = computed(() => {
     const items = props.items.slice(visibleRange.value.start, visibleRange.value.end);
     // 计算每个项的偏移量
-    let offset = visibleRange.value.startOffset;
-    logger.debug('visibleRange', visibleRange.value, 'startOffset', offset);//, 'visibleItems', items);
+    let offsetY = 0;
+    logger.debug('visibleRange', visibleRange.value, 'startOffset', offsetY);//, 'visibleItems', items);
 
     for (let i = 0; i < items.length; i += finalColumn.value) {
         let itemWidthVal = 0;
@@ -159,12 +189,6 @@ const visibleItems = computed(() => {
             itemWidthVal = ((props.contentWidth || containerSize.value.width) - finalGap.value.column * (finalColumn.value - 1)) / finalColumn.value;
         }
         let offsetX = 0;
-        if (props.contentWidth && props.contentWidth > 0) {
-            offsetX = (containerSize.value.width - props.contentWidth) / 2;
-        }
-        if (offsetX < 0) {
-            offsetX = 0;
-        }
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
             const item = items[i + j];
@@ -172,27 +196,27 @@ const visibleItems = computed(() => {
             items[i + j] = {
                 ...item,
                 __style__: {
-                    transform: `translateY(${offset}px) translateX(${offsetX}px)`,
+                    transform: offsetX > 0 ? `translateY(${offsetY}px) translateX(${offsetX}px)` : `translateY(${offsetY}px)`,
                     width: `${itemWidthVal}px`,
                 },
             };
             rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
             offsetX += itemWidthVal + finalGap.value.column;
         }
-        offset += Math.max(...rowHeights);
-        offset += finalGap.value.row;
+        offsetY += Math.max(...rowHeights);
+        offsetY += finalGap.value.row;
     }
-    // footer 始终在最后 
+    // footer 始终在最后
     if (footerRef.value) {
         if (visibleRange.value.end >= props.items.length - 1) {
-            footerRef.value!.style.transform = `translateY(${offset}px)`;
+            footerRef.value!.style.transform = `translateY(${visibleRange.value.startOffset + offsetY}px)`;
             footerRef.value!.style.visibility = 'visible';
         } else {
             footerRef.value!.style.visibility = 'hidden';
         }
     }
 
-    return items;
+    return { items, offset: visibleRange.value.startOffset };
 });
 
 // 滚动事件处理（防抖优化）
@@ -299,9 +323,14 @@ onUnmounted(() => {
         <div ref="headerRef" class="ui-virtual-list-header">
             <slot name="header"></slot>
         </div>
-        <div v-for="(item, index) in visibleItems" :key="item.id" ref="listItemsRef" class="ui-virtual-list-item"
-            :data-item-id="item.id" :style="item.__style__">
-            <slot name="item" :item="item" :index="visibleRange.start + index"></slot>
+        <div class="ui-virtual-content" :style="{
+            width: props.contentWidth ? props.contentWidth + 'px' : '100%',
+            transform: `translateY(${visibleItems.offset}px)`
+        }">
+            <div v-for="(item, index) in visibleItems.items" :key="item.id" ref="listItemsRef"
+                class="ui-virtual-list-item" :data-item-id="item.id" :style="item.__style__">
+                <slot name="item" :item="item" :index="visibleRange.start + index"></slot>
+            </div>
         </div>
         <div ref="footerRef" class="ui-virtual-list-footer" style="visibility: hidden;">
             <slot name="footer"></slot>

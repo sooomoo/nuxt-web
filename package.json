@@ -1,6 +1,7 @@
 {
     "name": "nuxt-app",
     "private": true,
+    "description": "vuepkg更新后,需要删除node_modules, lock file之后重新安装",
     "type": "module",
     "scripts": {
         "build": "nuxt build",

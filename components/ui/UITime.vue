@@ -5,12 +5,11 @@ const props = defineProps<{
     locale?: string
     format?: string
 }>();
-
 const displayTime = computed(() => {
     if (props.locale) {
         return new Date(props.unixSeconds * 1000).toLocaleString(new Intl.Locale(props.locale));
     } else {
-        return formatDate(props.unixSeconds, props.format);
+        return formatDate(props.unixSeconds, props.format || 'yyyy-MM-dd HH:mm:ss');
     }
 });
 </script>

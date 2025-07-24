@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-const items = Array.from({ length: 1000 }, (_, i) => ({
+const items = Array.from({ length: 300 }, (_, i) => ({
     id: i + '',
     name: `Item ${i}`
 }));
@@ -15,22 +15,20 @@ const nowSeconds = Date.now() / 1000;
     <div class="sth-sticky">
         <h1>Sth sticky</h1>
     </div>
-    <ClientOnly>
-        <!-- <div class="virtual-list"> -->
-        <UIVirtualList :items="items" :item-height="50" :buffer="10" :gap="{ row: 10, column: 10 }" :column="1"
-            :content-width="1000">
-            <template #header>
-                <h1 style="background-color: blanchedalmond;">Header</h1>
-            </template>
-            <template #footer>
-                <Footer style="background-color: aquamarine;"></Footer>
-            </template>
-            <template #item="{ item, index }">
-                <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
-            </template>
-        </UIVirtualList>
-        <!-- </div> -->
-    </ClientOnly>
+    <!-- <div class="virtual-list"> -->
+    <UIVirtualList :items="items" :item-height="50" :buffer="10" :gap="{ row: 10, column: 10 }" :column="1"
+        :content-width="1000">
+        <template #header>
+            <h1 style="background-color: blanchedalmond;">Header</h1>
+        </template>
+        <template #footer>
+            <Footer style="background-color: aquamarine;"></Footer>
+        </template>
+        <template #item="{ item, index }">
+            <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
+        </template>
+    </UIVirtualList>
+    <!-- </div> -->
 </template>
 
 <style lang="scss" scoped>
@@ -66,7 +64,7 @@ h1 {
 }
 
 .item-even {
-    height: 80px;
+    height: 50px;
     border: 1px solid #ccc;
     align-content: center;
     padding: 0 12px;
