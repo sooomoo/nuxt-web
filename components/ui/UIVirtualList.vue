@@ -21,6 +21,11 @@ interface Padding {
     bottom: number;
 }
 
+interface Size {
+    width: number
+    height: number
+}
+
 const props = defineProps<{
     items: T[]
     itemHeight: number
@@ -36,7 +41,7 @@ const props = defineProps<{
 const containerRef = ref<HTMLDivElement | null>(null);
 const listItemsRef = ref<HTMLDivElement[]>([]);
 
-const containerSize = shallowRef<{ width: number, height: number }>({ width: 0, height: 0 });
+const scrollParentSize = shallowRef<Size>({ width: 0, height: 0 });
 
 const scrollTop = ref(0);
 const measuredHeights = ref<{ [key: string]: number }>({});// 存储实际高度
@@ -67,6 +72,7 @@ const itemResizeObserver = typeof ResizeObserver === 'undefined' ? new FallbackR
         }
     }
 });
+
 watch(listItemsRef, (newVal, oldVal) => {
     oldVal.forEach((item) => {
         itemResizeObserver.unobserve(item);
@@ -108,32 +114,7 @@ const getHeightToIndex = (index: number, padding: Padding) => {
     return height;
 };
 
-const finalRowGap = computed(() => props.gap?.row ?? 0);
-
-// 动态总高度
-const totalHeight = computed(() => {
-    const padding = getContainerPadding();
-    let height = padding.top + headerHeight.value + finalRowGap.value;
-    for (let i = 0; i < props.items.length; i += finalColumn.value) {
-        const rowHeights: number[] = [];
-        for (let j = 0; j < finalColumn.value; j++) {
-            const item = props.items[i + j];
-            if (!item) continue; // 超出索引范围
-            rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
-        }
-        height += Math.max(...rowHeights);
-        height += finalRowGap.value;
-    }
-    height += footerHeight.value + padding.bottom;
-    // height = Math.ceil(height);
-    logger.debug('totalHeight', height);
-    return height;
-});
-
-
-// 核心计算属性：可见项范围
-const visibleRange = computed(() => {
-    const padding = getContainerPadding();
+const getStartIndex = (padding: Padding) => {
     let start = 0;
     let offset = padding.top + headerHeight.value + finalRowGap.value;
     for (let i = 0; i < props.items.length; i += finalColumn.value) {
@@ -151,23 +132,31 @@ const visibleRange = computed(() => {
         }
     }
 
-    start = Math.max(0, start - props.buffer * finalColumn.value);
-    let end = start + Math.ceil(containerSize.value.height / props.itemHeight) + 2 * props.buffer * finalColumn.value;
+    return Math.max(0, start - props.buffer * finalColumn.value);
+};
+
+const finalRowGap = computed(() => props.gap?.row ?? 0);
+
+// 动态总高度
+const totalHeight = computed(() => {
+    const padding = getContainerPadding();
+    let height = getHeightToIndex(props.items.length, padding);
+    height += footerHeight.value + padding.bottom;
+    logger.debug('totalHeight', height);
+    return height;
+});
+
+
+// 核心计算属性：可见项范围
+const visibleRange = computed(() => {
+    const padding = getContainerPadding();
+    const start = getStartIndex(padding);
+    let end = start + Math.ceil(scrollParentSize.value.height / props.itemHeight) + 2 * props.buffer * finalColumn.value;
     if (end > props.items.length) {
         end = props.items.length;
     }
 
-    let startOffset = padding.top + headerHeight.value + finalRowGap.value;
-    for (let i = 0; i < start; i += finalColumn.value) {
-        const rowHeights: number[] = [];
-        for (let j = 0; j < finalColumn.value; j++) {
-            const item = props.items[i + j];
-            if (!item) continue; // 超出索引范围
-            rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
-        }
-        startOffset += Math.max(...rowHeights);
-        startOffset += finalRowGap.value;
-    }
+    let startOffset = getHeightToIndex(start, padding);
     // logger.debug('offsets', startOffset, scrollTop.value);
     if (startOffset > totalHeight.value) {
         startOffset = totalHeight.value;
@@ -179,37 +168,42 @@ const visibleRange = computed(() => {
 // 可见项列表
 const visibleItems = computed(() => {
     const items = props.items.slice(visibleRange.value.start, visibleRange.value.end);
-    // 计算每个项的偏移量
-    let offsetY = 0;
-    logger.debug('visibleRange', visibleRange.value, 'startOffset', offsetY);//, 'visibleItems', items);
+    logger.debug('visibleRange', visibleRange.value);//, 'visibleItems', items);
 
+    let itemWidth = 0;
+    if (finalColumn.value > 0) {
+        itemWidth = ((props.contentWidth || scrollParentSize.value.width) - finalGap.value.column * (finalColumn.value - 1)) / finalColumn.value;
+    }
+
+    // 计算各个项的位置
+    let itemOffsetX = 0, itemOffsetY = 0;
+    const rowHeights: number[] = [];
     for (let i = 0; i < items.length; i += finalColumn.value) {
-        let itemWidthVal = 0;
-        if (finalColumn.value > 0) {
-            itemWidthVal = ((props.contentWidth || containerSize.value.width) - finalGap.value.column * (finalColumn.value - 1)) / finalColumn.value;
-        }
-        let offsetX = 0;
-        const rowHeights: number[] = [];
+        itemOffsetX = 0;
+        rowHeights.splice(0, rowHeights.length);
+
         for (let j = 0; j < finalColumn.value; j++) {
             const item = items[i + j];
             if (!item) continue; // 超出索引范围
             items[i + j] = {
                 ...item,
                 __style__: {
-                    transform: offsetX > 0 ? `translateY(${offsetY}px) translateX(${offsetX}px)` : `translateY(${offsetY}px)`,
-                    width: `${itemWidthVal}px`,
+                    transform: itemOffsetX > 0 ? `translateY(${itemOffsetY}px) translateX(${itemOffsetX}px)` : `translateY(${itemOffsetY}px)`,
+                    width: `${itemWidth}px`,
                 },
             };
             rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
-            offsetX += itemWidthVal + finalGap.value.column;
+            itemOffsetX += itemWidth + finalGap.value.column;
         }
-        offsetY += Math.max(...rowHeights);
-        offsetY += finalGap.value.row;
+
+        itemOffsetY += Math.max(...rowHeights);
+        itemOffsetY += finalGap.value.row;
     }
+
     // footer 始终在最后
     if (footerRef.value) {
         if (visibleRange.value.end >= props.items.length - 1) {
-            footerRef.value!.style.transform = `translateY(${visibleRange.value.startOffset + offsetY}px)`;
+            footerRef.value!.style.transform = `translateY(${visibleRange.value.startOffset + itemOffsetY}px)`;
             footerRef.value!.style.visibility = 'visible';
         } else {
             footerRef.value!.style.visibility = 'hidden';
@@ -221,13 +215,12 @@ const visibleItems = computed(() => {
 
 // 滚动事件处理（防抖优化）
 let scrollHandling = false;
-const handleScroll = () => {
-    // logger.debug('scrollTop', e);
+const handleScrollParentScroll = () => {
     if (scrollHandling) return;
     scrollHandling = true;
     requestAnimationFrame(() => {
+        scrollHandling = false;
         if (!scrollParent.value) {
-            scrollHandling = false;
             return;
         }
         if (scrollParent.value instanceof Window) {
@@ -235,7 +228,6 @@ const handleScroll = () => {
         } else {
             scrollTop.value = scrollParent.value.scrollTop;
         }
-        scrollHandling = false;
     });
 };
 
@@ -244,18 +236,19 @@ const updateScrollParentSize = () => {
         return;
     }
     if (scrollParent.value instanceof Window) {
-        containerSize.value = {
+        scrollParentSize.value = {
             width: scrollParent.value.innerWidth,
             height: scrollParent.value.innerHeight,
         };
     } else {
-        containerSize.value = {
+        scrollParentSize.value = {
             width: scrollParent.value.clientWidth,
             height: scrollParent.value.clientHeight,
         };
     }
 };
-const handleResize = (e: Event) => {
+
+const handleScrollParentResize = (e: Event) => {
     logger.debug('resize', e.target);
     updateScrollParentSize();
 };
@@ -267,35 +260,23 @@ const resizeObserver = typeof ResizeObserver === 'undefined' ? new FallbackResiz
         } else if (entry.target === footerRef.value) {
             footerHeight.value = entry.contentRect.height;
         } else if (entry.target === scrollParent.value) {
-            containerSize.value = entry.contentRect;
+            scrollParentSize.value = entry.contentRect;
         }
     }
 });
 
 const scrollParent = ref<Window | Element | null>(null);
 
-const doRelease = () => {
-    resizeObserver.disconnect();
-    itemResizeObserver.disconnect();
-
-    if (scrollParent.value) {
-        scrollParent.value.removeEventListener('scroll', handleScroll);
-        scrollParent.value.removeEventListener('resize', handleResize);
-    }
-};
-const doInit = () => {
-    doRelease();
+onMounted(() => {
     // 滚动父元素
     scrollParent.value = getScrollParent(containerRef.value);
     if (scrollParent.value) {
-        scrollParent.value.addEventListener('scroll', handleScroll, { passive: true });
+        scrollParent.value.addEventListener('scroll', handleScrollParentScroll, { passive: true });
         logger.debug('scrollParent', scrollParent.value);
-        scrollParent.value.addEventListener('resize', handleResize, { passive: true });
+        scrollParent.value.addEventListener('resize', handleScrollParentResize, { passive: true });
 
         updateScrollParentSize();
-        handleScroll();
-        // scrollTop.value = 0;
-        // scrollParent.value.scrollTo({ left: 0, top: 0, behavior: 'instant' });
+        handleScrollParentScroll();
     }
     // 初始测量
     if (headerRef.value && footerRef.value) {
@@ -304,14 +285,16 @@ const doInit = () => {
         headerHeight.value = headerRef.value?.clientHeight || 0;
         footerHeight.value = footerRef.value?.clientHeight || 0;
     }
-};
-
-onMounted(() => {
-    // 滚动父元素
-    doInit();
 });
+
 onUnmounted(() => {
-    doRelease();
+    resizeObserver.disconnect();
+    itemResizeObserver.disconnect();
+
+    if (scrollParent.value) {
+        scrollParent.value.removeEventListener('scroll', handleScrollParentScroll);
+        scrollParent.value.removeEventListener('resize', handleScrollParentResize);
+    }
 });
 
 </script>
