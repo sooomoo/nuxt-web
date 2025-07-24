@@ -16,7 +16,7 @@ const nowSeconds = Date.now() / 1000;
         <h1>Sth sticky</h1>
     </div>
     <!-- <div class="virtual-list"> -->
-    <UIVirtualList :items="items" :item-height="50" :buffer="10" :gap="{ row: 10, column: 10 }" :column="1"
+    <UIVirtualList :items="items" :item-height="50" :buffer="10" :gap="{ row: 10, column: 10 }" :column="2"
         :content-width="1000">
         <template #header>
             <h1 style="background-color: blanchedalmond;">Header</h1>
