@@ -47,8 +47,6 @@ const showFooter = computed(() => {
 }
 
 .default-layout__body {
-    flex: 1;
-    margin: 0;
     height: fit-content;
     padding-top: var(--header-height);
 }

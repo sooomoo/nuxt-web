@@ -1,15 +1,8 @@
 <script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
 import { logger } from 'vuepkg';
-import { FallbackResizeObserver, useElementSizes } from './scripts/Elements';
+import { FallbackResizeObserver, useElementSizes, zeroPadding, type Padding } from './scripts/Elements';
 import { useScrollParent } from './scripts/ScrollParent';
 
-
-interface Padding {
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-}
 
 const props = defineProps<{
     items: T[]
@@ -20,20 +13,27 @@ const props = defineProps<{
         row: number
         column: number
     }
-    buffer: number
+    buffer?: number
+    contentPadding?: Padding
+    contentClass?: string
 }>();
 
 const containerRef = ref<HTMLDivElement | null>(null);
+const contentRef = ref<HTMLDivElement | null>(null);
 const listItemsRef = ref<HTMLDivElement[]>([]);
 const { scrollTop, scrollParentSize, releaseScrollParent } = useScrollParent(containerRef);
 
 const measuredHeights = ref<{ [key: string]: number }>({});// 存储实际高度
 const finalColumn = computed(() => props.column || 1);
 const finalGap = computed(() => props.gap || { row: 0, column: 0 });
+const finalBuffer = computed(() => props.buffer ?? 10);
+const finalContentPadding = computed(() => props.contentPadding ?? zeroPadding());
 
 const headerRef = ref<HTMLDivElement | null>(null);
 const footerRef = ref<HTMLDivElement | null>(null);
 const { elemSizeArray, elemRelease } = useElementSizes(headerRef, footerRef);
+const headerHeight = computed(() => elemSizeArray.value[0]);
+const footerHeight = computed(() => elemSizeArray.value[1]);
 
 const itemResizeObserver = typeof ResizeObserver === 'undefined' ? new FallbackResizeObserver() : new ResizeObserver((entries) => {
     // logger.debug('itemResizeObserver', entries);
@@ -63,25 +63,32 @@ watch(listItemsRef, (newVal, oldVal) => {
     });
 }, { deep: true });
 
-const getContainerPadding = (): Padding => {
-    if (!containerRef.value) {
-        return { top: 0, bottom: 0, right: 0, left: 0 };
+const finalContentWidthExcludePadding = computed(() => {
+    const w = props.contentWidth || scrollParentSize.value.width;
+    if (w) {
+        return w - finalContentPadding.value.left - finalContentPadding.value.right;
     }
-    const parsePX = (px: string) => {
-        const val = parseFloat(px.replace('px', ''));
-        return isNaN(val) ? 0 : val;
-    };
-    const style = getComputedStyle(containerRef.value);
-    return {
-        top: parsePX(style.paddingTop),
-        bottom: parsePX(style.paddingBottom),
-        right: parsePX(style.paddingRight),
-        left: parsePX(style.paddingLeft),
-    };
-};
+    return 0;
+});
 
-const getHeightToIndex = (index: number, padding: Padding) => {
-    let height = padding.top + elemSizeArray.value[0] + finalRowGap.value;
+const finalContentWidth = computed(() => {
+    const w = props.contentWidth || scrollParentSize.value.width;
+    return w || 0;
+});
+
+watch(scrollParentSize, (val) => {
+    if (!containerRef.value || !contentRef.value) return;
+    if (props.contentWidth && val.width <= props.contentWidth) {
+        containerRef.value.style.alignItems = 'flex-start';
+        contentRef.value.style.left = finalContentPadding.value.left + 'px';
+    } else {
+        containerRef.value.style.alignItems = 'center';
+        contentRef.value.style.left = '';
+    }
+});
+
+const getHeightToIndex = (index: number) => {
+    let height = headerHeight.value + finalContentPadding.value.top;
     for (let i = 0; i < index; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -90,14 +97,14 @@ const getHeightToIndex = (index: number, padding: Padding) => {
             rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
         }
         height += Math.max(...rowHeights);
-        height += finalRowGap.value;
+        height += finalGap.value.row;
     }
     return height;
 };
 
-const getStartIndex = (padding: Padding) => {
+const getStartIndex = () => {
     let start = 0;
-    let offset = padding.top + elemSizeArray.value[0] + finalRowGap.value;
+    let offset = headerHeight.value + finalContentPadding.value.top;
     for (let i = 0; i < props.items.length; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -106,37 +113,36 @@ const getStartIndex = (padding: Padding) => {
             rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
         }
         offset += Math.max(...rowHeights);
-        offset += finalRowGap.value;
+        offset += finalGap.value.row;
         if (offset >= scrollTop.value) {
             start = i;
             break;
         }
     }
 
-    return Math.max(0, start - props.buffer * finalColumn.value);
+    return Math.max(0, start - finalBuffer.value * finalColumn.value);
 };
-
-const finalRowGap = computed(() => props.gap?.row ?? 0);
 
 // 动态总高度
 const totalHeight = computed(() => {
-    const padding = getContainerPadding();
-    let height = getHeightToIndex(props.items.length, padding);
-    height += elemSizeArray.value[1] + padding.bottom;
+    let height = getHeightToIndex(props.items.length);
+    if (height > finalGap.value.row) {
+        height -= finalGap.value.row;
+    }
+    height += finalContentPadding.value.bottom + footerHeight.value;
     logger.debug('totalHeight', height);
     return height;
 });
 
 // 核心计算属性：可见项范围
 const visibleRange = computed(() => {
-    const padding = getContainerPadding();
-    const start = getStartIndex(padding);
-    let end = start + Math.ceil(scrollParentSize.value.height / props.itemHeight) + 2 * props.buffer * finalColumn.value;
+    const start = getStartIndex();
+    let end = start + Math.ceil(scrollParentSize.value.height / props.itemHeight) + 2 * finalBuffer.value * finalColumn.value;
     if (end > props.items.length) {
         end = props.items.length;
     }
 
-    let startOffset = getHeightToIndex(start, padding);
+    let startOffset = getHeightToIndex(start);
     // logger.debug('offsets', startOffset, scrollTop.value);
     if (startOffset > totalHeight.value) {
         startOffset = totalHeight.value;
@@ -152,7 +158,7 @@ const visibleItems = computed(() => {
 
     let itemWidth = 0;
     if (finalColumn.value > 0) {
-        itemWidth = ((props.contentWidth || scrollParentSize.value.width) - finalGap.value.column * (finalColumn.value - 1)) / finalColumn.value;
+        itemWidth = (finalContentWidthExcludePadding.value - finalGap.value.column * (finalColumn.value - 1)) / finalColumn.value;
     }
 
     // 计算各个项的位置
@@ -182,12 +188,11 @@ const visibleItems = computed(() => {
 
     // footer 始终在最后
     if (footerRef.value) {
-        if (visibleRange.value.end >= props.items.length - 1) {
-            footerRef.value!.style.transform = `translateY(${visibleRange.value.startOffset + itemOffsetY}px)`;
-            footerRef.value!.style.visibility = 'visible';
-        } else {
-            footerRef.value!.style.visibility = 'hidden';
+        if (itemOffsetY > finalGap.value.row) {
+            itemOffsetY -= finalGap.value.row;
         }
+        const footerOffset = visibleRange.value.startOffset + itemOffsetY + finalContentPadding.value.bottom;
+        footerRef.value!.style.transform = `translateY(${footerOffset}px)`;
     }
 
     return { items, offset: visibleRange.value.startOffset };
@@ -198,26 +203,33 @@ onUnmounted(() => {
     elemRelease();
     releaseScrollParent();
 });
-
 </script>
 
 <template>
-    <div ref="containerRef" class="ui-virtual-list">
+    <div ref="containerRef" class="ui-virtual-list" style="padding: 0;">
         <!-- 撑开滚动条的占位元素 -->
-        <div :style="{ minHeight: totalHeight + 'px' }"></div>
-        <div ref="headerRef" class="ui-virtual-list-header">
+        <div :class="'ui-virtual-sizes ' + props.contentClass" :style="{
+            minWidth: finalContentWidth + 'px',
+            minHeight: totalHeight + 'px',
+        }"></div>
+        <div ref="headerRef" class="ui-virtual-list-header" :style="{
+            minWidth: finalContentWidth + 'px',
+        }">
             <slot name="header"></slot>
         </div>
-        <div class="ui-virtual-content" :style="{
-            width: props.contentWidth ? props.contentWidth + 'px' : '100%',
-            transform: `translateY(${visibleItems.offset}px)`
+        <div ref="contentRef" class="ui-virtual-content" :style="{
+            width: finalContentWidthExcludePadding + 'px',
+            transform: `translateY(${visibleItems.offset}px)`,
         }">
             <div v-for="(item, index) in visibleItems.items" :key="item.id" ref="listItemsRef"
                 class="ui-virtual-list-item" :data-item-id="item.id" :style="item.__style__">
                 <slot name="item" :item="item" :index="visibleRange.start + index"></slot>
             </div>
         </div>
-        <div ref="footerRef" class="ui-virtual-list-footer" style="visibility: hidden;">
+        <div ref="footerRef" class="ui-virtual-list-footer" :style="{
+            minWidth: finalContentWidth + 'px',
+            visibility: visibleRange.end >= props.items.length - 1 ? 'visible' : 'hidden',
+        }">
             <slot name="footer"></slot>
         </div>
     </div>

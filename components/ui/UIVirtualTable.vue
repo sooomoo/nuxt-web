@@ -8,15 +8,23 @@ interface TableSpan<T> {
     item: T
 }
 
-defineProps<{
+interface TableColumn {
+    width: number
+    field: string
+}
+
+const props = defineProps<{
     items: T[];
-    rowHeight: number
-    columnWidths: number[],
-    columnGapFunc: (leftIndex: number, rightIndex: number) => number
-    rowGapFunc: (topIndex: number, bottomIndex: number) => number
-    spans: TableSpan<T>[]
+    rowHeightFunc: (item: T) => number
+    columns: TableColumn[],
+    columnGapFunc?: (leftIndex: number, rightIndex: number) => number
+    rowGapFunc?: (topIndex: number, bottomIndex: number) => number
+    spans?: TableSpan<T>[]
     buffer: number
 }>();
+
+const finalBuffer = computed(() => props.buffer ?? 10);
+console.log(finalBuffer);
 </script>
 
 <template>

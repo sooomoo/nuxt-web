@@ -15,9 +15,9 @@ const nowSeconds = Date.now() / 1000;
     <div class="sth-sticky">
         <h1>Sth sticky</h1>
     </div>
-    <!-- <div class="virtual-list"> -->
     <UIVirtualList :items="items" :item-height="50" :buffer="10" :gap="{ row: 10, column: 10 }" :column="2"
-        :content-width="1000">
+        :content-width="1000" :content-padding="{ left: 12, right: 12, top: 12, bottom: 12 }" class="v-list"
+        content-class="v-list-content">
         <template #header>
             <h1 style="background-color: blanchedalmond;">Header</h1>
         </template>
@@ -28,11 +28,21 @@ const nowSeconds = Date.now() / 1000;
             <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
         </template>
     </UIVirtualList>
-    <!-- </div> -->
 </template>
 
 <style lang="scss" scoped>
+.v-list {
+    // padding: 30px;
+    // min-width: 1060px;
+}
+
+:deep(.v-list-content) {
+    background-color: white;
+}
+
+
 .sth-big-header {
+    min-width: 1000px;
     height: 200px;
     background-color: rgb(174, 248, 228);
 }
@@ -42,11 +52,12 @@ h1 {
 }
 
 .sth-sticky {
+    min-width: 1000px;
     position: sticky;
     top: var(--header-height);
     background-color: #f00;
     z-index: 2;
-    margin: 24px 0;
+    // margin: 24px 0;
     height: 70px;
 }
 
