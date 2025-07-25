@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
 import { logger } from 'vuepkg';
-import { FallbackResizeObserver, useElementSizes, zeroPadding, type Padding } from './scripts/Elements';
+import { FallbackResizeObserver, zeroPadding, type Padding } from './scripts/Elements';
 import { useScrollParent } from './scripts/ScrollParent';
 
 
@@ -28,12 +28,6 @@ const finalColumn = computed(() => props.column || 1);
 const finalGap = computed(() => props.gap || { row: 0, column: 0 });
 const finalBuffer = computed(() => props.buffer ?? 10);
 const finalContentPadding = computed(() => props.contentPadding ?? zeroPadding());
-
-const headerRef = ref<HTMLDivElement | null>(null);
-const footerRef = ref<HTMLDivElement | null>(null);
-const { elemSizeArray, elemRelease } = useElementSizes(headerRef, footerRef);
-const headerHeight = computed(() => elemSizeArray.value[0]);
-const footerHeight = computed(() => elemSizeArray.value[1]);
 
 const itemResizeObserver = typeof ResizeObserver === 'undefined' ? new FallbackResizeObserver() : new ResizeObserver((entries) => {
     // logger.debug('itemResizeObserver', entries);
@@ -80,7 +74,7 @@ watch(scrollParentSize, (val) => {
     if (!containerRef.value || !contentRef.value) return;
     if (props.contentWidth && val.width <= props.contentWidth) {
         containerRef.value.style.alignItems = 'flex-start';
-        contentRef.value.style.left = finalContentPadding.value.left + 'px';
+        contentRef.value.style.left = finalContentPadding.value.left - 3 + 'px'; // 3 为滚动条宽度的一半
     } else {
         containerRef.value.style.alignItems = 'center';
         contentRef.value.style.left = '';
@@ -88,7 +82,7 @@ watch(scrollParentSize, (val) => {
 });
 
 const getHeightToIndex = (index: number) => {
-    let height = headerHeight.value + finalContentPadding.value.top;
+    let height = finalContentPadding.value.top;
     for (let i = 0; i < index; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -104,7 +98,7 @@ const getHeightToIndex = (index: number) => {
 
 const getStartIndex = () => {
     let start = 0;
-    let offset = headerHeight.value + finalContentPadding.value.top;
+    let offset = finalContentPadding.value.top;
     for (let i = 0; i < props.items.length; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -129,7 +123,7 @@ const totalHeight = computed(() => {
     if (height > finalGap.value.row) {
         height -= finalGap.value.row;
     }
-    height += finalContentPadding.value.bottom + footerHeight.value;
+    height += finalContentPadding.value.bottom;
     logger.debug('totalHeight', height);
     return height;
 });
@@ -186,21 +180,11 @@ const visibleItems = computed(() => {
         itemOffsetY += finalGap.value.row;
     }
 
-    // footer 始终在最后
-    if (footerRef.value) {
-        if (itemOffsetY > finalGap.value.row) {
-            itemOffsetY -= finalGap.value.row;
-        }
-        const footerOffset = visibleRange.value.startOffset + itemOffsetY + finalContentPadding.value.bottom;
-        footerRef.value!.style.transform = `translateY(${footerOffset}px)`;
-    }
-
     return { items, offset: visibleRange.value.startOffset };
 });
 
 onUnmounted(() => {
     itemResizeObserver.disconnect();
-    elemRelease();
     releaseScrollParent();
 });
 </script>
@@ -212,11 +196,6 @@ onUnmounted(() => {
             minWidth: finalContentWidth + 'px',
             minHeight: totalHeight + 'px',
         }"></div>
-        <div ref="headerRef" class="ui-virtual-list-header" :style="{
-            minWidth: finalContentWidth + 'px',
-        }">
-            <slot name="header"></slot>
-        </div>
         <div ref="contentRef" class="ui-virtual-content" :style="{
             width: finalContentWidthExcludePadding + 'px',
             transform: `translateY(${visibleItems.offset}px)`,
@@ -225,12 +204,6 @@ onUnmounted(() => {
                 class="ui-virtual-list-item" :data-item-id="item.id" :style="item.__style__">
                 <slot name="item" :item="item" :index="visibleRange.start + index"></slot>
             </div>
-        </div>
-        <div ref="footerRef" class="ui-virtual-list-footer" :style="{
-            minWidth: finalContentWidth + 'px',
-            visibility: visibleRange.end >= props.items.length - 1 ? 'visible' : 'hidden',
-        }">
-            <slot name="footer"></slot>
         </div>
     </div>
 </template>
