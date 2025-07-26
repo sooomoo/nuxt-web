@@ -1,5 +1,4 @@
 <script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
-import { logger } from 'vuepkg';
 import { newGapFromString, newPaddingFromString, newResizeObserver, zeroPadding, type Gap, type Padding } from './scripts/Elements';
 import { useScrollParent } from './scripts/ScrollParent';
 import { isRenderVisibleRangeSame, zeroRenderVisibleRange, type RenderVisibleRange, type VisibleRange } from './scripts/Virtuals';
@@ -203,7 +202,7 @@ const getViewportInfo = () => {
 };
 
 const checkVisibleRange = () => {
-    const { topsHeight, viewportHeight, bottomsHeight } = getViewportInfo();
+    const { topsHeight, viewportHeight } = getViewportInfo();
     if (viewportHeight < 1) {
         return;
     }
@@ -242,11 +241,11 @@ const checkVisibleRange = () => {
     const curRange: RenderVisibleRange = { bufferStart, visibleStart, visibleEnd, bufferEnd, startOffset };
     if (!isRenderVisibleRangeSame(curRange, renderVisibleRange.value)) {
         renderVisibleRange.value = curRange;
-        logger.debug('viewport', {
-            topsHeight,
-            viewportHeight,
-            bottomsHeight,
-        });
+        // logger.debug('viewport', {
+        //     topsHeight,
+        //     viewportHeight,
+        //     bottomsHeight,
+        // });
         emit('visble-range-changed', { bufferStart, visibleStart, visibleEnd, bufferEnd });
     }
 };
