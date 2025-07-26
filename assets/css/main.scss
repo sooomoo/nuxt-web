@@ -4,6 +4,7 @@
     color-scheme: light dark;
     --header-height: 56px;
     --footer-height: 40px;
+    --scrollbar-size: 8px;
 }
 
 /*
@@ -44,9 +45,9 @@ html[data-theme='dark'] {
 
 /* 设置滚动条整体样式 */
 ::-webkit-scrollbar {
-    width: 6px;
+    width: var(--scrollbar-size);
     /* 垂直滚动条宽度 */
-    height: 6px;
+    height: var(--scrollbar-size);
     /* 水平滚动条高度 */
 }
 

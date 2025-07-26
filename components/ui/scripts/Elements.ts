@@ -12,6 +12,14 @@ export class FallbackResizeObserver implements ResizeObserver {
     }
 }
 
+export const newResizeObserver = (callback: ResizeObserverCallback): ResizeObserver => {
+    if (typeof ResizeObserver === "undefined") {
+        return new FallbackResizeObserver();
+    } else {
+        return new ResizeObserver(callback);
+    }
+};
+
 export class FallbackMutationObserver implements MutationObserver {
     disconnect(): void {
         logger.debug("disconnect");
@@ -24,32 +32,35 @@ export class FallbackMutationObserver implements MutationObserver {
     }
 }
 
+export const newMutationObserver = (callback: MutationCallback): MutationObserver => {
+    if (typeof MutationObserver === "undefined") {
+        return new FallbackMutationObserver();
+    } else {
+        return new MutationObserver(callback);
+    }
+};
+
 export const useElementSizes = (...nodes: Ref<HTMLDivElement | null, HTMLDivElement | null>[]) => {
     const elemSizes = shallowRef<Map<HTMLDivElement, number>>(new Map());
     const elemSizeArray = shallowRef<number[]>(nodes.map(() => 0));
 
-    let resizeObserver: ResizeObserver;
-    if (typeof ResizeObserver === "undefined") {
-        resizeObserver = new FallbackResizeObserver();
-    } else {
-        resizeObserver = new ResizeObserver((entries) => {
-            const sizeArr: number[] = [];
-            const map = new Map<HTMLDivElement, number>();
-            for (let index = 0; index < entries.length; index++) {
-                const entry = entries[index];
-                if (!(entry.target instanceof HTMLDivElement)) {
-                    sizeArr.push(0);
-                    continue;
-                }
-
-                const height = entry.contentRect.height;
-                map.set(entry.target, height);
-                sizeArr.push(height);
+    const resizeObserver = newResizeObserver((entries) => {
+        const sizeArr: number[] = [];
+        const map = new Map<HTMLDivElement, number>();
+        for (let index = 0; index < entries.length; index++) {
+            const entry = entries[index];
+            if (!(entry.target instanceof HTMLDivElement)) {
+                sizeArr.push(0);
+                continue;
             }
-            elemSizeArray.value = sizeArr;
-            elemSizes.value = map;
-        });
-    }
+
+            const height = entry.contentRect.height;
+            map.set(entry.target, height);
+            sizeArr.push(height);
+        }
+        elemSizeArray.value = sizeArr;
+        elemSizes.value = map;
+    });
 
     const doInit = () => {
         for (const element of nodes) {
@@ -115,21 +126,16 @@ export const useElementStyle = (...elements: Ref<HTMLDivElement | null, HTMLDivE
         };
     };
 
-    let obs: MutationObserver;
-    if (typeof MutationObserver === "undefined") {
-        obs = new FallbackMutationObserver();
-    } else {
-        obs = new MutationObserver((entries) => {
-            for (let index = 0; index < entries.length; index++) {
-                const element = entries[index];
-                if (!element.target || !(element.target instanceof Element)) {
-                    elemPaddingArray.value[index] = zeroPadding();
-                    continue;
-                }
-                elemPaddingArray.value[index] = getElementPadding(element.target);
+    const obs = newMutationObserver((entries) => {
+        for (let index = 0; index < entries.length; index++) {
+            const element = entries[index];
+            if (!element.target || !(element.target instanceof Element)) {
+                elemPaddingArray.value[index] = zeroPadding();
+                continue;
             }
-        });
-    }
+            elemPaddingArray.value[index] = getElementPadding(element.target);
+        }
+    });
 
     const doInit = () => {
         for (let index = 0; index < elements.length; index++) {

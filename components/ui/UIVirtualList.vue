@@ -1,8 +1,6 @@
 <script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
-import { logger } from 'vuepkg';
-import { FallbackResizeObserver, zeroPadding, type Padding } from './scripts/Elements';
+import { newResizeObserver, zeroPadding, type Padding } from './scripts/Elements';
 import { useScrollParent } from './scripts/ScrollParent';
-
 
 const props = defineProps<{
     items: T[]
@@ -21,7 +19,7 @@ const props = defineProps<{
 const containerRef = ref<HTMLDivElement | null>(null);
 const contentRef = ref<HTMLDivElement | null>(null);
 const listItemsRef = ref<HTMLDivElement[]>([]);
-const { scrollTop, scrollParentSize, releaseScrollParent } = useScrollParent(containerRef);
+const { scrollTop, scrollParentSize, isOverflowX, releaseScrollParent } = useScrollParent(containerRef);
 
 const measuredHeights = ref<{ [key: string]: number }>({});// 存储实际高度
 const finalColumn = computed(() => props.column || 1);
@@ -29,7 +27,7 @@ const finalGap = computed(() => props.gap || { row: 0, column: 0 });
 const finalBuffer = computed(() => props.buffer ?? 10);
 const finalContentPadding = computed(() => props.contentPadding ?? zeroPadding());
 
-const itemResizeObserver = typeof ResizeObserver === 'undefined' ? new FallbackResizeObserver() : new ResizeObserver((entries) => {
+const itemResizeObserver = newResizeObserver((entries) => {
     // logger.debug('itemResizeObserver', entries);
     for (const entry of entries) {
         if (!(entry.target instanceof HTMLDivElement)) {
@@ -39,10 +37,12 @@ const itemResizeObserver = typeof ResizeObserver === 'undefined' ? new FallbackR
         const height = entry.contentRect.height;
         const itemId = entry.target.dataset.itemId || '';
         // 此处需要过滤掉==0 的值，当元素被重用时，其元素的值会短暂为 0
-        if (!itemId || height < 1) {
+        // === props.itemHeight 的也没必要处理，因为默认会回退到这个尺寸
+        if (!itemId || height < 1 || height === props.itemHeight) {
             continue;
         }
-        if (height !== measuredHeights.value[itemId]) {
+
+        if (measuredHeights.value[itemId] !== height) {
             measuredHeights.value[itemId] = height;
         }
     }
@@ -70,11 +70,12 @@ const finalContentWidth = computed(() => {
     return w || 0;
 });
 
-watch(scrollParentSize, (val) => {
+watch(isOverflowX, (val) => {
+    // logger.debug('isOverflowX', val);
     if (!containerRef.value || !contentRef.value) return;
-    if (props.contentWidth && val.width <= props.contentWidth) {
+    if (val) {
         containerRef.value.style.alignItems = 'flex-start';
-        contentRef.value.style.left = finalContentPadding.value.left - 3 + 'px'; // 3 为滚动条宽度的一半
+        contentRef.value.style.left = finalContentPadding.value.left + 'px';
     } else {
         containerRef.value.style.alignItems = 'center';
         contentRef.value.style.left = '';
@@ -124,7 +125,7 @@ const totalHeight = computed(() => {
         height -= finalGap.value.row;
     }
     height += finalContentPadding.value.bottom;
-    logger.debug('totalHeight', height);
+    // logger.debug('totalHeight', height);
     return height;
 });
 
@@ -148,7 +149,7 @@ const visibleRange = computed(() => {
 // 可见项列表
 const visibleItems = computed(() => {
     const items = props.items.slice(visibleRange.value.start, visibleRange.value.end);
-    logger.debug('visibleRange', visibleRange.value);//, 'visibleItems', items);
+    // logger.debug('visibleRange', visibleRange.value);//, 'visibleItems', items);
 
     let itemWidth = 0;
     if (finalColumn.value > 0) {
