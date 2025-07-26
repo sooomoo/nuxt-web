@@ -7,8 +7,9 @@ const items = Array.from({ length: 300 }, (_, i) => ({
     name: `Item ${i}`
 }));
 
+const visibleRange = ref<VisibleRange | undefined>();
 const onVisibleRangeChanged = (range: VisibleRange) => {
-    console.log('onVisibleRangeChanged', range);
+    visibleRange.value = range;
 };
 
 const nowSeconds = Date.now() / 1000;
@@ -20,13 +21,12 @@ const nowSeconds = Date.now() / 1000;
             <UITime :unix-seconds="nowSeconds"></UITime>
         </div>
         <div class="sth-sticky">
-            <h1 style="height: 30px; background-color: green;">Sth sticky</h1>
-
+            {{ visibleRange }}
         </div>
         <h1>List Header</h1>
-        <UIVirtualList :items="items" :item-height="50" :buffer="50" :gap="{ row: 10, column: 10 }" :column="1"
-            :content-width="1000" :content-padding="{ left: 8, right: 8, top: 30, bottom: 30 }" class="v-list"
-            content-class="v-list-content" @visble-range-changed="onVisibleRangeChanged">
+        <UIVirtualList :items="items" :item-height="50" :buffer="50" gap="10" :column="1" :content-width="1000"
+            content-padding="10" class="v-list" content-class="v-list-content"
+            @visble-range-changed="onVisibleRangeChanged">
             <template #item="{ item, index }">
                 <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
             </template>

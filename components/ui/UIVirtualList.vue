@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
 import { logger } from 'vuepkg';
-import { newResizeObserver, zeroPadding, type Padding } from './scripts/Elements';
+import { newGapFromString, newPaddingFromString, newResizeObserver, zeroPadding, type Gap, type Padding } from './scripts/Elements';
 import { useScrollParent } from './scripts/ScrollParent';
 import { isRenderVisibleRangeSame, zeroRenderVisibleRange, type RenderVisibleRange, type VisibleRange } from './scripts/Virtuals';
 
@@ -9,12 +9,9 @@ const props = defineProps<{
     itemHeight: number
     contentWidth?: number
     column?: number
-    gap?: {
-        row: number
-        column: number
-    }
+    gap?: Gap | string
     buffer?: number
-    contentPadding?: Padding
+    contentPadding?: Padding | string
     contentClass?: string
     ssrVisibleItems?: number
 }>();
@@ -26,9 +23,19 @@ const { scrollTop, scrollParentSize, initScrollParent, scrollParent, isOverflowX
 
 const measuredHeights: { [key: string]: number } = {};// 存储实际高度
 const finalColumn = computed(() => props.column || 1);
-const finalGap = computed(() => props.gap || { row: 0, column: 0 });
+const finalGap = computed(() => {
+    if (typeof props.gap === 'string') {
+        return newGapFromString(props.gap);
+    }
+    return props.gap || { row: 0, column: 0 };
+});
 const finalBuffer = computed(() => props.buffer ?? 10);
-const finalContentPadding = computed(() => props.contentPadding ?? zeroPadding());
+const finalContentPadding = computed(() => {
+    if (typeof props.contentPadding === 'string') {
+        return newPaddingFromString(props.contentPadding);
+    }
+    return props.contentPadding ?? zeroPadding();
+});
 
 const renderVisibleRange = shallowRef<RenderVisibleRange>(zeroRenderVisibleRange());
 
@@ -166,7 +173,8 @@ const getViewportInfo = () => {
     }
 
     // 此处需要计算相对 top，因为 getBoundingClientRect 会返回相对于视口的位置，而不是相对于滚动容器的位置
-    const relativeTop = (containerRef.value?.getBoundingClientRect()?.top ?? 0) - scrollContainerTop;
+    const containerTop = (containerRef.value?.getBoundingClientRect()?.top ?? 0);
+    const relativeTop = containerTop - scrollContainerTop;
     let viewportHeight = scrollParentSize.value.height;
     // 此处需要处理掉 padding 部分的高度
     if (relativeTop > -finalContentPadding.value.top) {

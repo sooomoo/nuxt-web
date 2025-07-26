@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import { logger } from "vuepkg";
 
 export class FallbackResizeObserver implements ResizeObserver {
@@ -103,6 +104,76 @@ export interface Padding {
     right: number;
     bottom: number;
 }
+
+export const newPaddingFromString = (padding: string): Padding => {
+    const segs = padding
+        .trim()
+        .split(" ")
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0);
+    if (segs.length === 1) {
+        const val = parseFloat(segs[0].replace("px", ""));
+        return {
+            top: val,
+            right: val,
+            bottom: val,
+            left: val,
+        };
+    }
+    if (segs.length === 2) {
+        const ver = parseFloat(segs[0].replace("px", ""));
+        const hor = parseFloat(segs[1].replace("px", ""));
+        return {
+            top: ver,
+            right: hor,
+            bottom: ver,
+            left: hor,
+        };
+    }
+    if (segs.length === 3) {
+        const ver = parseFloat(segs[0].replace("px", ""));
+        const hor = parseFloat(segs[1].replace("px", ""));
+        return {
+            top: ver,
+            right: hor,
+            bottom: parseFloat(segs[2].replace("px", "")),
+            left: hor,
+        };
+    }
+    if (segs.length === 4) {
+        return {
+            top: parseFloat(segs[0].replace("px", "")),
+            right: parseFloat(segs[1].replace("px", "")),
+            bottom: parseFloat(segs[2].replace("px", "")),
+            left: parseFloat(segs[3].replace("px", "")),
+        };
+    }
+    return zeroPadding();
+};
+
+export interface Gap {
+    row: number;
+    column: number;
+}
+
+export const newGapFromString = (gap: string): Gap => {
+    const segs = gap
+        .trim()
+        .split(" ")
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0);
+    if (segs.length === 1) {
+        const val = parseFloat(segs[0].replace("px", ""));
+        return { row: val, column: val };
+    }
+    if (segs.length === 2) {
+        return {
+            row: parseFloat(segs[0].replace("px", "")),
+            column: parseFloat(segs[1].replace("px", "")),
+        };
+    }
+    return { row: 0, column: 0 };
+};
 
 export const zeroPadding = (): Padding => ({ left: 0, top: 0, right: 0, bottom: 0 });
 

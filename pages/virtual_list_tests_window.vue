@@ -6,8 +6,10 @@ const items = Array.from({ length: 300 }, (_, i) => ({
     id: i + '',
     name: `Item ${i}`
 }));
+
+const visibleRange = ref<VisibleRange | undefined>();
 const onVisibleRangeChanged = (range: VisibleRange) => {
-    console.log('onVisibleRangeChanged', range);
+    visibleRange.value = range;
 };
 
 const nowSeconds = Date.now() / 1000;
@@ -18,12 +20,12 @@ const nowSeconds = Date.now() / 1000;
         <UITime :unix-seconds="nowSeconds"></UITime>
     </div>
     <div class="sth-sticky">
-        <h1 style="height: 30px; background-color: green;">Sth sticky</h1>
+        {{ visibleRange }}
     </div>
     <h1>List Header</h1>
-    <UIVirtualList :items="items" :item-height="50" :buffer="10" :gap="{ row: 8, column: 8 }" :column="1"
-        :content-width="1000" :content-padding="{ left: 8, right: 8, top: 8, bottom: 8 }" :ssr-visible-items="10"
-        class="v-list" content-class="v-list-content" @visble-range-changed="onVisibleRangeChanged">
+    <UIVirtualList :items="items" :item-height="50" :buffer="10" gap="8" :column="1" :content-width="1000"
+        content-padding="8" :ssr-visible-items="10" class="v-list" content-class="v-list-content"
+        @visble-range-changed="onVisibleRangeChanged">
         <template #item="{ item, index }">
             <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
         </template>
@@ -66,7 +68,7 @@ h1 {
     min-width: 1000px;
     position: sticky;
     top: var(--header-height);
-    background-color: #f00;
+    background-color: rgb(44, 134, 252);
     z-index: 2;
     // margin: 24px 0;
     height: 70px;
