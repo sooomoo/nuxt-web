@@ -1,4 +1,3 @@
-import { logger } from "vuepkg";
 import { newResizeObserver } from "./Elements";
 
 const regex = /auto|scroll/;
@@ -72,8 +71,8 @@ export const useScrollParent = (node: Ref<HTMLDivElement | null, HTMLDivElement 
         });
     };
 
-    const handleScrollParentResize = (e: Event) => {
-        logger.debug('handleScrollParentResize', e);
+    const handleScrollParentResize = (_: Event) => {
+        // logger.debug('handleScrollParentResize', e);
         updateScrollParentSize();
     };
 
@@ -94,7 +93,7 @@ export const useScrollParent = (node: Ref<HTMLDivElement | null, HTMLDivElement 
                     height: scrollParent.value.innerHeight,
                 };
                 const scrollbarWidth = getScrollBarWidth();
-                logger.debug('scrollbarWidth', scrollbarWidth, scrollParent.value);
+                // logger.debug("scrollbarWidth", scrollbarWidth, scrollParent.value);
                 isOverflowX.value = scrollParent.value.document.body.scrollWidth + scrollbarWidth > scrollParent.value.innerWidth;
             } else {
                 scrollParentSize.value = {
@@ -131,14 +130,13 @@ export const useScrollParent = (node: Ref<HTMLDivElement | null, HTMLDivElement 
         if (scrollParent.value) {
             scrollParent.value.removeEventListener("scroll", handleScrollParentScroll);
             scrollParent.value.removeEventListener("resize", handleScrollParentResize);
-            if (!(scrollParent.value instanceof Window))
-                resizeObs.unobserve(scrollParent.value);
+            if (!(scrollParent.value instanceof Window)) resizeObs.unobserve(scrollParent.value);
         }
         // resizeObs.disconnect();
     };
 
     const doInit = () => {
-        logger.debug("useScrollParent", scrollParent.value);
+        // logger.debug("useScrollParent", scrollParent.value);
         unobserve();
         if (scrollParent.value) {
             if (scrollParent.value instanceof Window) {
@@ -155,7 +153,7 @@ export const useScrollParent = (node: Ref<HTMLDivElement | null, HTMLDivElement 
 
     watch(node, (newVal) => {
         unobserve();
-        logger.debug("scrollParent.value", scrollParent.value);
+        // logger.debug("scrollParent.value", scrollParent.value);
         scrollParent.value = getScrollParent(newVal);
         doInit();
     });
@@ -164,6 +162,7 @@ export const useScrollParent = (node: Ref<HTMLDivElement | null, HTMLDivElement 
 
     return {
         scrollParent,
+        initScrollParent: doInit,
         scrollTop,
         scrollParentSize,
         isOverflowX,

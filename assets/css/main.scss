@@ -14,6 +14,7 @@ html[data-theme='dark'] {
 @media (prefers-color-scheme: light) {
     :root {
         --background-color: #f8f8f8;
+        --color-container: white;
         --color-header-background: #fffb;
         --color-input-background: #f8f8f8;
         --color-text: #000;
@@ -28,6 +29,7 @@ html[data-theme='dark'] {
 @media (prefers-color-scheme: dark) {
     :root {
         --background-color: #121212;
+        --color-container: #222;
         --color-header-background: #222b;
         --color-input-background: #222b;
         --color-text: #eee;

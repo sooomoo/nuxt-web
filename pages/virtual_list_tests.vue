@@ -1,9 +1,15 @@
 <script setup lang="ts">
+import type { VisibleRange } from '~/components/ui/scripts/Virtuals';
 
-const items = Array.from({ length: 10000 }, (_, i) => ({
+
+const items = Array.from({ length: 300 }, (_, i) => ({
     id: i + '',
     name: `Item ${i}`
 }));
+
+const onVisibleRangeChanged = (range: VisibleRange) => {
+    console.log('onVisibleRangeChanged', range);
+};
 
 const nowSeconds = Date.now() / 1000;
 </script>
@@ -14,12 +20,13 @@ const nowSeconds = Date.now() / 1000;
             <UITime :unix-seconds="nowSeconds"></UITime>
         </div>
         <div class="sth-sticky">
-            <h1>Sth sticky</h1>
+            <h1 style="height: 30px; background-color: green;">Sth sticky</h1>
+
         </div>
         <h1>List Header</h1>
         <UIVirtualList :items="items" :item-height="50" :buffer="50" :gap="{ row: 10, column: 10 }" :column="1"
-            :content-width="1000" :content-padding="{ left: 8, right: 8, top: 8, bottom: 8 }" class="v-list"
-            content-class="v-list-content">
+            :content-width="1000" :content-padding="{ left: 8, right: 8, top: 30, bottom: 30 }" class="v-list"
+            content-class="v-list-content" @visble-range-changed="onVisibleRangeChanged">
             <template #item="{ item, index }">
                 <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
             </template>
@@ -41,11 +48,10 @@ const nowSeconds = Date.now() / 1000;
 }
 
 :deep(.v-list-content) {
-    background-color: white;
+    background-color: var(--color-container);
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
     border-radius: 3px;
 }
-
 
 .sth-big-header {
     min-width: 1000px;
@@ -55,6 +61,8 @@ const nowSeconds = Date.now() / 1000;
 
 h1 {
     margin: 0;
+    height: 50px;
+    align-content: center;
 }
 
 .sth-sticky {

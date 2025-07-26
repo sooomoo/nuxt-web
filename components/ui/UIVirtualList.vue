@@ -1,6 +1,8 @@
 <script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
+import { logger } from 'vuepkg';
 import { newResizeObserver, zeroPadding, type Padding } from './scripts/Elements';
 import { useScrollParent } from './scripts/ScrollParent';
+import { isRenderVisibleRangeSame, zeroRenderVisibleRange, type RenderVisibleRange, type VisibleRange } from './scripts/Virtuals';
 
 const props = defineProps<{
     items: T[]
@@ -14,18 +16,25 @@ const props = defineProps<{
     buffer?: number
     contentPadding?: Padding
     contentClass?: string
+    ssrVisibleItems?: number
 }>();
 
 const containerRef = ref<HTMLDivElement | null>(null);
 const contentRef = ref<HTMLDivElement | null>(null);
 const listItemsRef = ref<HTMLDivElement[]>([]);
-const { scrollTop, scrollParentSize, isOverflowX, releaseScrollParent } = useScrollParent(containerRef);
+const { scrollTop, scrollParentSize, initScrollParent, scrollParent, isOverflowX, releaseScrollParent } = useScrollParent(containerRef);
 
-const measuredHeights = ref<{ [key: string]: number }>({});// 存储实际高度
+const measuredHeights: { [key: string]: number } = {};// 存储实际高度
 const finalColumn = computed(() => props.column || 1);
 const finalGap = computed(() => props.gap || { row: 0, column: 0 });
 const finalBuffer = computed(() => props.buffer ?? 10);
 const finalContentPadding = computed(() => props.contentPadding ?? zeroPadding());
+
+const renderVisibleRange = shallowRef<RenderVisibleRange>(zeroRenderVisibleRange());
+
+const emit = defineEmits<{
+    (e: "visble-range-changed", range: VisibleRange): void
+}>();
 
 const itemResizeObserver = newResizeObserver((entries) => {
     // logger.debug('itemResizeObserver', entries);
@@ -42,8 +51,10 @@ const itemResizeObserver = newResizeObserver((entries) => {
             continue;
         }
 
-        if (measuredHeights.value[itemId] !== height) {
-            measuredHeights.value[itemId] = height;
+        if (measuredHeights[itemId] !== height) {
+            measuredHeights[itemId] = height;
+            updateTotalHeight();
+            checkVisibleRange();
         }
     }
 });
@@ -58,16 +69,15 @@ watch(listItemsRef, (newVal, oldVal) => {
 }, { deep: true });
 
 const finalContentWidthExcludePadding = computed(() => {
-    const w = props.contentWidth || scrollParentSize.value.width;
-    if (w) {
-        return w - finalContentPadding.value.left - finalContentPadding.value.right;
+    let remainWidth = props.contentWidth || scrollParentSize.value.width;
+    if (remainWidth) {
+        remainWidth = remainWidth - finalContentPadding.value.left - finalContentPadding.value.right;
     }
-    return 0;
+    return remainWidth > 0 ? remainWidth : 0;
 });
 
 const finalContentWidth = computed(() => {
-    const w = props.contentWidth || scrollParentSize.value.width;
-    return w || 0;
+    return props.contentWidth || scrollParentSize.value.width || 0;
 });
 
 watch(isOverflowX, (val) => {
@@ -81,6 +91,8 @@ watch(isOverflowX, (val) => {
         contentRef.value.style.left = '';
     }
 });
+watch(scrollTop, () => checkVisibleRange());
+watch(scrollParentSize, () => checkVisibleRange());
 
 const getHeightToIndex = (index: number) => {
     let height = finalContentPadding.value.top;
@@ -89,15 +101,17 @@ const getHeightToIndex = (index: number) => {
         for (let j = 0; j < finalColumn.value; j++) {
             const item = props.items[i + j];
             if (!item) continue; // 超出索引范围
-            rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
+            rowHeights.push(measuredHeights[item.id] || props.itemHeight);
         }
         height += Math.max(...rowHeights);
         height += finalGap.value.row;
     }
+
     return height;
 };
 
-const getStartIndex = () => {
+const getStartIndex = (topsHeight: number) => {
+    const actualTopForList = scrollTop.value - topsHeight;
     let start = 0;
     let offset = finalContentPadding.value.top;
     for (let i = 0; i < props.items.length; i += finalColumn.value) {
@@ -105,50 +119,133 @@ const getStartIndex = () => {
         for (let j = 0; j < finalColumn.value; j++) {
             const item = props.items[i + j];
             if (!item) continue; // 超出索引范围
-            rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
+            rowHeights.push(measuredHeights[item.id] || props.itemHeight);
         }
         offset += Math.max(...rowHeights);
-        offset += finalGap.value.row;
-        if (offset >= scrollTop.value) {
+        if (offset >= actualTopForList) {
             start = i;
             break;
         }
+        offset += finalGap.value.row;
     }
 
-    return Math.max(0, start - finalBuffer.value * finalColumn.value);
+    return {
+        bufferStart: Math.max(0, start - finalBuffer.value * finalColumn.value),
+        visibleStart: start
+    };
 };
 
-// 动态总高度
-const totalHeight = computed(() => {
+const totalHeight = ref(0);
+
+const updateTotalHeight = () => {
     let height = getHeightToIndex(props.items.length);
     if (height > finalGap.value.row) {
         height -= finalGap.value.row;
     }
     height += finalContentPadding.value.bottom;
-    // logger.debug('totalHeight', height);
-    return height;
-});
+    totalHeight.value = height;
+};
 
-// 核心计算属性：可见项范围
-const visibleRange = computed(() => {
-    const start = getStartIndex();
-    let end = start + Math.ceil(scrollParentSize.value.height / props.itemHeight) + 2 * finalBuffer.value * finalColumn.value;
-    if (end > props.items.length) {
-        end = props.items.length;
+const getViewportInfo = () => {
+    if (!scrollParent.value) {
+        let fallbackItems = props.ssrVisibleItems ?? 0;
+        if (fallbackItems < 1) {
+            fallbackItems = 1;
+        }
+        const fallbackHeight = fallbackItems * props.itemHeight + (fallbackItems - 1) * finalGap.value.row;
+        return { topsHeight: 0, viewportHeight: fallbackHeight, bottomsHeight: 0 };
+    }
+    let scrollHeight = 0;
+    let scrollContainerTop = 0;
+    if (scrollParent.value instanceof Window) {
+        scrollHeight = scrollParent.value.document.scrollingElement?.scrollHeight ?? 0;
+    } else if (scrollParent.value instanceof HTMLElement) {
+        scrollHeight = scrollParent.value.scrollHeight;
+        const rect = scrollParent.value.getBoundingClientRect();
+        scrollContainerTop = rect.top;
     }
 
-    let startOffset = getHeightToIndex(start);
-    // logger.debug('offsets', startOffset, scrollTop.value);
-    if (startOffset > totalHeight.value) {
-        startOffset = totalHeight.value;
+    // 此处需要计算相对 top，因为 getBoundingClientRect 会返回相对于视口的位置，而不是相对于滚动容器的位置
+    const relativeTop = (containerRef.value?.getBoundingClientRect()?.top ?? 0) - scrollContainerTop;
+    let viewportHeight = scrollParentSize.value.height;
+    // 此处需要处理掉 padding 部分的高度
+    if (relativeTop > -finalContentPadding.value.top) {
+        viewportHeight = viewportHeight - relativeTop - finalContentPadding.value.top;
     }
 
-    return { start, end, startOffset };
-});
+    const othersHeight = scrollHeight - totalHeight.value;
+    const topsHeight = Math.floor(relativeTop + scrollTop.value);
+    const bottomsHeight = othersHeight - topsHeight;
+    // logger.debug('getViewportInfo', {
+    //     scrollContainerTop,
+    //     scrollHeight,
+    //     othersHeight,
+    //     topsHeight,
+    //     bottomsHeight,
+    //     scrollTop: scrollTop.value,
+    //     totalHeight: totalHeight.value,
+    //     containerRect,
+    //     viewportHeight,
+    // });
+    return {
+        topsHeight,
+        viewportHeight,
+        bottomsHeight,
+    };
+};
+
+const checkVisibleRange = () => {
+    const { topsHeight, viewportHeight, bottomsHeight } = getViewportInfo();
+    if (viewportHeight < 1) {
+        return;
+    }
+    updateTotalHeight();
+    const { bufferStart, visibleStart } = getStartIndex(topsHeight);
+    let visibleEnd = visibleStart;
+    // 计算视口可见项
+    let visibleItemsHeight = 0;
+    const rowHeights: number[] = [];
+    for (let i = visibleStart; i < props.items.length; i += finalColumn.value) {
+        rowHeights.splice(0, rowHeights.length);
+        for (let j = 0; j < finalColumn.value; j++) {
+            const item = props.items[i + j];
+            if (!item) continue; // 超出索引范围
+            rowHeights.push(measuredHeights[item.id] || props.itemHeight);
+        }
+        visibleEnd = i;
+        visibleItemsHeight += Math.max(...rowHeights);
+        if (visibleItemsHeight > viewportHeight) {
+            break;
+        }
+        // 加了间隔之后，如果大于了可显示高度，则还是取当前的索引
+        visibleItemsHeight += finalGap.value.row;
+        if (visibleItemsHeight > viewportHeight) {
+            break;
+        }
+    }
+
+    let bufferEnd = visibleEnd + finalBuffer.value * finalColumn.value;
+    bufferEnd = Math.min(bufferEnd, props.items.length - 1);
+
+    let startOffset = getHeightToIndex(bufferStart);
+    // startOffset += finalGap.value.row;
+    startOffset = Math.min(startOffset, totalHeight.value);
+
+    const curRange: RenderVisibleRange = { bufferStart, visibleStart, visibleEnd, bufferEnd, startOffset };
+    if (!isRenderVisibleRangeSame(curRange, renderVisibleRange.value)) {
+        renderVisibleRange.value = curRange;
+        logger.debug('viewport', {
+            topsHeight,
+            viewportHeight,
+            bottomsHeight,
+        });
+        emit('visble-range-changed', { bufferStart, visibleStart, visibleEnd, bufferEnd });
+    }
+};
 
 // 可见项列表
 const visibleItems = computed(() => {
-    const items = props.items.slice(visibleRange.value.start, visibleRange.value.end);
+    const items = props.items.slice(renderVisibleRange.value.bufferStart, renderVisibleRange.value.bufferEnd + 1);
     // logger.debug('visibleRange', visibleRange.value);//, 'visibleItems', items);
 
     let itemWidth = 0;
@@ -173,7 +270,7 @@ const visibleItems = computed(() => {
                     width: `${itemWidth}px`,
                 },
             };
-            rowHeights.push(measuredHeights.value[item.id] || props.itemHeight);
+            rowHeights.push(measuredHeights[item.id] || props.itemHeight);
             itemOffsetX += itemWidth + finalGap.value.column;
         }
 
@@ -181,7 +278,15 @@ const visibleItems = computed(() => {
         itemOffsetY += finalGap.value.row;
     }
 
-    return { items, offset: visibleRange.value.startOffset };
+    return items;
+});
+
+updateTotalHeight();
+checkVisibleRange();
+onMounted(() => {
+    initScrollParent();
+    updateTotalHeight();
+    checkVisibleRange();
 });
 
 onUnmounted(() => {
@@ -199,11 +304,11 @@ onUnmounted(() => {
         }"></div>
         <div ref="contentRef" class="ui-virtual-content" :style="{
             width: finalContentWidthExcludePadding + 'px',
-            transform: `translateY(${visibleItems.offset}px)`,
+            transform: `translateY(${renderVisibleRange.startOffset}px)`,
         }">
-            <div v-for="(item, index) in visibleItems.items" :key="item.id" ref="listItemsRef"
-                class="ui-virtual-list-item" :data-item-id="item.id" :style="item.__style__">
-                <slot name="item" :item="item" :index="visibleRange.start + index"></slot>
+            <div v-for="(item, index) in visibleItems" :key="item.id" ref="listItemsRef" class="ui-virtual-list-item"
+                :data-item-id="item.id" :style="item.__style__">
+                <slot name="item" :item="item" :index="renderVisibleRange.bufferStart + index"></slot>
             </div>
         </div>
     </div>
