@@ -241,6 +241,8 @@ const checkVisibleRange = () => {
         if (visibleItemsHeight >= viewportHeight) {
             break;
         }
+        if (i === props.items.length - 1) break; // 已经是最后一个项了，不再处理
+
         // 加了间隔之后，如果大于了可显示高度，则还是取当前的索引 
         // 此处暂不➕到visibleItemsHeight上，否则后面计算visibleEndRelativeOffset 会不准确
         const step = visibleItemsHeight + finalGap.value.row;

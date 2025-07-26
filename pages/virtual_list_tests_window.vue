@@ -29,7 +29,7 @@ const nowSeconds = Date.now() / 1000;
     </div>
     <h1>List Header</h1>
     <UIVirtualList :items="items" :item-height="50" :buffer="10" gap="8" :column="1" :content-width="1000"
-        content-padding="8" :ssr-visible-items="10" class="v-list" content-class="v-list-content"
+        content-padding="8" :ssr-visible-items="10" content-class="v-list-content"
         @visble-range-changed="onVisibleRangeChanged">
         <template #item="{ item, index }">
             <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
@@ -39,11 +39,6 @@ const nowSeconds = Date.now() / 1000;
 </template>
 
 <style lang="scss" scoped>
-.v-list {
-    // padding: 30px;
-    // min-width: 1060px;
-}
-
 .v-list-contaner {
     width: 100%;
     height: calc(100vh - var(--header-height));
