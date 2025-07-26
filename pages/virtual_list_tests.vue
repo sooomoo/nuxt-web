@@ -21,10 +21,16 @@ const nowSeconds = Date.now() / 1000;
             <UITime :unix-seconds="nowSeconds"></UITime>
         </div>
         <div class="sth-sticky">
-            {{ visibleRange }}
+            itemsRange: {{ visibleRange?.bufferStart }} - [ {{ visibleRange?.visibleStart }} - {{
+                visibleRange?.visibleEnd
+            }}
+            ] - {{
+                visibleRange?.bufferEnd }}<br />
+            visibleStartRelativeOffset: {{ visibleRange?.visibleStartRelativeOffset }}px<br />
+            visibleEndRelativeOffset: {{ visibleRange?.visibleEndRelativeOffset }}px
         </div>
         <h1>List Header</h1>
-        <UIVirtualList :items="items" :item-height="50" :buffer="50" gap="10" :column="1" :content-width="1000"
+        <UIVirtualList :items="items" :item-height="50" :buffer="10" gap="10" :column="1" :content-width="1000"
             content-padding="10" class="v-list" content-class="v-list-content"
             @visble-range-changed="onVisibleRangeChanged">
             <template #item="{ item, index }">
@@ -68,9 +74,9 @@ h1 {
 .sth-sticky {
     min-width: 1000px;
     position: sticky;
-    // top: var(--header-height);
+    text-align: center;
     top: 0;
-    background-color: #f00;
+    background-color: #f005;
     z-index: 2;
     // margin: 24px 0;
     height: 70px;

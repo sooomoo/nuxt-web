@@ -121,6 +121,7 @@ const getStartIndex = (topsHeight: number) => {
     const actualTopForList = scrollTop.value - topsHeight;
     let start = 0;
     let offset = finalContentPadding.value.top;
+    let startIndexRowHeight = 0;
     for (let i = 0; i < props.items.length; i += finalColumn.value) {
         const rowHeights: number[] = [];
         for (let j = 0; j < finalColumn.value; j++) {
@@ -128,17 +129,31 @@ const getStartIndex = (topsHeight: number) => {
             if (!item) continue; // 超出索引范围
             rowHeights.push(measuredHeights[item.id] || props.itemHeight);
         }
-        offset += Math.max(...rowHeights);
+        startIndexRowHeight = Math.max(...rowHeights);
+        offset += startIndexRowHeight;
         if (offset >= actualTopForList) {
             start = i;
             break;
         }
         offset += finalGap.value.row;
     }
+    offset -= startIndexRowHeight; // 需要去掉 start 这一行的高度
+    let startRelativeOffset = 0; // start 相对于视口的偏移量
+    if (actualTopForList > 0) {
+        startRelativeOffset = offset - actualTopForList; // start 相对于视口的偏移量
+    }
+
+    logger.debug('getStartIndex', {
+        actualTopForList,
+        offset,
+        scrollTopValue: scrollTop.value,
+        startRelativeOffset,
+    });
 
     return {
         bufferStart: Math.max(0, start - finalBuffer.value * finalColumn.value),
-        visibleStart: start
+        visibleStart: start,
+        startRelativeOffset: startRelativeOffset
     };
 };
 
@@ -184,18 +199,18 @@ const getViewportInfo = () => {
     const othersHeight = scrollHeight - totalHeight.value;
     const topsHeight = Math.floor(relativeTop + scrollTop.value);
     const bottomsHeight = othersHeight - topsHeight;
-    logger.debug('getViewportInfo', {
-        // scrollContainerTop,
-        // scrollHeight,
-        // othersHeight,
-        // topsHeight,
-        // bottomsHeight,
-        // scrollTop: scrollTop.value,
-        // totalHeight: totalHeight.value,
-        // containerRect,
-        viewportHeight,
-        scrollParentHeight: scrollParentSize.value.height,
-    });
+    // logger.debug('getViewportInfo', {
+    //     // scrollContainerTop,
+    //     // scrollHeight,
+    //     // othersHeight,
+    //     // topsHeight,
+    //     // bottomsHeight,
+    //     // scrollTop: scrollTop.value,
+    //     // totalHeight: totalHeight.value,
+    //     // containerRect,
+    //     viewportHeight,
+    //     scrollParentHeight: scrollParentSize.value.height,
+    // });
     return {
         topsHeight,
         viewportHeight,
@@ -209,10 +224,10 @@ const checkVisibleRange = () => {
         return;
     }
     updateTotalHeight();
-    const { bufferStart, visibleStart } = getStartIndex(topsHeight);
+    const { bufferStart, visibleStart, startRelativeOffset } = getStartIndex(topsHeight);
     let visibleEnd = visibleStart;
     // 计算视口可见项
-    let visibleItemsHeight = 0;
+    let visibleItemsHeight = startRelativeOffset;
     const rowHeights: number[] = [];
     for (let i = visibleStart; i < props.items.length; i += finalColumn.value) {
         rowHeights.splice(0, rowHeights.length);
@@ -223,32 +238,36 @@ const checkVisibleRange = () => {
         }
         visibleEnd = i;
         visibleItemsHeight += Math.max(...rowHeights);
-        if (visibleItemsHeight > viewportHeight) {
+        if (visibleItemsHeight >= viewportHeight) {
             break;
         }
-        // 加了间隔之后，如果大于了可显示高度，则还是取当前的索引
-        visibleItemsHeight += finalGap.value.row;
-        if (visibleItemsHeight > viewportHeight) {
+        // 加了间隔之后，如果大于了可显示高度，则还是取当前的索引 
+        // 此处暂不➕到visibleItemsHeight上，否则后面计算visibleEndRelativeOffset 会不准确
+        const step = visibleItemsHeight + finalGap.value.row;
+        if (step >= viewportHeight) {
             break;
         }
+        visibleItemsHeight = step;
     }
 
     let bufferEnd = visibleEnd + finalBuffer.value * finalColumn.value;
     bufferEnd = Math.min(bufferEnd, props.items.length - 1);
 
     let startOffset = getHeightToIndex(bufferStart);
-    // startOffset += finalGap.value.row;
     startOffset = Math.min(startOffset, totalHeight.value);
 
-    const curRange: RenderVisibleRange = { bufferStart, visibleStart, visibleEnd, bufferEnd, startOffset };
+    const curRange: RenderVisibleRange = {
+        bufferStart,
+        visibleStart,
+        visibleEnd,
+        bufferEnd,
+        startOffset,
+        visibleStartRelativeOffset: startRelativeOffset,
+        visibleEndRelativeOffset: viewportHeight - visibleItemsHeight
+    };
     if (!isRenderVisibleRangeSame(curRange, renderVisibleRange.value)) {
         renderVisibleRange.value = curRange;
-        // logger.debug('viewport', {
-        //     topsHeight,
-        //     viewportHeight,
-        //     bottomsHeight,
-        // });
-        emit('visble-range-changed', { bufferStart, visibleStart, visibleEnd, bufferEnd });
+        emit('visble-range-changed', curRange);
     }
 };
 
