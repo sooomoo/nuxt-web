@@ -1,4 +1,5 @@
 <script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
+import { logger } from 'vuepkg';
 import { newGapFromString, newPaddingFromString, newResizeObserver, zeroPadding, type Gap, type Padding } from './scripts/Elements';
 import { useScrollParent } from './scripts/ScrollParent';
 import { isRenderVisibleRangeSame, zeroRenderVisibleRange, type RenderVisibleRange, type VisibleRange } from './scripts/Virtuals';
@@ -183,17 +184,18 @@ const getViewportInfo = () => {
     const othersHeight = scrollHeight - totalHeight.value;
     const topsHeight = Math.floor(relativeTop + scrollTop.value);
     const bottomsHeight = othersHeight - topsHeight;
-    // logger.debug('getViewportInfo', {
-    //     scrollContainerTop,
-    //     scrollHeight,
-    //     othersHeight,
-    //     topsHeight,
-    //     bottomsHeight,
-    //     scrollTop: scrollTop.value,
-    //     totalHeight: totalHeight.value,
-    //     containerRect,
-    //     viewportHeight,
-    // });
+    logger.debug('getViewportInfo', {
+        // scrollContainerTop,
+        // scrollHeight,
+        // othersHeight,
+        // topsHeight,
+        // bottomsHeight,
+        // scrollTop: scrollTop.value,
+        // totalHeight: totalHeight.value,
+        // containerRect,
+        viewportHeight,
+        scrollParentHeight: scrollParentSize.value.height,
+    });
     return {
         topsHeight,
         viewportHeight,
