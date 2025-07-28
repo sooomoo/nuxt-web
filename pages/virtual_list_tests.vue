@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import type { VisibleRange } from '~/components/ui/scripts/Virtuals';
+import { logger } from 'vuepkg';
+import type { VirtualScrollerExpose, VisibleRange } from '~/components/ui/scripts/Virtuals';
+import UIVirtualList from '~/components/ui/UIVirtualList.vue';
 
 
 const items = Array.from({ length: 300 }, (_, i) => ({
@@ -13,6 +15,21 @@ const onVisibleRangeChanged = (range: VisibleRange) => {
 };
 
 const nowSeconds = Date.now() / 1000;
+const vlistRef = ref<VirtualScrollerExpose | undefined>();
+const scrollToTop = () => {
+    vlistRef.value?.scrollToTop();
+};
+const scrollToBottom = () => {
+    vlistRef.value?.scrollToBottom();
+};
+
+const indexChange = (evt: Event) => {
+    if (!(evt.target instanceof HTMLInputElement)) {
+        return;
+    }
+    logger.debug('indexChange', evt.target.valueAsNumber);
+    vlistRef.value?.scrollToIndex(evt.target.valueAsNumber);
+};
 </script>
 
 <template>
@@ -21,17 +38,25 @@ const nowSeconds = Date.now() / 1000;
             <UITime :unix-seconds="nowSeconds"></UITime>
         </div>
         <div class="sth-sticky">
-            itemsRange: {{ visibleRange?.bufferStart }} - [ {{ visibleRange?.visibleStart }} - {{
-                visibleRange?.visibleEnd
-            }}
-            ] - {{
-                visibleRange?.bufferEnd }}<br />
-            visibleStartRelativeOffset: {{ visibleRange?.visibleStartRelativeOffset }}px<br />
-            visibleEndRelativeOffset: {{ visibleRange?.visibleEndRelativeOffset }}px
+            <div class="v-info">
+                itemsRange: {{ visibleRange?.bufferStart }} - [ {{ visibleRange?.visibleStart }} - {{
+                    visibleRange?.visibleEnd
+                }}
+                ] - {{
+                    visibleRange?.bufferEnd }}<br />
+                visibleStartRelativeOffset: {{ visibleRange?.visibleStartRelativeOffset }}px<br />
+                visibleEndRelativeOffset: {{ visibleRange?.visibleEndRelativeOffset }}px
+            </div>
+            <div class="v-actions">
+                <button @click="scrollToTop">Scroll to Top</button>
+                <button @click="scrollToBottom">Scroll to Bottom</button>
+                <input type="number" @change="indexChange" />
+            </div>
         </div>
         <h1>List Header</h1>
-        <UIVirtualList :items="items" :item-height="50" :buffer="10" gap="10" :column="1" :content-width="1000"
-            content-padding="10" content-class="v-list-content" @visble-range-changed="onVisibleRangeChanged">
+        <UIVirtualList ref="vlistRef" :items="items" :item-height="50" :buffer="10" gap="10" :column="1"
+            :content-width="1000" content-padding="10" content-class="v-list-content"
+            @visble-range-changed="onVisibleRangeChanged">
             <template #item="{ item, index }">
                 <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
             </template>
@@ -43,9 +68,10 @@ const nowSeconds = Date.now() / 1000;
 <style lang="scss" scoped>
 .v-list-contaner {
     width: 100%;
-    height: calc(100vh - var(--header-height));
-    overflow: auto;
+    // height: calc(100vh - var(--header-height));
+    // overflow: auto;
 }
+
 
 :deep(.v-list-content) {
     background-color: var(--color-container);
@@ -69,11 +95,31 @@ h1 {
     min-width: 1000px;
     position: sticky;
     text-align: center;
-    top: 0;
+    top: var(--header-height);
     background-color: #f005;
     z-index: 2;
     // margin: 24px 0;
     height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .v-info {
+        width: 40%;
+    }
+
+    .v-actions {
+        & button {
+            margin: 0 8px;
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        & input {
+            width: 100px;
+            padding: 6px 12px;
+        }
+    }
 }
 
 .virtual-list {

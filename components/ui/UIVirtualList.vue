@@ -2,7 +2,7 @@
 import { logger } from 'vuepkg';
 import { newGapFromString, newPaddingFromString, newResizeObserver, zeroPadding, type Gap, type Padding } from './scripts/Elements';
 import { useScrollParent } from './scripts/ScrollParent';
-import { isRenderVisibleRangeSame, zeroRenderVisibleRange, type RenderVisibleRange, type VisibleRange } from './scripts/Virtuals';
+import { isRenderVisibleRangeSame, zeroRenderVisibleRange, type RenderVisibleRange, type VirtualScrollerExpose, type VisibleRange } from './scripts/Virtuals';
 
 const props = defineProps<{
     items: T[]
@@ -36,9 +36,18 @@ const finalContentPadding = computed(() => {
     }
     return props.contentPadding ?? zeroPadding();
 });
+const finalContentWidthExcludePadding = computed(() => {
+    let remainWidth = props.contentWidth || scrollParentSize.value.width;
+    if (remainWidth) {
+        remainWidth = remainWidth - finalContentPadding.value.left - finalContentPadding.value.right;
+    }
+    return remainWidth > 0 ? remainWidth : 0;
+});
+const finalContentWidth = computed(() => {
+    return props.contentWidth || scrollParentSize.value.width || 0;
+});
 
 const renderVisibleRange = shallowRef<RenderVisibleRange>(zeroRenderVisibleRange());
-
 const emit = defineEmits<{
     (e: "visble-range-changed", range: VisibleRange): void
 }>();
@@ -60,12 +69,10 @@ const itemResizeObserver = newResizeObserver((entries) => {
 
         if (measuredHeights[itemId] !== height) {
             measuredHeights[itemId] = height;
-            updateTotalHeight();
-            checkVisibleRange();
+            refresh();
         }
     }
 });
-
 watch(listItemsRef, (newVal, oldVal) => {
     oldVal.forEach((item) => {
         itemResizeObserver.unobserve(item);
@@ -75,17 +82,6 @@ watch(listItemsRef, (newVal, oldVal) => {
     });
 }, { deep: true });
 
-const finalContentWidthExcludePadding = computed(() => {
-    let remainWidth = props.contentWidth || scrollParentSize.value.width;
-    if (remainWidth) {
-        remainWidth = remainWidth - finalContentPadding.value.left - finalContentPadding.value.right;
-    }
-    return remainWidth > 0 ? remainWidth : 0;
-});
-
-const finalContentWidth = computed(() => {
-    return props.contentWidth || scrollParentSize.value.width || 0;
-});
 
 watch(isOverflowX, (val) => {
     // logger.debug('isOverflowX', val);
@@ -116,7 +112,6 @@ const getHeightToIndex = (index: number) => {
 
     return height;
 };
-
 const getStartIndex = (topsHeight: number) => {
     const actualTopForList = scrollTop.value - topsHeight;
     let start = 0;
@@ -143,12 +138,12 @@ const getStartIndex = (topsHeight: number) => {
         startRelativeOffset = offset - actualTopForList; // start 相对于视口的偏移量
     }
 
-    logger.debug('getStartIndex', {
-        actualTopForList,
-        offset,
-        scrollTopValue: scrollTop.value,
-        startRelativeOffset,
-    });
+    // logger.debug('getStartIndex', {
+    //     actualTopForList,
+    //     offset,
+    //     scrollTopValue: scrollTop.value,
+    //     startRelativeOffset,
+    // });
 
     return {
         bufferStart: Math.max(0, start - finalBuffer.value * finalColumn.value),
@@ -158,7 +153,6 @@ const getStartIndex = (topsHeight: number) => {
 };
 
 const totalHeight = ref(0);
-
 const updateTotalHeight = () => {
     let height = getHeightToIndex(props.items.length);
     if (height > finalGap.value.row) {
@@ -175,7 +169,7 @@ const getViewportInfo = () => {
             fallbackItems = 1;
         }
         const fallbackHeight = fallbackItems * props.itemHeight + (fallbackItems - 1) * finalGap.value.row;
-        return { topsHeight: 0, viewportHeight: fallbackHeight, bottomsHeight: 0 };
+        return { topsHeight: 0, viewportHeight: fallbackHeight, bottomsHeight: 0, scrollHeight: 0 };
     }
     let scrollHeight = 0;
     let scrollContainerTop = 0;
@@ -215,6 +209,7 @@ const getViewportInfo = () => {
         topsHeight,
         viewportHeight,
         bottomsHeight,
+        scrollHeight,
     };
 };
 
@@ -269,7 +264,12 @@ const checkVisibleRange = () => {
     };
     if (!isRenderVisibleRangeSame(curRange, renderVisibleRange.value)) {
         renderVisibleRange.value = curRange;
-        emit('visble-range-changed', curRange);
+        // emit('visble-range-changed', curRange);
+        if (typeof requestAnimationFrame === 'undefined') {
+            emit('visble-range-changed', curRange);
+        } else {
+            requestAnimationFrame(() => emit('visble-range-changed', curRange));
+        }
     }
 };
 
@@ -311,18 +311,44 @@ const visibleItems = computed(() => {
     return items;
 });
 
-updateTotalHeight();
-checkVisibleRange();
-onMounted(() => {
-    initScrollParent();
+const refresh = () => {
     updateTotalHeight();
     checkVisibleRange();
+};
+
+refresh();
+onMounted(() => {
+    initScrollParent();
+    refresh();
 });
 
 onUnmounted(() => {
     itemResizeObserver.disconnect();
     releaseScrollParent();
 });
+
+
+const scrollToTop = (behavior?: ScrollBehavior) => {
+    logger.debug('scrollToTop', behavior, scrollParent.value);
+    scrollParent.value?.scrollTo({ top: 0, behavior, left: 0 });
+};
+const scrollToBottom = (behavior?: ScrollBehavior) => {
+    const { scrollHeight, viewportHeight } = getViewportInfo();
+    if (scrollHeight <= viewportHeight) return;
+    scrollParent.value?.scrollTo({ top: scrollHeight - viewportHeight, behavior, left: 0 });
+};
+const scrollToIndex = (index: number, behavior?: ScrollBehavior) => {
+    if (index < 0) return;
+    const { topsHeight, scrollHeight } = getViewportInfo();
+    const height = topsHeight + getHeightToIndex(index);
+    if (height > scrollHeight) {
+        scrollToBottom(behavior);
+        return;
+    }
+    scrollParent.value?.scrollTo({ top: height, behavior, left: 0 });
+};
+defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex });
+
 </script>
 
 <template>

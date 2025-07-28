@@ -1,5 +1,3 @@
-import { logger } from "vuepkg";
-
 export interface VisibleRange {
     bufferStart: number;
     visibleStart: number;
@@ -38,16 +36,8 @@ export const isRenderVisibleRangeSame = (a: RenderVisibleRange, b: RenderVisible
     );
 };
 
-export class VirtualScrollController {
-    scrollToIndex(index: number, behavior?: ScrollBehavior) {
-        logger.debug("scrollToIndex", index, behavior);
-    }
-
-    scrollToBottom(behavior?: ScrollBehavior) {
-        logger.debug("scrollToBottom", behavior);
-    }
-
-    scrollToTop(behavior?: ScrollBehavior) {
-        logger.debug("scrollToBottom", behavior);
-    }
+export interface VirtualScrollerExpose {
+    scrollToTop: (behavior?: ScrollBehavior) => void;
+    scrollToBottom: (behavior?: ScrollBehavior) => void;
+    scrollToIndex: (index: number, behavior?: ScrollBehavior) => void;
 }
