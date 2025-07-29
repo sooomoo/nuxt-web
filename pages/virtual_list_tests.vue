@@ -17,10 +17,10 @@ const onVisibleRangeChanged = (range: VisibleRange) => {
 const nowSeconds = Date.now() / 1000;
 const vlistRef = ref<VirtualScrollerExpose | undefined>();
 const scrollToTop = () => {
-    vlistRef.value?.scrollToTop();
+    vlistRef.value?.scrollToTop('smooth');
 };
 const scrollToBottom = () => {
-    vlistRef.value?.scrollToBottom();
+    vlistRef.value?.scrollToBottom('smooth');
 };
 
 const indexChange = (evt: Event) => {
@@ -28,7 +28,7 @@ const indexChange = (evt: Event) => {
         return;
     }
     logger.debug('indexChange', evt.target.valueAsNumber);
-    vlistRef.value?.scrollToIndex(evt.target.valueAsNumber);
+    vlistRef.value?.scrollToIndex(evt.target.valueAsNumber, 'smooth');
 };
 </script>
 
@@ -55,7 +55,7 @@ const indexChange = (evt: Event) => {
         </div>
         <h1>List Header</h1>
         <UIVirtualList ref="vlistRef" :items="items" :item-height="50" :buffer="10" gap="10" :column="1"
-            :content-width="1000" content-padding="10" content-class="v-list-content"
+            :content-width="1000" content-padding="12" content-class="v-list-content"
             @visble-range-changed="onVisibleRangeChanged">
             <template #item="{ item, index }">
                 <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
@@ -136,7 +136,7 @@ h1 {
 }
 
 .item-even {
-    height: 50px;
+    height: 80px;
     border: 1px solid #ccc;
     align-content: center;
     padding: 0 12px;

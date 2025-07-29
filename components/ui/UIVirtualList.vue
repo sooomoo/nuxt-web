@@ -328,24 +328,50 @@ onUnmounted(() => {
 });
 
 
-const scrollToTop = (behavior?: ScrollBehavior) => {
+const scrollToTop = (behavior: ScrollBehavior = 'auto') => {
+    clearScrollTimeout();
     logger.debug('scrollToTop', behavior, scrollParent.value);
-    scrollParent.value?.scrollTo({ top: 0, behavior, left: 0 });
+    scrollParent.value?.scrollTo({ top: 0, behavior });
 };
-const scrollToBottom = (behavior?: ScrollBehavior) => {
-    const { scrollHeight, viewportHeight } = getViewportInfo();
-    if (scrollHeight <= viewportHeight) return;
-    scrollParent.value?.scrollTo({ top: scrollHeight - viewportHeight, behavior, left: 0 });
-};
-const scrollToIndex = (index: number, behavior?: ScrollBehavior) => {
-    if (index < 0) return;
-    const { topsHeight, scrollHeight } = getViewportInfo();
-    const height = topsHeight + getHeightToIndex(index);
-    if (height > scrollHeight) {
-        scrollToBottom(behavior);
-        return;
+
+let scrollTimeout: ReturnType<typeof setTimeout> | undefined;
+const clearScrollTimeout = () => {
+    if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = undefined;
     }
-    scrollParent.value?.scrollTo({ top: height, behavior, left: 0 });
+};
+const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
+    const doScroll = () => {
+        clearScrollTimeout();
+        const { scrollHeight, viewportHeight } = getViewportInfo();
+        if (scrollTop.value < scrollHeight - viewportHeight) {
+            scrollParent.value?.scrollTo({ top: scrollHeight - viewportHeight, behavior });
+            scrollTimeout = setTimeout(() => doScroll(), 500);
+        } else {
+            logger.debug('scrollToBottom', 'break', scrollTop.value, scrollHeight, viewportHeight);
+        }
+    };
+    doScroll();
+};
+const scrollToIndex = (index: number, behavior: ScrollBehavior = 'auto') => {
+    if (index < 0) return;
+    const doScroll = () => {
+        clearScrollTimeout();
+        const { topsHeight, scrollHeight } = getViewportInfo();
+        const height = topsHeight + getHeightToIndex(index);
+        if (height > scrollHeight) {
+            scrollToBottom(behavior);
+            return;
+        }
+        scrollParent.value?.scrollTo({ top: height, behavior });
+        if (index >= renderVisibleRange.value.visibleStart && index < renderVisibleRange.value.visibleEnd) {
+            logger.debug('scrollToIndex', 'break');
+            return;
+        }
+        scrollTimeout = setTimeout(() => doScroll(), 500);
+    };
+    doScroll();
 };
 defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex });
 
