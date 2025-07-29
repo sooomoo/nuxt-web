@@ -342,6 +342,7 @@ const clearScrollTimeout = () => {
     }
 };
 const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
+    // 由于高度无法提前感知，所以需要试探性的滚动，满足条件时再退出
     const doScroll = () => {
         clearScrollTimeout();
         const { scrollHeight, viewportHeight } = getViewportInfo();
@@ -356,6 +357,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
 };
 const scrollToIndex = (index: number, behavior: ScrollBehavior = 'auto') => {
     if (index < 0) return;
+    // 由于高度无法提前感知，所以需要试探性的滚动，满足条件时再退出
     const doScroll = () => {
         clearScrollTimeout();
         const { topsHeight, scrollHeight } = getViewportInfo();
