@@ -17,10 +17,10 @@ const onVisibleRangeChanged = (range: VisibleRange) => {
 const nowSeconds = Date.now() / 1000;
 const vlistRef = ref<VirtualScrollerExpose | undefined>();
 const scrollToTop = () => {
-    vlistRef.value?.scrollToTop('smooth');
+    vlistRef.value?.scrollToTop();
 };
 const scrollToBottom = () => {
-    vlistRef.value?.scrollToBottom('smooth');
+    vlistRef.value?.scrollToBottom();
 };
 
 const indexChange = (evt: Event) => {
@@ -28,7 +28,7 @@ const indexChange = (evt: Event) => {
         return;
     }
     logger.debug('indexChange', evt.target.valueAsNumber);
-    vlistRef.value?.scrollToIndex(evt.target.valueAsNumber, 'smooth');
+    vlistRef.value?.scrollToIndex(evt.target.valueAsNumber);
 };
 </script>
 

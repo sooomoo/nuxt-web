@@ -343,12 +343,13 @@ const clearScrollTimeout = () => {
 };
 const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
     // 由于高度无法提前感知，所以需要试探性的滚动，满足条件时再退出
+    const delay = behavior === 'instant' ? 10 : 500;
     const doScroll = () => {
         clearScrollTimeout();
         const { scrollHeight, viewportHeight } = getViewportInfo();
         if (scrollTop.value < scrollHeight - viewportHeight) {
             scrollParent.value?.scrollTo({ top: scrollHeight - viewportHeight, behavior });
-            scrollTimeout = setTimeout(() => doScroll(), 500);
+            scrollTimeout = setTimeout(() => doScroll(), delay);
         } else {
             logger.debug('scrollToBottom', 'break', scrollTop.value, scrollHeight, viewportHeight);
         }
@@ -358,6 +359,7 @@ const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
 const scrollToIndex = (index: number, behavior: ScrollBehavior = 'auto') => {
     if (index < 0) return;
     // 由于高度无法提前感知，所以需要试探性的滚动，满足条件时再退出
+    const delay = behavior === 'instant' ? 10 : 500;
     const doScroll = () => {
         clearScrollTimeout();
         const { topsHeight, scrollHeight } = getViewportInfo();
@@ -371,7 +373,7 @@ const scrollToIndex = (index: number, behavior: ScrollBehavior = 'auto') => {
             logger.debug('scrollToIndex', 'break');
             return;
         }
-        scrollTimeout = setTimeout(() => doScroll(), 500);
+        scrollTimeout = setTimeout(() => doScroll(), delay);
     };
     doScroll();
 };
