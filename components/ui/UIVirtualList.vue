@@ -325,7 +325,7 @@ const refresh = () => {
 };
 
 const onMouseWheel = (_e: Event) => {
-    // logger.debug('onMouseWheel', e);
+    // logger.debug('onMouseWheel', _e);
     clearScrollTimeout(); // 有鼠标滚动时，取消跳转，防止滚动抖动
 };
 
