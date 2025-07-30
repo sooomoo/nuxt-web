@@ -82,7 +82,7 @@ const indexChange = (evt: Event) => {
 .sth-big-header {
     min-width: 1000px;
     height: 200px;
-    background-color: rgb(174, 248, 228);
+    background-color: rgb(28, 71, 66);
 }
 
 h1 {

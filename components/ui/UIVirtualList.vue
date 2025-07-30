@@ -1,6 +1,5 @@
 <script setup lang="ts" generic="T extends {[key: string]: any}">
-import { logger } from 'vuepkg';
-import { newGapFromString, newPaddingFromString, newResizeObserver, zeroPadding, type Gap, type Padding } from './scripts/Elements';
+import { logger, newGapFromString, newPaddingFromString, newResizeObserver, zeroPadding, type Gap, type Padding } from 'vuepkg';
 import { useScrollParent } from './scripts/ScrollParent';
 import { isRenderVisibleRangeSame, zeroRenderVisibleRange, type RenderVisibleRange, type VirtualScrollerExpose, type VisibleRange } from './scripts/Virtuals';
 
@@ -111,7 +110,7 @@ const getHeightToIndex = (index: number) => {
         rowHeights.splice(0, rowHeights.length);
         for (let j = 0; j < finalColumn.value; j++) {
             const item = props.items[i * finalColumn.value + j];
-            if (!item) continue; // 超出索引范围 
+            if (!item) continue; // 超出索引范围
             rowHeights.push(getItemHeight(item));
         }
         height += Math.max(...rowHeights);
@@ -246,7 +245,7 @@ const checkVisibleRange = () => {
         }
         if (i === props.items.length - 1) break; // 已经是最后一个项了，不再处理
 
-        // 加了间隔之后，如果大于了可显示高度，则还是取当前的索引 
+        // 加了间隔之后，如果大于了可显示高度，则还是取当前的索引
         // 此处暂不➕到visibleItemsHeight上，否则后面计算visibleEndRelativeOffset 会不准确
         const step = visibleItemsHeight + finalGap.value.row;
         if (step >= viewportHeight) {

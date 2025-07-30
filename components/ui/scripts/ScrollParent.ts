@@ -1,4 +1,4 @@
-import { newResizeObserver } from "./Elements";
+import { newResizeObserver } from "vuepkg";
 
 const regex = /auto|scroll/;
 

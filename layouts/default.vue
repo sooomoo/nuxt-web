@@ -44,7 +44,7 @@ const showFooter = computed(() => {
     box-shadow: 0 0 1px rgba(0, 0, 0, 0.25);
     padding: 0 16px;
     gap: 32px;
-    opacity: 0.4;
+    // opacity: 0.4;
 }
 
 .default-layout__body {

@@ -1,6 +1,5 @@
 <script setup lang="ts" generic="T extends { id: string | number | bigint, [key: string]: any }">
-import { zeroPadding, type Padding } from 'vuepkg';
-import { newPaddingFromString } from './scripts/Elements';
+import { newPaddingFromString, zeroPadding, type Padding } from 'vuepkg';
 import { zeroRenderVisibleRange, type RenderVisibleRange } from './scripts/Virtuals';
 
 
