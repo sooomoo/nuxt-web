@@ -5,7 +5,7 @@ import UIVirtualList from '~/components/ui/UIVirtualList.vue';
 
 
 const items = Array.from({ length: 300 }, (_, i) => ({
-    id: i + '',
+    id: i,
     name: `Item ${i}`
 }));
 

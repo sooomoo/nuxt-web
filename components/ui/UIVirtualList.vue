@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="T extends { id: string, [key: string]: any }">
+<script setup lang="ts" generic="T extends { id: string | number | bigint, [key: string]: any }">
 import { logger } from 'vuepkg';
 import { newGapFromString, newPaddingFromString, newResizeObserver, zeroPadding, type Gap, type Padding } from './scripts/Elements';
 import { useScrollParent } from './scripts/ScrollParent';
@@ -104,7 +104,7 @@ const getHeightToIndex = (index: number) => {
         for (let j = 0; j < finalColumn.value; j++) {
             const item = props.items[i + j];
             if (!item) continue; // 超出索引范围
-            rowHeights.push(measuredHeights[item.id] || props.itemHeight);
+            rowHeights.push(measuredHeights[item.id.toString()] || props.itemHeight);
         }
         height += Math.max(...rowHeights);
         height += finalGap.value.row;
@@ -122,7 +122,7 @@ const getStartIndex = (topsHeight: number) => {
         for (let j = 0; j < finalColumn.value; j++) {
             const item = props.items[i + j];
             if (!item) continue; // 超出索引范围
-            rowHeights.push(measuredHeights[item.id] || props.itemHeight);
+            rowHeights.push(measuredHeights[item.id.toString()] || props.itemHeight);
         }
         startIndexRowHeight = Math.max(...rowHeights);
         offset += startIndexRowHeight;
@@ -229,7 +229,7 @@ const checkVisibleRange = () => {
         for (let j = 0; j < finalColumn.value; j++) {
             const item = props.items[i + j];
             if (!item) continue; // 超出索引范围
-            rowHeights.push(measuredHeights[item.id] || props.itemHeight);
+            rowHeights.push(measuredHeights[item.id.toString()] || props.itemHeight);
         }
         visibleEnd = i;
         visibleItemsHeight += Math.max(...rowHeights);
@@ -300,7 +300,7 @@ const visibleItems = computed(() => {
                     width: `${itemWidth}px`,
                 },
             };
-            rowHeights.push(measuredHeights[item.id] || props.itemHeight);
+            rowHeights.push(measuredHeights[item.id.toString()] || props.itemHeight);
             itemOffsetX += itemWidth + finalGap.value.column;
         }
 
@@ -392,8 +392,8 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
             width: finalContentWidthExcludePadding + 'px',
             transform: `translateY(${renderVisibleRange.startOffset}px)`,
         }">
-            <div v-for="(item, index) in visibleItems" :key="item.id" ref="listItemsRef" class="ui-virtual-list-item"
-                :data-item-id="item.id" :style="item.__style__">
+            <div v-for="(item, index) in visibleItems" :key="item.id.toString()" ref="listItemsRef"
+                class="ui-virtual-list-item" :data-item-id="item.id" :style="item.__style__">
                 <slot name="item" :item="item" :index="renderVisibleRange.bufferStart + index"></slot>
             </div>
         </div>
