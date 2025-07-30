@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="T extends { id: string | number | bigint, [key: string]: any }">
+<script setup lang="ts" generic="T extends {[key: string]: any}">
 import { logger } from 'vuepkg';
 import { newGapFromString, newPaddingFromString, newResizeObserver, zeroPadding, type Gap, type Padding } from './scripts/Elements';
 import { useScrollParent } from './scripts/ScrollParent';
@@ -6,6 +6,7 @@ import { isRenderVisibleRangeSame, zeroRenderVisibleRange, type RenderVisibleRan
 
 const props = defineProps<{
     items: T[]
+    itemKey: (item: T) => string
     itemHeight: number
     contentWidth?: number
     column?: number
@@ -60,7 +61,7 @@ const itemResizeObserver = newResizeObserver((entries) => {
         }
 
         const height = entry.contentRect.height;
-        const itemId = entry.target.dataset.itemId || '';
+        const itemId = entry.target.dataset.itemId;
         // 此处需要过滤掉==0 的值，当元素被重用时，其元素的值会短暂为 0
         // === props.itemHeight 的也没必要处理，因为默认会回退到这个尺寸
         if (!itemId || height < 1 || height === props.itemHeight) {
@@ -97,14 +98,20 @@ watch(isOverflowX, (val) => {
 watch(scrollTop, () => checkVisibleRange());
 watch(scrollParentSize, () => checkVisibleRange());
 
+const getItemHeight = (item: T): number => {
+    const itemKey = props.itemKey(item);
+    return measuredHeights[itemKey] || props.itemHeight;
+};
+
 const getHeightToIndex = (index: number) => {
     let height = finalContentPadding.value.top;
+    const rowHeights: number[] = [];
     for (let i = 0; i < index; i += finalColumn.value) {
-        const rowHeights: number[] = [];
+        rowHeights.splice(0, rowHeights.length);
         for (let j = 0; j < finalColumn.value; j++) {
             const item = props.items[i + j];
-            if (!item) continue; // 超出索引范围
-            rowHeights.push(measuredHeights[item.id.toString()] || props.itemHeight);
+            if (!item) continue; // 超出索引范围 
+            rowHeights.push(getItemHeight(item));
         }
         height += Math.max(...rowHeights);
         height += finalGap.value.row;
@@ -122,7 +129,7 @@ const getStartIndex = (topsHeight: number) => {
         for (let j = 0; j < finalColumn.value; j++) {
             const item = props.items[i + j];
             if (!item) continue; // 超出索引范围
-            rowHeights.push(measuredHeights[item.id.toString()] || props.itemHeight);
+            rowHeights.push(getItemHeight(item));
         }
         startIndexRowHeight = Math.max(...rowHeights);
         offset += startIndexRowHeight;
@@ -229,9 +236,9 @@ const checkVisibleRange = () => {
         for (let j = 0; j < finalColumn.value; j++) {
             const item = props.items[i + j];
             if (!item) continue; // 超出索引范围
-            rowHeights.push(measuredHeights[item.id.toString()] || props.itemHeight);
+            rowHeights.push(getItemHeight(item));
+            visibleEnd = i + j;
         }
-        visibleEnd = i;
         visibleItemsHeight += Math.max(...rowHeights);
         if (visibleItemsHeight >= viewportHeight) {
             break;
@@ -300,7 +307,7 @@ const visibleItems = computed(() => {
                     width: `${itemWidth}px`,
                 },
             };
-            rowHeights.push(measuredHeights[item.id.toString()] || props.itemHeight);
+            rowHeights.push(getItemHeight(item));
             itemOffsetX += itemWidth + finalGap.value.column;
         }
 
@@ -364,6 +371,7 @@ const scrollToIndex = (index: number, behavior: ScrollBehavior = 'auto') => {
         clearScrollTimeout();
         const { topsHeight, scrollHeight } = getViewportInfo();
         const height = topsHeight + getHeightToIndex(index);
+        logger.debug('scrollToIndex', index, topsHeight, height, scrollHeight);
         if (height > scrollHeight) {
             scrollToBottom(behavior);
             return;
@@ -392,8 +400,8 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
             width: finalContentWidthExcludePadding + 'px',
             transform: `translateY(${renderVisibleRange.startOffset}px)`,
         }">
-            <div v-for="(item, index) in visibleItems" :key="item.id.toString()" ref="listItemsRef"
-                class="ui-virtual-list-item" :data-item-id="item.id" :style="item.__style__">
+            <div v-for="(item, index) in visibleItems" :key="props.itemKey(item)" ref="listItemsRef"
+                class="ui-virtual-list-item" :data-item-id="props.itemKey(item)" :style="item.__style__">
                 <slot name="item" :item="item" :index="renderVisibleRange.bufferStart + index"></slot>
             </div>
         </div>

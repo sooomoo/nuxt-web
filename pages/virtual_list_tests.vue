@@ -4,7 +4,7 @@ import type { VirtualScrollerExpose, VisibleRange } from '~/components/ui/script
 import UIVirtualList from '~/components/ui/UIVirtualList.vue';
 
 
-const items = Array.from({ length: 300 }, (_, i) => ({
+const items = Array.from({ length: 3000 }, (_, i) => ({
     id: i,
     name: `Item ${i}`
 }));
@@ -54,8 +54,8 @@ const indexChange = (evt: Event) => {
             </div>
         </div>
         <h1>List Header</h1>
-        <UIVirtualList ref="vlistRef" :items="items" :item-height="50" :buffer="10" gap="10" :column="1"
-            :content-width="1000" content-padding="12" content-class="v-list-content"
+        <UIVirtualList ref="vlistRef" :items="items" :item-key="(item) => item.id.toString()" :item-height="50"
+            :buffer="20" gap="10" :column="3" :content-width="1000" content-padding="12" content-class="v-list-content"
             @visble-range-changed="onVisibleRangeChanged">
             <template #item="{ item, index }">
                 <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
@@ -136,7 +136,7 @@ h1 {
 }
 
 .item-even {
-    height: 80px;
+    height: 50px;
     border: 1px solid #ccc;
     align-content: center;
     padding: 0 12px;
