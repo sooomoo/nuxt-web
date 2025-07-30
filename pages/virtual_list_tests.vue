@@ -68,8 +68,8 @@ const indexChange = (evt: Event) => {
 <style lang="scss" scoped>
 .v-list-contaner {
     width: 100%;
-    // height: calc(100vh - var(--header-height));
-    // overflow: auto;
+    height: calc(100vh - var(--header-height));
+    overflow: auto;
 }
 
 

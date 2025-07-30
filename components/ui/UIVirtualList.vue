@@ -106,10 +106,11 @@ const getItemHeight = (item: T): number => {
 const getHeightToIndex = (index: number) => {
     let height = finalContentPadding.value.top;
     const rowHeights: number[] = [];
-    for (let i = 0; i < index; i += finalColumn.value) {
+    const rows = Math.floor(index / finalColumn.value);
+    for (let i = 0; i < rows; i++) {
         rowHeights.splice(0, rowHeights.length);
         for (let j = 0; j < finalColumn.value; j++) {
-            const item = props.items[i + j];
+            const item = props.items[i * finalColumn.value + j];
             if (!item) continue; // 超出索引范围 
             rowHeights.push(getItemHeight(item));
         }
@@ -323,6 +324,11 @@ const refresh = () => {
     checkVisibleRange();
 };
 
+const onMouseWheel = (_e: Event) => {
+    // logger.debug('onMouseWheel', e);
+    clearScrollTimeout(); // 有鼠标滚动时，取消跳转，防止滚动抖动
+};
+
 refresh();
 onMounted(() => {
     initScrollParent();
@@ -390,7 +396,7 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
 </script>
 
 <template>
-    <div ref="containerRef" class="ui-virtual-list" style="padding: 0;">
+    <div ref="containerRef" class="ui-virtual-list" style="padding: 0;" @wheel="onMouseWheel">
         <!-- 撑开滚动条的占位元素 -->
         <div :class="'ui-virtual-sizes ' + props.contentClass" :style="{
             minWidth: finalContentWidth + 'px',
