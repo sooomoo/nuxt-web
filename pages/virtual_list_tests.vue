@@ -55,7 +55,7 @@ const indexChange = (evt: Event) => {
         </div>
         <h1>List Header</h1>
         <UIVirtualList ref="vlistRef" :items="items" :item-key="(item) => item.id.toString()" :item-height="50"
-            :buffer="20" gap="10" :column="3" :content-width="1000" content-padding="12" content-class="v-list-content"
+            :buffer="20" gap="8" :content-width="1000" content-padding="12" content-class="v-list-content"
             @visble-range-changed="onVisibleRangeChanged">
             <template #item="{ item, index }">
                 <div :class="{ 'item-even': index % 2 === 0 }" class="item">{{ item.name }} - {{ index }}</div>
@@ -82,7 +82,7 @@ const indexChange = (evt: Event) => {
 .sth-big-header {
     min-width: 1000px;
     height: 200px;
-    background-color: rgb(28, 71, 66);
+    background-color: rgb(50, 220, 200);
 }
 
 h1 {
