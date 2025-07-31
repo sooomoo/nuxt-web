@@ -397,7 +397,7 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
 <template>
     <div ref="containerRef" class="ui-virtual-list" style="padding: 0;" @wheel="onMouseWheel">
         <!-- 撑开滚动条的占位元素 -->
-        <div :class="'ui-virtual-sizes ' + props.contentClass" :style="{
+        <div :class="'ui-virtual-sizes ' + contentClass" :style="{
             minWidth: finalContentWidth + 'px',
             minHeight: totalHeight + 'px',
         }"></div>
@@ -405,8 +405,8 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
             width: finalContentWidthExcludePadding + 'px',
             transform: `translateY(${renderVisibleRange.startOffset}px)`,
         }">
-            <div v-for="(item, index) in visibleItems" :key="props.itemKey(item)" ref="listItemsRef"
-                class="ui-virtual-list-item" :data-item-id="props.itemKey(item)" :style="item.__style__">
+            <div v-for="(item, index) in visibleItems" :key="itemKey(item)" ref="listItemsRef"
+                class="ui-virtual-list-item" :data-item-id="itemKey(item)" :style="item.__style__">
                 <slot name="item" :item="item" :index="renderVisibleRange.bufferStart + index"></slot>
             </div>
         </div>

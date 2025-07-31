@@ -8,9 +8,6 @@ watchEffect(() => {
     log.debug("routing...path is : ", route.fullPath);
     log.debug("authStore.user is : ", authStore.user);
 });
-const showFooter = computed(() => {
-    return !route.path.includes('/virtual_list_tests');
-});
 </script>
 
 <template>
@@ -26,7 +23,6 @@ const showFooter = computed(() => {
     <main class="default-layout__body">
         <slot />
     </main>
-    <Footer v-if="showFooter" />
 </template>
 
 <style lang="scss" scoped>
@@ -44,7 +40,7 @@ const showFooter = computed(() => {
     box-shadow: 0 0 1px rgba(0, 0, 0, 0.25);
     padding: 0 16px;
     gap: 32px;
-    // opacity: 0.4;
+    opacity: 0.4;
 }
 
 .default-layout__body {
