@@ -313,6 +313,11 @@
             border: 1px solid #f0f0f0;
             padding: 6px 12px;
         }
+        tr:hover {
+            background: #527dff0d;
+            // transform: scale(1.02);
+            transition: background 0.3s ease;
+        }
     }
 }
 

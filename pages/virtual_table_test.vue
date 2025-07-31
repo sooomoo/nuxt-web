@@ -103,11 +103,6 @@ const indexChange = (evt: Event) => {
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
     border-radius: 3px;
 
-    & th,
-    td {
-        border: 1px solid #f0f0f0;
-        padding: 0 0;
-    }
 }
 
 :deep(.v-table) {
@@ -116,6 +111,11 @@ const indexChange = (evt: Event) => {
     td {
         border: 1px solid #f0f0f0;
         padding: 0 12px;
+
+        &:first-child {
+            // box-shadow: 5px 0 4px #0001;
+            box-shadow: 5px 0 4px 0 rgba(0, 0, 0, 0.05);
+        }
     }
 }
 
