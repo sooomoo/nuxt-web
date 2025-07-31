@@ -53,6 +53,8 @@ const onClickStartSSE = () => {
     <button @click="onClickStartSSE">Start SSE</button>
     <UITab v-model:active-index="activeTab" class="tab-test" :items="tabList"></UITab>
     <UITab v-model:active-index="activeTab" class="vtab-test" :items="vtabList" orientation="vertical"></UITab>
+
+    <UISorter class="margin"></UISorter>
     <UITooltiop tooltip="This is a tooltip" class="tooltip-test">
         <button>Hover me</button>
         <template #content>
@@ -141,6 +143,10 @@ const onClickStartSSE = () => {
 
 <style lang="scss" scoped>
 $backcolor: #f0f0f0;
+
+.margin {
+    margin: 10px 20px;
+}
 
 .tab {
     margin-left: 20px;

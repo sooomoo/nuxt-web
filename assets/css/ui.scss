@@ -101,6 +101,9 @@
 .ui-scroll-y {
     overflow-y: auto;
 }
+.ui-clickable {
+    cursor: pointer;
+}
 
 // ----- components styles
 .ui-tooltip {
@@ -296,4 +299,38 @@
 .ui-virtual-table {
     width: 100%;
     position: relative;
+}
+
+.ui-sorter {
+    width: fit-content;
+    height: auto;
+    gap: 2px;
+
+    & svg {
+        width: 8px;
+        height: auto;
+        fill: #999;
+        transition: fill 0.3s ease;
+    }
+
+    .ui-sorter-clickable {
+        &:hover {
+            & svg {
+                fill: currentColor;
+            }
+        }
+    }
+
+    .ui-sorter-asc {
+        padding: 2px 2px 0 2px;
+        & svg {
+            transform: rotateZ(-90deg);
+        }
+    }
+    .ui-sorter-desc {
+        padding: 0 2px 2px 2px;
+        & svg {
+            transform: rotateZ(90deg);
+        }
+    }
 }

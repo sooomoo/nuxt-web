@@ -1,13 +1,7 @@
 <template>
-    <svg class="ui-icon-arrow-fill" viewBox="0 0 1024 1024" width="20" height="20">
+    <svg class="ui-icon-arrow-fill" viewBox="0 0 1024 1024" width="20" height="20" fill="currentColor">
         <path
             d="M319.803077 71.837538l490.417231 306.569847a157.538462 157.538462 0 0 1 0 267.18523L319.803077 952.162462A157.538462 157.538462 0 0 1 78.769231 818.569846V205.430154A157.538462 157.538462 0 0 1 319.803077 71.837538z">
         </path>
     </svg>
 </template>
-
-<style lang="scss" scoped>
-.ui-icon-arrow-fill {
-    fill: #333;
-}
-</style>
