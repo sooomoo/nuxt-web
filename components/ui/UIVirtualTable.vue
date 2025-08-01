@@ -288,7 +288,9 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
                 <tr v-for="(row, index) in visibleItems" :key="itemKey(row)" :data-item-id="itemKey(row)"
                     :style="{ height: `${rowHeightFunc(row)}px` }">
                     <td v-for="col in columns" :key="col.field">
-                        <slot name="cell" :row="row" :row-index="index" :col="col">{{ row[col.field] ?? '' }}</slot>
+                        <slot name="cell" :row="row" :row-index="renderVisibleRange.bufferStart + index" :col="col">
+                            {{ row[col.field] ?? '' }}
+                        </slot>
                     </td>
                 </tr>
             </tbody>

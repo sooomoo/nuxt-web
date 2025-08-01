@@ -12,6 +12,7 @@ interface TableRowItem {
     id: number,
     name: string,
     title: string
+    [key: string]: unknown
 }
 
 
@@ -86,6 +87,9 @@ const indexChange = (evt: Event) => {
         <UIVirtualTable ref="vtableRef" :columns="columns" :items="items" :item-key="item => item.id.toString()"
             :row-height-func="item => item.id % 2 === 0 ? 50 : 50" content-class="v-table-content" content-padding="8"
             table-class="v-table" @visble-range-changed="onVisibleRangeChanged">
+            <template #cell="{ row, col }">
+                {{ row[col.field] ?? '' }}
+            </template>
         </UIVirtualTable>
         <Footer></Footer>
     </div>
@@ -109,12 +113,13 @@ const indexChange = (evt: Event) => {
 
     & th,
     td {
-        border: 1px solid #f0f0f0;
+        border: 1px solid #444;
         padding: 0 12px;
 
         &:first-child {
+            position: relative;
             // box-shadow: 5px 0 4px #0001;
-            box-shadow: 5px 0 4px 0 rgba(0, 0, 0, 0.05);
+            // box-shadow: 5px 0 4px 0 rgba(0, 0, 0, 0.05); 
         }
     }
 }
