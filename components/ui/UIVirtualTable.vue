@@ -398,19 +398,19 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
 <template>
     <div ref="containerRef" class="ui-virtual-table" style="padding: 0;" @wheel="onMouseWheel">
         <!-- 撑开滚动条的占位元素 -->
-        <div class="ui-virtual-table-sizes" :class="contentClass" :style="{
+        <div class="ui-relative" :class="contentClass" :style="{
             minWidth: contentWidthWithPadding + 'px',
             minHeight: totalHeight + 'px',
         }"></div>
-        <div ref="contentRef" class="ui-virtual-table-content" :class="tableClass" :style="{
+        <div ref="contentRef" class="ui-relative" :class="tableClass" :style="{
             position: 'absolute',
             width: contentWidth + 'px',
             transform: `translateY(${renderVisibleRange.startOffset}px)`,
         }">
             <div v-for="(row, index) in visibleItems" :key="rowKey(row)" ref="rowItemsRef"
-                class="ui-flex ui-flex-align-stretch ui-virtual-table-row" :class="rowClass" :data-row-id="rowKey(row)"
+                class="ui-flex ui-flex-align-stretch ui-relative" :class="rowClass" :data-row-id="rowKey(row)"
                 :style="row.__style__">
-                <div v-for="col in finalColumns" :key="col.field" class="ui-virtual-table-cell" :class="cellClass"
+                <div v-for="col in finalColumns" :key="col.field" class="ui-relative" :class="cellClass"
                     :style="col.__style__">
                     <slot name="cell" :row="row" :row-index="renderVisibleRange.bufferStart + index" :col="col">
                         {{ row[col.field] ?? '' }}
