@@ -104,6 +104,15 @@
 .ui-clickable {
     cursor: pointer;
 }
+.ui-relative {
+    position: relative;
+}
+.ui-absolute {
+    position: absolute;
+}
+.ui-fixed {
+    position: fixed;
+}
 
 // ----- components styles
 .ui-tooltip {
@@ -318,6 +327,58 @@
             // transform: scale(1.02);
             transition: background 0.3s ease;
         }
+    }
+
+    & .ui-virtual-table-sizes {
+        position: relative;
+    }
+    & .ui-virtual-table-content {
+        position: relative;
+        // &::after {
+        //     content: "";
+        //     position: absolute;
+        //     top: -0.5px;
+        //     right: -0.5px;
+        //     bottom: -0.5px;
+        //     left: -0.5px;
+        //     border: 1px solid #888;
+        //     pointer-events: none;
+        // }
+    }
+    & .ui-virtual-table-row {
+        position: relative;
+        // &::after {
+        //     content: "";
+        //     position: absolute;
+        //     bottom: -0.5px;
+        //     left: 0;
+        //     right: 0;
+        //     height: 0;
+        //     border-bottom: 1px solid #888;
+        // }
+        // &:last-child {
+        //     &::after {
+        //         border-bottom: none;
+        //     }
+        // }
+    }
+    & .ui-virtual-table-cell {
+        position: relative;
+        // padding: 8px 12px;
+        // &::after {
+        //     content: "";
+        //     position: absolute;
+        //     top: 0;
+        //     right: -0.5px;
+        //     bottom: 0;
+        //     width: 0;
+        //     border-right: 1px solid #888;
+        // }
+        // &:last-child {
+        //     &::after {
+        //         border-right: none;
+        //     }
+        // }
     }
 }
 

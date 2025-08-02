@@ -41,3 +41,11 @@ export interface VirtualScrollerExpose {
     scrollToBottom: (behavior?: ScrollBehavior) => void;
     scrollToIndex: (index: number, behavior?: ScrollBehavior) => void;
 }
+
+export interface TableSpan<T> {
+    row: number;
+    column: number;
+    rowSpan: number;
+    columnSpan: number;
+    item: T;
+}

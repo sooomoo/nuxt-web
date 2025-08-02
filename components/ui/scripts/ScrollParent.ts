@@ -10,7 +10,7 @@ function overflow(node: Element) {
     return style(node, "overflow") + style(node, "overflow-y") + style(node, "overflow-x");
 }
 
-function scroll(node: Element) {
+export function isElementScrollable(node: Element) {
     return regex.test(overflow(node));
 }
 
@@ -25,7 +25,7 @@ export function getScrollParent(node: HTMLElement | null) {
     }
     let elem: Element | null = node;
     while (elem) {
-        if (scroll(elem)) {
+        if (isElementScrollable(elem)) {
             return elem;
         }
         elem = elem.parentElement;

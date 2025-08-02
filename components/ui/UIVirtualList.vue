@@ -337,6 +337,7 @@ onMounted(() => {
 onUnmounted(() => {
     itemResizeObserver.disconnect();
     releaseScrollParent();
+    clearScrollTimeout();
 });
 
 
@@ -397,7 +398,7 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
 <template>
     <div ref="containerRef" class="ui-virtual-list" style="padding: 0;" @wheel="onMouseWheel">
         <!-- 撑开滚动条的占位元素 -->
-        <div :class="'ui-virtual-sizes ' + contentClass" :style="{
+        <div class="ui-virtual-sizes" :class="contentClass" :style="{
             minWidth: finalContentWidth + 'px',
             minHeight: totalHeight + 'px',
         }"></div>
