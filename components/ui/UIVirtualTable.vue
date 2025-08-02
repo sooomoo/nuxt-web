@@ -340,7 +340,6 @@ onUnmounted(() => {
     clearScrollTimeout();
 });
 
-
 const scrollToTop = (behavior: ScrollBehavior = 'auto') => {
     clearScrollTimeout();
     logger.debug('scrollToTop', behavior, scrollParent.value);
