@@ -148,7 +148,11 @@ const indexChange = (evt: Event) => {
                 <input type="number" @change="indexChange" />
             </div>
         </div>
-        <h1>List Header</h1>
+        <div class="ui-flex ui-flex-justify-center v-table-header-container">
+            <UITableHeader class="v-table-header" :columns="columns" col-class="ui-cell-border v-table-header-col"
+                :column-gap="colGap">
+            </UITableHeader>
+        </div>
         <UIVirtualTable ref="vtableRef" :columns="columns" :buffer="20" :items="items"
             :row-key="item => item.id.toString()" :item-height="50" content-class="v-table-content" content-padding="16"
             table-class="v-table" :ssr-visible-items="20" row-class="v-table-row"
@@ -163,6 +167,61 @@ const indexChange = (evt: Event) => {
 </template>
 
 <style lang="scss" scoped>
+.sth-sticky {
+    position: sticky;
+    text-align: center;
+    top: var(--header-height);
+    background-color: #f005;
+    z-index: 2;
+    // margin: 24px 0;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .v-info {
+        width: 40%;
+    }
+
+    .v-actions {
+        & button {
+            margin: 0 8px;
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        & input {
+            width: 100px;
+            padding: 6px 12px;
+        }
+    }
+}
+
+.v-table-header-container {
+    position: sticky;
+    top: calc(var(--header-height) + 70px);
+    justify-content: safe center;
+    z-index: 2;
+}
+
+.v-table-header {
+    height: 50px;
+    // background-color: var(--color-container);
+    padding: 0 16px;
+    background: #f0f0f0;
+}
+
+:deep(.v-table-header-col) {
+    height: 50px;
+    // background: #f0f0f0;
+    align-content: center;
+    padding: 0 12px;
+
+    // &::after {
+    //     border: 1px solid var(--table-border-color);
+    // }
+}
+
 .virtual-table {
     width: 100%;
     // height: calc(100vh - var(--header-height));
@@ -171,7 +230,6 @@ const indexChange = (evt: Event) => {
 
 :deep(.v-table-content) {
     background-color: var(--color-container);
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
     border-radius: 3px;
 }
 
@@ -212,6 +270,7 @@ const indexChange = (evt: Event) => {
     // }
 }
 
+
 :deep(.v-table-cell) {
     padding: 0 12px;
     position: relative;
@@ -247,35 +306,5 @@ h1 {
     margin: 0;
     height: 50px;
     align-content: center;
-}
-
-.sth-sticky {
-    position: sticky;
-    text-align: center;
-    top: var(--header-height);
-    background-color: #f005;
-    z-index: 2;
-    // margin: 24px 0;
-    height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .v-info {
-        width: 40%;
-    }
-
-    .v-actions {
-        & button {
-            margin: 0 8px;
-            background-color: var(--color-primary);
-            color: white;
-        }
-
-        & input {
-            width: 100px;
-            padding: 6px 12px;
-        }
-    }
 }
 </style>
