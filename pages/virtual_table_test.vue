@@ -88,7 +88,14 @@ const spans: TableSpan<string>[] = [
         rowSpan: 10,
         colSpan: 1,
         item: 'Cross1998'
-    }
+    },
+    {
+        row: 2000,
+        col: 2,
+        rowSpan: 6,
+        colSpan: 2,
+        item: 'Cross2000'
+    },
 ];
 
 const visibleRange = ref<VisibleRange | undefined>();

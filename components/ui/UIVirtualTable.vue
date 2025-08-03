@@ -325,8 +325,12 @@ const visibleSpans = computed(() => {
     const spans = props.spans || [];
     for (let i = 0; i < spans.length; i += 1) {
         const span = spans[i];
-        const rowBegin = span.row, rowEnd = span.row + span.rowSpan;
-        const colBegin = span.col, colEnd = span.col + span.colSpan;
+        let rowBegin = span.row, rowEnd = span.row + span.rowSpan;
+        let colBegin = span.col, colEnd = span.col + span.colSpan;
+        if (rowBegin < 0) rowBegin = 0;
+        if (colBegin < 0) colBegin = 0;
+        if (rowEnd > props.items.length) rowEnd = props.items.length;
+        if (colEnd > props.columns.length) colEnd = props.columns.length;
 
         // 与 visible range 有交集，则显示，否则不显示
         if (rowEnd <= renderVisibleRange.value.bufferStart || rowBegin > renderVisibleRange.value.bufferEnd) {
@@ -378,8 +382,12 @@ const hiddenCells = computed(() => {
     const spans = props.spans || [];
     for (let i = 0; i < spans.length; i += 1) {
         const span = spans[i];
-        const rowBegin = span.row, rowEnd = span.row + span.rowSpan;
-        const colBegin = span.col, colEnd = span.col + span.colSpan;
+        let rowBegin = span.row, rowEnd = span.row + span.rowSpan;
+        let colBegin = span.col, colEnd = span.col + span.colSpan;
+        if (rowBegin < 0) rowBegin = 0;
+        if (colBegin < 0) colBegin = 0;
+        if (rowEnd > props.items.length) rowEnd = props.items.length;
+        if (colEnd > props.columns.length) colEnd = props.columns.length;
 
         // 与 visible range 有交集，则显示，否则不显示
         if (rowEnd <= renderVisibleRange.value.bufferStart || rowBegin > renderVisibleRange.value.bufferEnd) {
