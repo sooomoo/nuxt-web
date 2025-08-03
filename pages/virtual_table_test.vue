@@ -303,7 +303,8 @@ const indexChange = (evt: Event) => {
             width: 30px;
             pointer-events: none;
             transform: translateX(100%);
-            box-shadow: inset 12px 0 8px -8px rgba(0, 0, 0, 0.2);
+            transition: box-shadow .3s ease;
+            box-shadow: inset 12px 0 8px -8px rgba(0, 0, 0, 0.1);
         }
     }
 }
