@@ -190,10 +190,6 @@ const indexChange = (evt: Event) => {
     justify-content: center;
     min-width: 1060px;
 
-    .v-info {
-        // width: 40%;
-    }
-
     .v-actions {
         & button {
             margin: 0 8px;
