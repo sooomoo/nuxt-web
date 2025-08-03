@@ -303,6 +303,7 @@ const visibleItems = computed(() => {
             items[i + j] = {
                 ...item,
                 __style__: {
+                    willChange: 'transform',
                     transform: itemOffsetX > 0 ? `translateY(${itemOffsetY}px) translateX(${itemOffsetX}px)` : `translateY(${itemOffsetY}px)`,
                     width: `${itemWidth}px`,
                 },
@@ -404,6 +405,7 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
         }"></div>
         <div ref="contentRef" class="ui-virtual-content" :style="{
             width: finalContentWidthExcludePadding + 'px',
+            willChange: 'transform',
             transform: `translateY(${renderVisibleRange.startOffset}px)`,
         }">
             <div v-for="(item, index) in visibleItems" :key="itemKey(item)" ref="listItemsRef"

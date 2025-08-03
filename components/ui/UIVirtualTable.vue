@@ -368,6 +368,7 @@ const visibleSpans = computed(() => {
             left: 0,
             width: `${width}px`,
             height: `${height}px`,
+            willChange: 'transform',
             transform: `translateY(${offsetY}px) translateX(${offsetX}px)`,
             // top: `${getHeightToIndex(span.row)}px`,
         };
@@ -495,6 +496,7 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
         <div ref="contentRef" :class="tableClass" :style="{
             position: 'absolute',
             width: contentWidth + 'px',
+            willChange: 'transform',
             transform: `translateY(${renderVisibleRange.startOffset}px)`,
         }">
             <div v-for="(row, index) in visibleItems" :key="rowKey(row)" ref="rowItemsRef"
