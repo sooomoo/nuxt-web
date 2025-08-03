@@ -29,7 +29,7 @@ const props = defineProps<{
     columnGap?: { [key: number]: number }
     columns: TCol[]
     /**
-     * 合并单元格的定义，考虑到 span 不会太多，因此它们未做虚拟化
+     * 合并单元格的定义，也做了虚拟化
      */
     spans?: TableSpan<TSpanItem>[]
     buffer?: number
@@ -300,8 +300,6 @@ const checkVisibleRange = () => {
     }
 };
 
-
-
 // 可见项列表
 const visibleItems = computed(() => {
     const items = props.items.slice(renderVisibleRange.value.bufferStart, renderVisibleRange.value.bufferEnd + 1);
@@ -318,15 +316,25 @@ const visibleItems = computed(() => {
         }
     }
 
+    return items;
+});
+
+const visibleSpans = computed(() => {
     // 计算 spans 的位置，同时隐藏被覆盖的单元格
-    const hideCells = {} as Record<string, boolean>;
+    const visSpans = [] as TableSpan<TSpanItem>[];
     const spans = props.spans || [];
     for (let i = 0; i < spans.length; i += 1) {
         const span = spans[i];
-        let width = 0;
         const rowBegin = span.row, rowEnd = span.row + span.rowSpan;
         const colBegin = span.col, colEnd = span.col + span.colSpan;
 
+        // 与 visible range 有交集，则显示，否则不显示
+        if (rowEnd <= renderVisibleRange.value.bufferStart || rowBegin > renderVisibleRange.value.bufferEnd) {
+            continue;
+        }
+        visSpans.push(span);
+
+        let width = 0;
         for (let c = colBegin; c < colEnd; c += 1) {
             const col = props.columns[c];
             width += col.width;
@@ -350,12 +358,6 @@ const visibleItems = computed(() => {
             }
         }
 
-        for (let r = rowBegin; r < rowEnd; r += 1) {
-            for (let c = colBegin; c < colEnd; c += 1) {
-                hideCells[`${r}-${c}`] = true;
-            }
-        }
-
         span.__style__ = {
             position: 'absolute',
             top: 0,
@@ -367,10 +369,31 @@ const visibleItems = computed(() => {
         };
     }
 
-    return {
-        items,
-        hideCells,
-    };
+    return visSpans;
+});
+
+const hiddenCells = computed(() => {
+    // 计算需要隐藏的单元格（即被 span 覆盖的单元格） 
+    const hideCells = {} as Record<string, boolean>;
+    const spans = props.spans || [];
+    for (let i = 0; i < spans.length; i += 1) {
+        const span = spans[i];
+        const rowBegin = span.row, rowEnd = span.row + span.rowSpan;
+        const colBegin = span.col, colEnd = span.col + span.colSpan;
+
+        // 与 visible range 有交集，则显示，否则不显示
+        if (rowEnd <= renderVisibleRange.value.bufferStart || rowBegin > renderVisibleRange.value.bufferEnd) {
+            continue;
+        }
+
+        for (let r = rowBegin; r < rowEnd; r += 1) {
+            for (let c = colBegin; c < colEnd; c += 1) {
+                hideCells[`${r}-${c}`] = true;
+            }
+        }
+    }
+
+    return hideCells;
 });
 
 const refresh = () => {
@@ -461,13 +484,13 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
             width: contentWidth + 'px',
             transform: `translateY(${renderVisibleRange.startOffset}px)`,
         }">
-            <div v-for="(row, index) in visibleItems.items" :key="rowKey(row)" ref="rowItemsRef"
+            <div v-for="(row, index) in visibleItems" :key="rowKey(row)" ref="rowItemsRef"
                 class="ui-flex ui-flex-align-stretch ui-relative" :class="rowClass" :data-row-id="rowKey(row)"
                 :style="row.__style__">
                 <div v-for="(col, colIndex) in finalColumns" :key="col.field" class="ui-relative" :class="cellClass"
                     :style="{
                         ...col.__style__,
-                        visibility: visibleItems.hideCells[`${renderVisibleRange.bufferStart + index}-${colIndex}`] ? 'hidden' : 'visible',
+                        visibility: hiddenCells[`${renderVisibleRange.bufferStart + index}-${colIndex}`] ? 'hidden' : 'visible',
                     }">
                     <slot name="cell" :row="row" :row-index="renderVisibleRange.bufferStart + index" :col="col"
                         :col-index="colIndex">
@@ -475,7 +498,7 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
                     </slot>
                 </div>
             </div>
-            <div v-for="span in spans" :key="span.row + span.col" class="ui-relative" :class="spanClass"
+            <div v-for="span in visibleSpans" :key="span.row + span.col" class="ui-relative" :class="spanClass"
                 :style="span.__style__">
                 <slot name="span" :span="span">
                     {{ span.item }}
