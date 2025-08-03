@@ -292,6 +292,20 @@ const indexChange = (evt: Event) => {
         // border-right: none;
         // border-top: none;
     }
+
+    &:first-child {
+        &::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            bottom: -4px;
+            right: 0;
+            width: 30px;
+            pointer-events: none;
+            transform: translateX(100%);
+            box-shadow: inset 12px 0 8px -8px rgba(0, 0, 0, 0.2);
+        }
+    }
 }
 
 :deep(.v-table-span) {
