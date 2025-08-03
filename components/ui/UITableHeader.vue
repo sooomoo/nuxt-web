@@ -38,7 +38,7 @@ const finalColumns = computed(() => {
 <template>
     <div class="ui-flex ui-flex-align-stretch ui-table-header">
         <div v-for="(col, colIndex) in finalColumns" :key="col.field" :class="colClass" :style="col.__style__">
-            <slot name="cell" :col="col" :col-index="colIndex">
+            <slot name="col" :col="col" :col-index="colIndex">
                 {{ col.title }}
             </slot>
         </div>

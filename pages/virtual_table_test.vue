@@ -149,8 +149,13 @@ const indexChange = (evt: Event) => {
             </div>
         </div>
         <div class="ui-flex ui-flex-justify-center v-table-header-container">
-            <UITableHeader class="v-table-header" :columns="columns" col-class="ui-cell-border v-table-header-col"
+            <UITableHeader class="v-table-header" :columns="columns"
+                col-class="ui-cell-border ui-flex ui-flex-align-center ui-flex-justify-space-between v-table-header-col"
                 :column-gap="colGap">
+                <template #col="{ col }">
+                    {{ col.title }}
+                    <UISorter></UISorter>
+                </template>
             </UITableHeader>
         </div>
         <UIVirtualTable ref="vtableRef" :columns="columns" :buffer="20" :items="items"
@@ -167,20 +172,26 @@ const indexChange = (evt: Event) => {
 </template>
 
 <style lang="scss" scoped>
+.sth-big-header {
+    height: 200px;
+    background-color: rgb(50, 220, 200);
+    min-width: 1060px;
+}
+
 .sth-sticky {
     position: sticky;
     text-align: center;
     top: var(--header-height);
     background-color: #f005;
     z-index: 2;
-    // margin: 24px 0;
     height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 1060px;
 
     .v-info {
-        width: 40%;
+        // width: 40%;
     }
 
     .v-actions {
@@ -208,7 +219,10 @@ const indexChange = (evt: Event) => {
     height: 50px;
     // background-color: var(--color-container);
     padding: 0 16px;
-    background: #f0f0f0;
+    background: var(--color-container);
+    background-color: var(--color-header-background);
+    backdrop-filter: blur(8px);
+    // box-shadow: 0 4px 4px rgba(0, 0, 0, 0.05);
 }
 
 :deep(.v-table-header-col) {
@@ -217,9 +231,9 @@ const indexChange = (evt: Event) => {
     align-content: center;
     padding: 0 12px;
 
-    // &::after {
-    //     border: 1px solid var(--table-border-color);
-    // }
+    &::after {
+        border: 1px solid var(--table-border-color);
+    }
 }
 
 .virtual-table {
@@ -295,16 +309,5 @@ const indexChange = (evt: Event) => {
         // border-top: none;
         // background: var(--color-primary);
     }
-}
-
-.sth-big-header {
-    height: 200px;
-    background-color: rgb(50, 220, 200);
-}
-
-h1 {
-    margin: 0;
-    height: 50px;
-    align-content: center;
 }
 </style>
