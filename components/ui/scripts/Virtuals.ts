@@ -44,8 +44,10 @@ export interface VirtualScrollerExpose {
 
 export interface TableSpan<T> {
     row: number;
-    column: number;
+    col: number;
     rowSpan: number;
-    columnSpan: number;
+    colSpan: number;
     item: T;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
 }

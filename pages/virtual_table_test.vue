@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { logger } from 'vuepkg';
-import type { VirtualScrollerExpose, VisibleRange } from '~/components/ui/scripts/Virtuals';
+import type { TableSpan, VirtualScrollerExpose, VisibleRange } from '~/components/ui/scripts/Virtuals';
 
 
 interface TableColumn {
@@ -53,6 +53,43 @@ const colGap: { [key: number]: number } = {
     [-1]: 8,
     0: 12,
 };
+const spans: TableSpan<string>[] = [
+    {
+        row: 0,
+        col: 0,
+        rowSpan: 5,
+        colSpan: 1,
+        item: 'Cross1'
+    },
+    {
+        row: 5,
+        col: 0,
+        rowSpan: 3,
+        colSpan: 1,
+        item: 'Cross2'
+    },
+    {
+        row: 8,
+        col: 0,
+        rowSpan: 10,
+        colSpan: 1,
+        item: 'Cross3'
+    },
+    {
+        row: 7,
+        col: 1,
+        rowSpan: 10,
+        colSpan: 2,
+        item: 'Cross7'
+    },
+    {
+        row: 1998,
+        col: 0,
+        rowSpan: 10,
+        colSpan: 1,
+        item: 'Cross1998'
+    }
+];
 
 const visibleRange = ref<VisibleRange | undefined>();
 const onVisibleRangeChanged = (range: VisibleRange) => {
@@ -108,7 +145,8 @@ const indexChange = (evt: Event) => {
         <UIVirtualTable ref="vtableRef" :columns="columns" :buffer="20" :items="items"
             :row-key="item => item.id.toString()" :item-height="50" content-class="v-table-content" content-padding="16"
             table-class="v-table" :ssr-visible-items="20" row-class="v-table-row" cell-class="v-table-cell"
-            :row-gap="rowGap" :column-gap="colGap" @visble-range-changed="onVisibleRangeChanged">
+            span-class="v-table-span" :row-gap="rowGap" :column-gap="colGap" :spans="spans"
+            @visble-range-changed="onVisibleRangeChanged">
             <template #cell="{ row, col }">
                 {{ row[col.field] ?? '' }}
             </template>
@@ -168,6 +206,26 @@ const indexChange = (evt: Event) => {
 }
 
 :deep(.v-table-cell) {
+    padding: 0 12px;
+    position: relative;
+    align-content: center;
+
+    &::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+        top: -0.5px;
+        left: -0.5px;
+        right: -0.5px;
+        bottom: -0.5px;
+        border: 1px solid #444;
+        // border-left: none;
+        // border-right: none;
+        // border-top: none;
+    }
+}
+
+:deep(.v-table-span) {
     padding: 0 12px;
     position: relative;
     align-content: center;

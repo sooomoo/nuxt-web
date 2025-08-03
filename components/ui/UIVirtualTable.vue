@@ -29,7 +29,7 @@ const props = defineProps<{
     columnGap?: { [key: number]: number }
     columns: TCol[]
     /**
-     * 合并单元格的定义
+     * 合并单元格的定义，考虑到 span 不会太多，因此它们未做虚拟化
      */
     spans?: TableSpan<TSpanItem>[]
     buffer?: number
@@ -38,6 +38,7 @@ const props = defineProps<{
     tableClass?: string
     rowClass?: string
     cellClass?: string
+    spanClass?: string
     ssrVisibleItems?: number
 }>();
 
@@ -299,6 +300,8 @@ const checkVisibleRange = () => {
     }
 };
 
+
+
 // 可见项列表
 const visibleItems = computed(() => {
     const items = props.items.slice(renderVisibleRange.value.bufferStart, renderVisibleRange.value.bufferEnd + 1);
@@ -315,7 +318,59 @@ const visibleItems = computed(() => {
         }
     }
 
-    return items;
+    // 计算 spans 的位置，同时隐藏被覆盖的单元格
+    const hideCells = {} as Record<string, boolean>;
+    const spans = props.spans || [];
+    for (let i = 0; i < spans.length; i += 1) {
+        const span = spans[i];
+        let width = 0;
+        const rowBegin = span.row, rowEnd = span.row + span.rowSpan;
+        const colBegin = span.col, colEnd = span.col + span.colSpan;
+
+        for (let c = colBegin; c < colEnd; c += 1) {
+            const col = props.columns[c];
+            width += col.width;
+            if (c < colEnd - 1) {
+                width += getColumnRightGap(c);
+            }
+        }
+        let height = 0;
+        for (let r = rowBegin; r < rowEnd; r += 1) {
+            height += getRowHeight(props.items[r]);
+            if (r < rowEnd - 1) {
+                height += getRowBottomGap(r);
+            }
+        }
+        const offsetY = getHeightToIndex(rowBegin) - renderVisibleRange.value.startOffset;
+        let offsetX = 0;
+        for (let c = 0; c < colBegin; c += 1) {
+            offsetX += props.columns[c].width;
+            if (c < colEnd - 1) {
+                offsetX += getColumnRightGap(c);
+            }
+        }
+
+        for (let r = rowBegin; r < rowEnd; r += 1) {
+            for (let c = colBegin; c < colEnd; c += 1) {
+                hideCells[`${r}-${c}`] = true;
+            }
+        }
+
+        span.__style__ = {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: `${width}px`,
+            height: `${height}px`,
+            transform: `translateY(${offsetY}px) translateX(${offsetX}px)`,
+            // top: `${getHeightToIndex(span.row)}px`,
+        };
+    }
+
+    return {
+        items,
+        hideCells,
+    };
 });
 
 const refresh = () => {
@@ -406,15 +461,25 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
             width: contentWidth + 'px',
             transform: `translateY(${renderVisibleRange.startOffset}px)`,
         }">
-            <div v-for="(row, index) in visibleItems" :key="rowKey(row)" ref="rowItemsRef"
+            <div v-for="(row, index) in visibleItems.items" :key="rowKey(row)" ref="rowItemsRef"
                 class="ui-flex ui-flex-align-stretch ui-relative" :class="rowClass" :data-row-id="rowKey(row)"
                 :style="row.__style__">
-                <div v-for="col in finalColumns" :key="col.field" class="ui-relative" :class="cellClass"
-                    :style="col.__style__">
-                    <slot name="cell" :row="row" :row-index="renderVisibleRange.bufferStart + index" :col="col">
+                <div v-for="(col, colIndex) in finalColumns" :key="col.field" class="ui-relative" :class="cellClass"
+                    :style="{
+                        ...col.__style__,
+                        visibility: visibleItems.hideCells[`${renderVisibleRange.bufferStart + index}-${colIndex}`] ? 'hidden' : 'visible',
+                    }">
+                    <slot name="cell" :row="row" :row-index="renderVisibleRange.bufferStart + index" :col="col"
+                        :col-index="colIndex">
                         {{ row[col.field] ?? '' }}
                     </slot>
                 </div>
+            </div>
+            <div v-for="span in spans" :key="span.row + span.col" class="ui-relative" :class="spanClass"
+                :style="span.__style__">
+                <slot name="span" :span="span">
+                    {{ span.item }}
+                </slot>
             </div>
         </div>
     </div>
