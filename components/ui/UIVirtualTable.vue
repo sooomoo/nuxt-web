@@ -376,9 +376,10 @@ const visibleSpans = computed(() => {
     return visSpans;
 });
 
-const hiddenCells = computed(() => {
+const hiddenCellsStyle = computed(() => {
     // 计算需要隐藏的单元格（即被 span 覆盖的单元格） 
-    const hideCells = {} as Record<string, boolean>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hideCells = {} as Record<string, Record<string, any>>;
     const spans = props.spans || [];
     for (let i = 0; i < spans.length; i += 1) {
         const span = spans[i];
@@ -396,7 +397,11 @@ const hiddenCells = computed(() => {
 
         for (let r = rowBegin; r < rowEnd; r += 1) {
             for (let c = colBegin; c < colEnd; c += 1) {
-                hideCells[`${r}-${c}`] = true;
+                hideCells[`${r}-${c}`] = {
+                    visibility: 'hidden',
+                    userSelect: 'none',
+                    pointerEvents: 'none',
+                };
             }
         }
     }
@@ -498,7 +503,7 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
                 <div v-for="(col, colIndex) in finalColumns" :key="col.field" class="ui-relative" :class="cellClass"
                     :style="{
                         ...col.__style__,
-                        visibility: hiddenCells[`${renderVisibleRange.bufferStart + index}-${colIndex}`] ? 'hidden' : 'visible',
+                        ...(hiddenCellsStyle[`${renderVisibleRange.bufferStart + index}-${colIndex}`] ?? {}),
                     }">
                     <slot name="cell" :row="row" :row-index="renderVisibleRange.bufferStart + index" :col="col"
                         :col-index="colIndex">

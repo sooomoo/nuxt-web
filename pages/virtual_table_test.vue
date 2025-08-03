@@ -40,7 +40,7 @@ const items: TableRowItem[] = Array.from({ length: 3000 }, (_, i) => ({
     id: i,
     name: `Name ${i}`,
     title: `Title ${i}`,
-    time: new Date().toLocaleString()
+    time: i
 }));
 
 const rowGap: { [key: number]: number } = {
@@ -50,7 +50,7 @@ const rowGap: { [key: number]: number } = {
     // 9: 12,
 };
 const colGap: { [key: number]: number } = {
-    [-1]: 8,
+    // [-1]: 8,
     0: 12,
 };
 const spans: TableSpan<string>[] = [
@@ -75,13 +75,13 @@ const spans: TableSpan<string>[] = [
         colSpan: 1,
         item: 'Cross3'
     },
-    {
-        row: 7,
-        col: 1,
-        rowSpan: 10,
-        colSpan: 2,
-        item: 'Cross7'
-    },
+    // {
+    //     row: 7,
+    //     col: 1,
+    //     rowSpan: 10,
+    //     colSpan: 2,
+    //     item: 'Cross7'
+    // },
     {
         row: 1998,
         col: 0,
@@ -225,7 +225,8 @@ const indexChange = (evt: Event) => {
         left: -0.5px;
         right: -0.5px;
         bottom: -0.5px;
-        border: 1px solid #444;
+        z-index: -1;
+        border: 1px solid var(--table-border-color);
         // border-left: none;
         // border-right: none;
         // border-top: none;
@@ -234,7 +235,6 @@ const indexChange = (evt: Event) => {
 
 :deep(.v-table-span) {
     padding: 0 12px;
-    position: relative;
     align-content: center;
 
     &::after {
@@ -245,10 +245,12 @@ const indexChange = (evt: Event) => {
         left: -0.5px;
         right: -0.5px;
         bottom: -0.5px;
-        border: 1px solid #444;
+        border: 1px solid var(--table-border-color);
         // border-left: none;
         // border-right: none;
         // border-top: none;
+        // background: var(--color-primary);
+        z-index: -1;
     }
 }
 
