@@ -488,31 +488,29 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
 <template>
     <div ref="containerRef" class="ui-virtual-table" style="padding: 0;" @wheel="onMouseWheel">
         <!-- 撑开滚动条的占位元素 -->
-        <div class="ui-relative" :class="contentClass" :style="{
+        <div :class="contentClass" :style="{
             minWidth: contentWidthWithPadding + 'px',
             minHeight: totalHeight + 'px',
         }"></div>
-        <div ref="contentRef" class="ui-relative" :class="tableClass" :style="{
+        <div ref="contentRef" :class="tableClass" :style="{
             position: 'absolute',
             width: contentWidth + 'px',
             transform: `translateY(${renderVisibleRange.startOffset}px)`,
         }">
             <div v-for="(row, index) in visibleItems" :key="rowKey(row)" ref="rowItemsRef"
-                class="ui-flex ui-flex-align-stretch ui-relative" :class="rowClass" :data-row-id="rowKey(row)"
+                class="ui-flex ui-flex-align-stretch" :class="rowClass" :data-row-id="rowKey(row)"
                 :style="row.__style__">
-                <div v-for="(col, colIndex) in finalColumns" :key="col.field" class="ui-relative" :class="cellClass"
-                    :style="{
-                        ...col.__style__,
-                        ...(hiddenCellsStyle[`${renderVisibleRange.bufferStart + index}-${colIndex}`] ?? {}),
-                    }">
+                <div v-for="(col, colIndex) in finalColumns" :key="col.field" :class="cellClass" :style="{
+                    ...col.__style__,
+                    ...(hiddenCellsStyle[`${renderVisibleRange.bufferStart + index}-${colIndex}`] ?? {}),
+                }">
                     <slot name="cell" :row="row" :row-index="renderVisibleRange.bufferStart + index" :col="col"
                         :col-index="colIndex">
                         {{ row[col.field] ?? '' }}
                     </slot>
                 </div>
             </div>
-            <div v-for="span in visibleSpans" :key="span.row + span.col" class="ui-relative" :class="spanClass"
-                :style="span.__style__">
+            <div v-for="span in visibleSpans" :key="span.row + span.col" :class="spanClass" :style="span.__style__">
                 <slot name="span" :span="span">
                     {{ span.item }}
                 </slot>

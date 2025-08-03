@@ -50,7 +50,7 @@ const rowGap: { [key: number]: number } = {
     // 9: 12,
 };
 const colGap: { [key: number]: number } = {
-    // [-1]: 8,
+    [-1]: 8,
     0: 12,
 };
 const spans: TableSpan<string>[] = [
@@ -151,9 +151,9 @@ const indexChange = (evt: Event) => {
         <h1>List Header</h1>
         <UIVirtualTable ref="vtableRef" :columns="columns" :buffer="20" :items="items"
             :row-key="item => item.id.toString()" :item-height="50" content-class="v-table-content" content-padding="16"
-            table-class="v-table" :ssr-visible-items="20" row-class="v-table-row" cell-class="v-table-cell"
-            span-class="v-table-span" :row-gap="rowGap" :column-gap="colGap" :spans="spans"
-            @visble-range-changed="onVisibleRangeChanged">
+            table-class="v-table" :ssr-visible-items="20" row-class="v-table-row"
+            cell-class="ui-cell-border v-table-cell" span-class="ui-cell-border v-table-span" :row-gap="rowGap"
+            :column-gap="colGap" :spans="spans" @visble-range-changed="onVisibleRangeChanged">
             <template #cell="{ row, col }">
                 {{ row[col.field] ?? '' }}
             </template>
@@ -218,14 +218,6 @@ const indexChange = (evt: Event) => {
     align-content: center;
 
     &::after {
-        content: "";
-        position: absolute;
-        pointer-events: none;
-        top: -0.5px;
-        left: -0.5px;
-        right: -0.5px;
-        bottom: -0.5px;
-        z-index: -1;
         border: 1px solid var(--table-border-color);
         // border-left: none;
         // border-right: none;
@@ -238,19 +230,11 @@ const indexChange = (evt: Event) => {
     align-content: center;
 
     &::after {
-        content: "";
-        position: absolute;
-        pointer-events: none;
-        top: -0.5px;
-        left: -0.5px;
-        right: -0.5px;
-        bottom: -0.5px;
         border: 1px solid var(--table-border-color);
         // border-left: none;
         // border-right: none;
         // border-top: none;
         // background: var(--color-primary);
-        z-index: -1;
     }
 }
 
