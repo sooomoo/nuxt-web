@@ -13,14 +13,14 @@ export const parseCookies = (
     }
     const parsedCookies = [];
     for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i];
+        const cookie = cookies[i] ?? "";
         const parts = cookie.split(";");
         const nameValue = parts.shift()?.split("=");
         if (!nameValue || nameValue.length !== 2) {
             continue;
         }
-        const cookieName = nameValue[0].trim();
-        const cookieValue = nameValue[1].trim();
+        const cookieName = nameValue[0]?.trim() ?? "";
+        const cookieValue = nameValue[1]?.trim() ?? "";
         const cookieOptions: Record<string, unknown> = {};
         parts.forEach((part) => {
             const [key, value] = part.split("=");

@@ -2,6 +2,7 @@ import type { Secrets } from "vuepkg";
 import {
     decodeSecureString,
     encodeSecureString,
+    logger,
     newBoxKeyPair,
     newBoxKeyPairFromArray,
     newSignKeyPair,
@@ -12,6 +13,7 @@ import {
  * @returns
  */
 export const getSecuretsFromCookie = (cookies: string[]): Secrets | undefined => {
+    logger.debug("getSecuretsFromCookie cookies are: \n", import.meta.env, cookies);
     const parsedCookies = parseCookies(cookies);
     const sessionId = parsedCookies.find((c) => c.name === import.meta.env.VITE_COOKIE_SK1_NAME)?.value ?? "";
     const clientKey = parsedCookies.find((c) => c.name === import.meta.env.VITE_COOKIE_SK2_NAME)?.value ?? "";

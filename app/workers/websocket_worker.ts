@@ -15,6 +15,8 @@ if (import.meta.client) {
 
     scope.onconnect = (e: MessageEvent) => {
         const port = e.ports[0];
+        if (!port) return;
+
         ports.push(port);
 
         port.onmessage = (e: MessageEvent<IWebSocketCmd<unknown>>) => {

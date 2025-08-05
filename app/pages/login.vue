@@ -9,16 +9,16 @@ const route = useRoute();
 
 const handleLoginStatusUpdated = (status: LoginStatus) => {
     switch (status) {
-        case "success":
+        case "success" as LoginStatus:
             // 登录成功，跳转到首页
             navigateTo(decodeURIComponent((route.query.redirect as string) || "/"), {
                 replace: true,
             });
             break;
-        case "error":
+        case "error" as LoginStatus:
             // 登录失败，显示错误信息
             break;
-        case "fail":
+        case "fail" as LoginStatus:
             // 登录失败，显示错误信息
             break;
     }

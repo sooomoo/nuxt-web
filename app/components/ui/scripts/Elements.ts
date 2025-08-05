@@ -1,4 +1,3 @@
-
 import { newMutationObserver, newResizeObserver, zeroPadding, type Padding } from "vuepkg";
 
 export const useElementSizes = (...nodes: Ref<HTMLDivElement | null, HTMLDivElement | null>[]) => {
@@ -10,7 +9,7 @@ export const useElementSizes = (...nodes: Ref<HTMLDivElement | null, HTMLDivElem
         const map = new Map<HTMLDivElement, number>();
         for (let index = 0; index < entries.length; index++) {
             const entry = entries[index];
-            if (!(entry.target instanceof HTMLDivElement)) {
+            if (!entry || !(entry.target instanceof HTMLDivElement)) {
                 sizeArr.push(0);
                 continue;
             }
@@ -58,7 +57,6 @@ export const useElementSizes = (...nodes: Ref<HTMLDivElement | null, HTMLDivElem
     };
 };
 
-
 export const useElementStyle = (...elements: Ref<HTMLDivElement | null, HTMLDivElement | null>[]) => {
     const elemPaddingArray = ref<Padding[]>(elements.map(() => zeroPadding()));
 
@@ -82,7 +80,7 @@ export const useElementStyle = (...elements: Ref<HTMLDivElement | null, HTMLDivE
     const obs = newMutationObserver((entries) => {
         for (let index = 0; index < entries.length; index++) {
             const element = entries[index];
-            if (!element.target || !(element.target instanceof Element)) {
+            if (!element || !element.target || !(element.target instanceof Element)) {
                 elemPaddingArray.value[index] = zeroPadding();
                 continue;
             }
@@ -93,7 +91,7 @@ export const useElementStyle = (...elements: Ref<HTMLDivElement | null, HTMLDivE
     const doInit = () => {
         for (let index = 0; index < elements.length; index++) {
             const element = elements[index];
-            if (!element.value) {
+            if (!element || !element.value) {
                 elemPaddingArray.value[index] = zeroPadding();
                 continue;
             }

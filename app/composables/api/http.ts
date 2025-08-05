@@ -180,7 +180,7 @@ const doRawFetch = async <TResp>(
         // }
     }
 
-    saveCookies(ctx ?? undefined, response.headers.getSetCookie());
+    saveCookies(ctx, response.headers.getSetCookie());
 
     if ((options?.responseType ?? "json") === "json" && typeof respData === "string" && respData.length > 0) {
         try {
@@ -307,7 +307,7 @@ export const usePost = <TResp>(path: string, body?: Record<string, any>, query?:
             },
             clear: () => {
                 res.data.value = null;
-                res.error.value = null;
+                res.error.value = undefined;
                 res.status.value = "idle";
             },
         } as AsyncData<TResp | null, FetchError>;
@@ -353,7 +353,7 @@ export const useGet = <TResp>(path: string, query?: Record<string, any>, options
             },
             clear: () => {
                 res.data.value = null;
-                res.error.value = null;
+                res.error.value = undefined;
                 res.status.value = "idle";
             },
         } as AsyncData<TResp | null, FetchError>;

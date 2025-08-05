@@ -5,7 +5,7 @@ const lvLogger = logger.tag("LoginView");
 const authStore = useAuthStore();
 
 const emit = defineEmits<{
-    "status-update": [value: LoginStatus];
+    (e: 'status-update', value: LoginStatus): void;
 }>();
 
 const mobile = ref("");
@@ -60,15 +60,15 @@ const handleSubmit = async () => {
     });
     lvLogger.debug("login result", data.value, error.value);
     if (error.value) {
-        emit("status-update", "error");
+        emit("status-update", 'fail' as LoginStatus);
         return;
     }
     if (data.value && data.value.code === RespCode.succeed) {
         // 登录成功，获取一下用户数据
         authStore.getUserInfo();
-        emit("status-update", "success");
+        emit("status-update", "success" as LoginStatus);
     } else {
-        emit("status-update", "fail");
+        emit("status-update", "fail" as LoginStatus);
     }
 };
 </script>

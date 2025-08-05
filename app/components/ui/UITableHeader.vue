@@ -21,7 +21,7 @@ const finalColumns = computed(() => {
         ...col,
     }));
     for (let i = 0; i < arr.length; i++) {
-        const col = arr[i];
+        const col = arr[i]!;
         const gap = i < arr.length - 1 ? getColumnRightGap(i) : 0;
         arr[i] = {
             ...col,

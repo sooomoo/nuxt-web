@@ -69,7 +69,7 @@ const finalColumns = computed(() => {
         ...col,
     }));
     for (let i = 0; i < arr.length; i++) {
-        const col = arr[i];
+        const col = arr[i]!;
         const gap = i < arr.length - 1 ? getColumnRightGap(i) : 0;
         arr[i] = {
             ...col,
@@ -77,7 +77,7 @@ const finalColumns = computed(() => {
                 width: col.width + 'px',
                 marginRight: `${gap}px`
             }
-        };
+        } as any;
     }
     return arr;
 });
@@ -98,7 +98,7 @@ const totalHeight = ref(0);
 const updateTotalHeight = () => {
     let height = finalContentPadding.value.top;
     for (let i = 0; i < props.items.length; i++) {
-        const item = props.items[i];
+        const item = props.items[i]!;
         height += getRowHeight(item);
         if (i < props.items.length - 1) {
             height += getRowBottomGap(i);
@@ -111,7 +111,7 @@ const updateTotalHeight = () => {
 const contentWidth = computed(() => {
     let width = 0;
     for (let i = 0; i < props.columns.length; i++) {
-        const element = props.columns[i];
+        const element = props.columns[i]!;
         width += element.width;
         if (i < props.columns.length - 1) {
             width += getColumnRightGap(i);
@@ -175,7 +175,7 @@ watch(rowItemsRef, (newVal, oldVal) => {
 const getHeightToIndex = (index: number) => {
     let height = finalContentPadding.value.top;
     for (let i = 0; i < index; i++) {
-        const item = props.items[i];
+        const item = props.items[i]!;
         height += getRowHeight(item);
         height += getRowBottomGap(i);
     }
@@ -187,7 +187,7 @@ const getStartIndex = (topsHeight: number) => {
     let offset = finalContentPadding.value.top;
     let startIndexRowHeight = 0;
     for (let i = 0; i < props.items.length; i += 1) {
-        startIndexRowHeight = getRowHeight(props.items[i]);
+        startIndexRowHeight = getRowHeight(props.items[i]!);
         offset += startIndexRowHeight;
         if (offset >= actualTopForList) {
             start = i;
@@ -259,7 +259,7 @@ const checkVisibleRange = () => {
     let visibleItemsHeight = startRelativeOffset;
     for (let i = visibleStart; i < props.items.length; i += 1) {
         visibleEnd = i;
-        visibleItemsHeight += getRowHeight(props.items[i]);
+        visibleItemsHeight += getRowHeight(props.items[i]!);
         if (visibleItemsHeight >= viewportHeight) {
             break;
         }
@@ -312,7 +312,7 @@ const visibleItems = computed(() => {
                 __style__: {
                     marginBottom: `${getRowBottomGap(rowIndex)}px`,
                 }
-            };
+            } as any;
         }
     }
 
@@ -324,7 +324,7 @@ const visibleSpans = computed(() => {
     const visSpans = [] as TableSpan<TSpanItem>[];
     const spans = props.spans || [];
     for (let i = 0; i < spans.length; i += 1) {
-        const span = spans[i];
+        const span = spans[i]!;
         let rowBegin = span.row, rowEnd = span.row + span.rowSpan;
         let colBegin = span.col, colEnd = span.col + span.colSpan;
         if (rowBegin < 0) rowBegin = 0;
@@ -340,7 +340,7 @@ const visibleSpans = computed(() => {
 
         let width = 0;
         for (let c = colBegin; c < colEnd; c += 1) {
-            const col = props.columns[c];
+            const col = props.columns[c]!;
             width += col.width;
             if (c < colEnd - 1) {
                 width += getColumnRightGap(c);
@@ -348,7 +348,7 @@ const visibleSpans = computed(() => {
         }
         let height = 0;
         for (let r = rowBegin; r < rowEnd; r += 1) {
-            height += getRowHeight(props.items[r]);
+            height += getRowHeight(props.items[r]!);
             if (r < rowEnd - 1) {
                 height += getRowBottomGap(r);
             }
@@ -356,7 +356,7 @@ const visibleSpans = computed(() => {
         const offsetY = getHeightToIndex(rowBegin) - renderVisibleRange.value.startOffset;
         let offsetX = 0;
         for (let c = 0; c < colBegin; c += 1) {
-            offsetX += props.columns[c].width;
+            offsetX += props.columns[c]!.width;
             if (c < colEnd - 1) {
                 offsetX += getColumnRightGap(c);
             }
@@ -383,7 +383,7 @@ const hiddenCellsStyle = computed(() => {
     const hideCells = {} as Record<string, Record<string, any>>;
     const spans = props.spans || [];
     for (let i = 0; i < spans.length; i += 1) {
-        const span = spans[i];
+        const span = spans[i]!;
         let rowBegin = span.row, rowEnd = span.row + span.rowSpan;
         let colBegin = span.col, colEnd = span.col + span.colSpan;
         if (rowBegin < 0) rowBegin = 0;
