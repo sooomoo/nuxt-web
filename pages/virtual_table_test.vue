@@ -36,7 +36,7 @@ const columns: TableColumn[] = [{
     title: "Time"
 }];
 
-const items: TableRowItem[] = Array.from({ length: 3000 }, (_, i) => ({
+const items: TableRowItem[] = Array.from({ length: 10000 }, (_, i) => ({
     id: i,
     name: `Name ${i}`,
     title: `Title ${i}`,
@@ -182,13 +182,18 @@ const indexChange = (evt: Event) => {
     position: sticky;
     text-align: center;
     top: var(--header-height);
-    background-color: #f005;
+    background-color: var(--color-header-background);
+    backdrop-filter: blur(8px);
     z-index: 2;
     height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
     min-width: 1060px;
+
+    .v-info {
+        width: 300px;
+    }
 
     .v-actions {
         & button {
@@ -215,7 +220,6 @@ const indexChange = (evt: Event) => {
     height: 50px;
     // background-color: var(--color-container);
     padding: 0 16px;
-    background: var(--color-container);
     background-color: var(--color-header-background);
     backdrop-filter: blur(8px);
     // box-shadow: 0 4px 4px rgba(0, 0, 0, 0.05);
