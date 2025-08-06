@@ -97,4 +97,18 @@ export default defineNuxtConfig({
     typescript: {
         typeCheck: true,
     },
+    runtimeConfig: {
+        public: {
+            loginPage: process.env.VITE_LOGIN_PAGE,
+            apiBaseUrl: process.env.VITE_API_BASE_URL,
+            apiRefreshTokenPath: process.env.VITE_API_REFRESH_TOKEN_PATH,
+            apiLoginPath: process.env.VITE_API_LOGIN_PATH,
+            serverSignPubKey: process.env.VITE_SERVER_SIGN_PUB_KEY,
+            serverExPubKey: process.env.VITE_SERVER_EX_PUB_KEY,
+            enableCrypto: process.env.VITE_ENABLE_CRYPTO,
+            sidName: process.env.VITE_COOKIE_SK1_NAME,
+            cidName: process.env.VITE_COOKIE_SK2_NAME,
+            refreshTokenName: process.env.VITE_COOKIE_REFRESH_TOKEN_NAME,
+        },
+    },
 });

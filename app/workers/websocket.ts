@@ -25,11 +25,11 @@ export const closeWebSocket = () => {
     sharedWorker.value?.port.postMessage({ cmd: WebSocketCmdClose });
 };
 
-export const openWebSocket = () => {
+export const openWebSocket = (apiBaseUrl: string) => {
     sharedWorker.value?.port.postMessage({
         cmd: WebSocketCmdConnect,
         data: {
-            url: import.meta.env.VITE_API_BASE_URL + "/hub/chat",
+            url: apiBaseUrl + "/hub/chat",
             subprotocol: ["niu-v1"],
             heartbeatInterval: 10000,
             maxRetryAttempts: 10,

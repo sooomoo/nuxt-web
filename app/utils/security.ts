@@ -1,22 +1,22 @@
+import type { NuxtApp } from "#app";
 import type { Secrets } from "vuepkg";
 import {
     decodeSecureString,
     encodeSecureString,
-    logger,
     newBoxKeyPair,
     newBoxKeyPairFromArray,
     newSignKeyPair,
-    newSignKeyPairFromArray,
+    newSignKeyPairFromArray
 } from "vuepkg";
 /**
  * 获取会话密钥
  * @returns
  */
-export const getSecuretsFromCookie = (cookies: string[]): Secrets | undefined => {
-    logger.debug("getSecuretsFromCookie cookies are: \n", import.meta.env, cookies);
+export const getSecuretsFromCookie = (cookies: string[], ctx?: NuxtApp): Secrets | undefined => {
+    const runtimeConfig = useRuntimeConfig(ctx?.ssrContext?.event)
     const parsedCookies = parseCookies(cookies);
-    const sessionId = parsedCookies.find((c) => c.name === import.meta.env.VITE_COOKIE_SK1_NAME)?.value ?? "";
-    const clientKey = parsedCookies.find((c) => c.name === import.meta.env.VITE_COOKIE_SK2_NAME)?.value ?? "";
+    const sessionId = parsedCookies.find((c) => c.name === runtimeConfig.public.sidName)?.value ?? "";
+    const clientKey = parsedCookies.find((c) => c.name === runtimeConfig.public.cidName)?.value ?? "";
     const pubKeys = decodeSecureString(sessionId);
     const priKeys = decodeSecureString(clientKey);
     if (pubKeys.box && pubKeys.sign && priKeys.box && priKeys.sign) {
@@ -36,12 +36,13 @@ export const getSecuretsFromCookie = (cookies: string[]): Secrets | undefined =>
  * @returns
  */
 export const ensureSecurets = (): Secrets => {
-    const sessionId = useCookie(import.meta.env.VITE_COOKIE_SK1_NAME, {
+    const runtimeConfig = useRuntimeConfig()
+    const sessionId = useCookie(runtimeConfig.public.sidName, {
         path: "/",
         sameSite: import.meta.dev ? "none" : "strict",
         secure: true,
     });
-    const clientKey = useCookie(import.meta.env.VITE_COOKIE_SK2_NAME, {
+    const clientKey = useCookie(runtimeConfig.public.cidName, {
         path: "/",
         sameSite: import.meta.dev ? "none" : "strict",
         secure: true,

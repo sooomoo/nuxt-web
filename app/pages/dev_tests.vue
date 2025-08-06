@@ -30,7 +30,8 @@ const defaultOpenedItems = ['2'];
 
 const onClickStartSSE = () => {
     const id = Date.now();
-    const url = import.meta.env.VITE_API_BASE_URL + '/sse/ai/ask?id=' + id;
+    const config = useRuntimeConfig();
+    const url = config.public.apiBaseUrl + '/sse/ai/ask?id=' + id;
     logger.debug('Start SSE', url);
     const source = new EventSource(url, {
         withCredentials: true,

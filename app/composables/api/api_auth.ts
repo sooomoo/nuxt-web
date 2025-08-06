@@ -23,10 +23,10 @@ export const apiAuth = {
         const res = await usePost<ResponseDto<null>>("/v1/auth/login/do", param);
         if (res.error.value === null && res.data.value?.code === RespCode.succeed) {
             if (import.meta.client) {
-                openWebSocket();
+                openWebSocket(useRuntimeConfig().public.apiBaseUrl);
             } else {
-                useNuxtApp().hooks.hookOnce("app:rendered", () => {
-                    openWebSocket();
+                useNuxtApp().hooks.hookOnce("app:rendered", (ctx) => {
+                    openWebSocket(useRuntimeConfig(ctx?.ssrContext?.event).public.apiBaseUrl);
                 });
             }
         }
@@ -45,6 +45,7 @@ export const apiAuth = {
         if (import.meta.client) {
             pagePath = window.location.pathname + window.location.search;
         }
-        navigateTo(import.meta.env.VITE_LOGIN_PAGE + `?redirect=${encodeURIComponent(pagePath)}`, { redirectCode: 302 });
+        const config = useRuntimeConfig();
+        navigateTo(config.public.loginPage + `?redirect=${encodeURIComponent(pagePath)}`, { redirectCode: 302 });
     },
 };

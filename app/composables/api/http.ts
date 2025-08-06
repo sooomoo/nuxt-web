@@ -32,7 +32,6 @@ export interface HttpOptions {
 }
 
 const defaultFetchOptions: Record<string, any> = {
-    baseURL: import.meta.env.VITE_API_BASE_URL,
     responseType: "json",
     timeout: 15000,
     credentials: "include",
@@ -52,7 +51,8 @@ const isRefreshTokenAvailable = (ctx?: NuxtApp): boolean => {
     const ctxHeaders = ctx?.ssrContext?.event.node.req.headers;
     const cookies = splitCookies(ctxHeaders?.cookie ?? "");
     const parsedCookies = parseCookies(cookies);
-    const refreshName = import.meta.env.VITE_COOKIE_REFRESH_TOKEN_NAME;
+    const config = useRuntimeConfig(ctx?.ssrContext?.event);
+    const refreshName = config.public.refreshTokenName;
     const refreshToken = parsedCookies.find((c) => c.name === refreshName)?.value ?? "";
     logger.tag("isRefreshTokenAvailable").debug(`refreshToken is: ${refreshToken}`);
     return refreshToken.length > 0;
@@ -95,7 +95,7 @@ const doRawFetch = async <TResp>(
 
     fetchLogger.debug("cookies are: \n", cookies);
 
-    const secrets = getSecuretsFromCookie(cookies);
+    const secrets = getSecuretsFromCookie(cookies, ctx);
     if (!secrets) {
         fetchLogger.error("获取会话密钥失败");
         throw new Error("获取会话密钥失败");
@@ -118,10 +118,11 @@ const doRawFetch = async <TResp>(
 
     let finalBody = body as any;
     // 1. 加密请求体（仅针对 POST/PUT 请求）
-    if (body && ["post", "put"].includes(method.toLowerCase()) && import.meta.env.VITE_ENABLE_CRYPTO === "true") {
+    const config = useRuntimeConfig(ctx?.ssrContext?.event);
+    if (body && ["post", "put"].includes(method.toLowerCase()) && config.public.enableCrypto === "true") {
         // 先加密
         let reqData = JSONStringify(body);
-        reqData = useEncrypt(boxKeyPair, reqData, import.meta.env.VITE_SERVER_EX_PUB_KEY);
+        reqData = useEncrypt(boxKeyPair, reqData, config.public.serverExPubKey);
         finalBody = reqData; // 替换原始数据为加密后的数据
         signData["body"] = reqData;
         headers.set(headerContentType, contentTypeEncrypted);
@@ -137,6 +138,7 @@ const doRawFetch = async <TResp>(
 
     const response = await $fetch.raw<TResp>(path, {
         ...defaultFetchOptions,
+        baseURL: useRuntimeConfig(ctx?.ssrContext?.event).public.apiBaseUrl,
         body: finalBody,
         query: query,
         method: method as any,
@@ -166,14 +168,14 @@ const doRawFetch = async <TResp>(
         body: respData,
     });
 
-    if (!useSignVerify(respStr, respSignature, import.meta.env.VITE_SERVER_SIGN_PUB_KEY)) {
+    if (!useSignVerify(respStr, respSignature, config.public.serverSignPubKey)) {
         fetchLogger.warn(`【FAILED】签名验证失败`, respData);
         throw new Error("签名验证失败");
     }
 
     const contentType = response.headers.get(headerContentType) ?? "";
     if (contentType.startsWith(contentTypeEncrypted)) {
-        respData = useDecrypt(boxKeyPair, respData, import.meta.env.VITE_SERVER_EX_PUB_KEY);
+        respData = useDecrypt(boxKeyPair, respData, config.public.serverExPubKey);
         // const rawType = response.headers.get(headerRawType) ?? "";
         // if (rawType) {
         //     response.headers.set(headerContentType, rawType);
@@ -204,7 +206,8 @@ interface RefreshTokenArgs {
 
 const onceRefreshTokenTask = callOncePromise<FetchResponse<unknown> | undefined, RefreshTokenArgs>((args) => {
     const { ctx, options } = args!;
-    const refreshPath = import.meta.env.VITE_API_REFRESH_TOKEN_PATH;
+    const config = useRuntimeConfig(ctx?.ssrContext?.event);
+    const refreshPath = config.public.apiRefreshTokenPath;
     return doRawFetch("POST", refreshPath, undefined, undefined, ctx, options);
 });
 
@@ -234,7 +237,8 @@ const doFetch = async <TResp>(
             const refLog = logger.tag(`Handle 401: ${method} ${path}`);
             if (!isRefreshTokenAvailable(ctx)) {
                 refLog.debug(`refresh token is not available.`);
-                await navigateTo(import.meta.env.VITE_LOGIN_PAGE + redirect, {
+                const config = useRuntimeConfig(ctx?.ssrContext?.event);
+                await navigateTo(config.public.loginPage + redirect, {
                     redirectCode: 302,
                 });
                 throw new Error("refresh token not available");
@@ -259,7 +263,8 @@ const doFetch = async <TResp>(
             } catch (error2) {
                 refLog.error(`refresh token failed.`, error2);
                 if (isStatusError(error2, 401)) {
-                    await navigateTo(import.meta.env.VITE_LOGIN_PAGE + redirect, {
+                    const config = useRuntimeConfig(ctx?.ssrContext?.event);
+                    await navigateTo(config.public.loginPage + redirect, {
                         redirectCode: 302,
                     });
                     throw new Error("refresh token failed");

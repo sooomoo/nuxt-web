@@ -3,6 +3,7 @@ import { logger, unixNow } from "vuepkg";
 import { openWebSocket, startWebSocket } from "./workers/websocket";
 
 const authStore = useAuthStore();
+const config = useRuntimeConfig();
 
 onMounted(async () => {
     // // 15986004295946240
@@ -24,6 +25,7 @@ onMounted(async () => {
     const unixtime = unixNow();
     logger.info(
         "onMounted",
+        config,
         unixtime,
         Date.now(),
         unixtime.toString(36),
@@ -36,7 +38,7 @@ onMounted(async () => {
             useAppEventBus().emit("websocketMessage", event.data.data);
         }
     });
-    openWebSocket();
+    openWebSocket(config.public.apiBaseUrl);
 });
 </script>
 
