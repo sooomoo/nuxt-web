@@ -25,6 +25,7 @@ const finalColumns = computed(() => {
         const gap = i < arr.length - 1 ? getColumnRightGap(i) : 0;
         arr[i] = {
             ...col,
+            __gap__: gap,
             __style__: {
                 width: col.width + 'px',
                 marginRight: `${gap}px`
@@ -33,14 +34,33 @@ const finalColumns = computed(() => {
     }
     return arr;
 });
+
+const handleResize = (leftColIndex: number, rightColumnIndex: number, deltaX: number, deltaY: number) => {
+    const col = props.columns[leftColIndex]!;
+    let newVal = col.width + deltaX;
+    if (newVal < col.minWidth) {
+        newVal = col.minWidth;
+    }
+    if (newVal > col.maxWidth) {
+        newVal = col.maxWidth;
+    }
+    col.width = newVal;
+}
+
 </script>
 
 <template>
     <div class="ui-flex ui-flex-align-stretch ui-table-header">
-        <div v-for="(col, colIndex) in finalColumns" :key="col.field" :class="colClass" :style="col.__style__">
+        <div v-for="(col, colIndex) in finalColumns" :key="col.field" class="column-item" :class="colClass"
+            :style="col.__style__">
             <slot name="col" :col="col" :col-index="colIndex">
                 {{ col.title }}
             </slot>
+            <UIResizer v-if="colIndex < finalColumns.length - 1" class="hor-resizer" :direction="'hor'" :style="{
+                width: '4px',
+                transform: `translateX(${(col.__gap__ + 4) / 2}px)`
+            }" @resize="(dx, dy) => handleResize(colIndex, colIndex + 1, dx, dy)">
+            </UIResizer>
         </div>
     </div>
 </template>

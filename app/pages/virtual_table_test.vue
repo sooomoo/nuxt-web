@@ -5,6 +5,8 @@ import type { TableSpan, VirtualScrollerExpose, VisibleRange } from '~/component
 
 interface TableColumn {
     width: number,
+    minWidth: number,
+    maxWidth: number,
     field: string
     title: string
 }
@@ -18,23 +20,36 @@ interface TableRowItem {
 
 const nowSeconds = Date.now() / 1000;
 
-const columns: TableColumn[] = [{
-    width: 120,
-    field: "id",
-    title: "ID"
-}, {
-    width: 200,
-    field: "name",
-    title: "Name"
-}, {
-    width: 500,
-    field: "title",
-    title: "Title"
-}, {
-    width: 180,
-    field: "time",
-    title: "Time"
-}];
+const columns = reactive<TableColumn[]>([
+    {
+        width: 120,
+        minWidth: 80,
+        maxWidth: 200,
+        field: "id",
+        title: "ID"
+    },
+    {
+        width: 200,
+        minWidth: 150,
+        maxWidth: 300,
+        field: "name",
+        title: "Name"
+    },
+    {
+        width: 500,
+        minWidth: 300,
+        maxWidth: 600,
+        field: "title",
+        title: "Title"
+    },
+    {
+        width: 180,
+        minWidth: 140,
+        maxWidth: 300,
+        field: "time",
+        title: "Time"
+    }
+]);
 
 const items: TableRowItem[] = Array.from({ length: 10000 }, (_, i) => ({
     id: i,

@@ -325,9 +325,6 @@
     }
 }
 
-// .ui-table-header {
-// }
-
 .ui-sorter {
     width: fit-content;
     height: auto;
@@ -358,6 +355,33 @@
         padding: 0 2px 2px 2px;
         & svg {
             transform: rotateZ(90deg);
+        }
+    }
+}
+
+.ui-resizer {
+    background-color: red;
+}
+.ui-resizer-hor {
+    cursor: ew-resize;
+}
+.ui-resizer-vert {
+    cursor: ns-resize;
+}
+.ui-resizer-all {
+    cursor: move;
+}
+
+.ui-table-header {
+    & .column-item {
+        position: relative;
+
+        & .hor-resizer {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            width: 4px;
         }
     }
 }
