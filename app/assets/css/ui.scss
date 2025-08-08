@@ -360,13 +360,13 @@
 }
 
 .ui-resizer {
-    background-color: red;
+    background-color: transparent;
 }
 .ui-resizer-hor {
-    cursor: ew-resize;
+    cursor: col-resize;
 }
 .ui-resizer-vert {
-    cursor: ns-resize;
+    cursor: row-resize;
 }
 .ui-resizer-all {
     cursor: move;
@@ -382,6 +382,12 @@
             bottom: 0;
             right: 0;
             width: 4px;
+            &:hover {
+                background-color: red;
+            }
+        }
+        & .hor-resizer-active {
+            background-color: red;
         }
     }
 }
