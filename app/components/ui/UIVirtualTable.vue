@@ -1,56 +1,57 @@
-<script setup lang="ts" generic="
-T extends {  [key: string]: any }, 
-TCol extends {width: number, field: string, [key: string]: any},
-TSpanItem">
-import { logger, newPaddingFromString, newResizeObserver, zeroPadding, type Padding } from 'vuepkg';
-import { useScrollParent } from './scripts/ScrollParent';
+<script
+    setup
+    lang="ts"
+    generic="T extends { [key: string]: any }, TCol extends { width: number; field: string; [key: string]: any }, TSpanItem"
+>
+import { logger, newPaddingFromString, newResizeObserver, zeroPadding, type Padding } from "vuepkg";
+import { useScrollParent } from "./scripts/ScrollParent";
 import {
     isRenderVisibleRangeSame,
     zeroRenderVisibleRange,
     type RenderVisibleRange,
     type TableSpan,
     type VirtualScrollerExpose,
-    type VisibleRange
-} from './scripts/Virtuals';
+    type VisibleRange,
+} from "./scripts/Virtuals";
 
 const props = defineProps<{
     items: T[];
-    itemHeight: number
-    rowKey: (item: T) => string
+    itemHeight: number;
+    rowKey: (item: T) => string;
     /**
      * 行间距, key 为行索引, value 为间距。间距将添加在指定行的底部（最后一行不会添加）.
      * key 为-1 时，表示默认行间距
      */
-    rowGap?: { [key: number]: number }
+    rowGap?: { [key: number]: number };
     /**
      * 列间距, key 为列索引, value 为间距。间距将添加在指定列的右侧（最后一列不会添加）。
      * key 为-1 时，表示默认列间距
      */
-    columnGap?: { [key: number]: number }
-    columns: TCol[]
+    columnGap?: { [key: number]: number };
+    columns: TCol[];
     /**
      * 合并单元格的定义，也做了虚拟化
      */
-    spans?: TableSpan<TSpanItem>[]
-    buffer?: number
-    contentPadding?: Padding | string
-    contentClass?: string
-    tableClass?: string
-    rowClass?: string
-    cellClass?: string
-    spanClass?: string
-    ssrVisibleItems?: number
+    spans?: TableSpan<TSpanItem>[];
+    buffer?: number;
+    contentPadding?: Padding | string;
+    contentClass?: string;
+    tableClass?: string;
+    rowClass?: string;
+    cellClass?: string;
+    spanClass?: string;
+    ssrVisibleItems?: number;
 }>();
 
 const containerRef = ref<HTMLDivElement | null>(null);
 const contentRef = ref<HTMLDivElement | null>(null);
 const rowItemsRef = ref<HTMLDivElement[]>([]);
-const measuredHeights: { [key: string]: number } = {};// 存储实际高度
+const measuredHeights: { [key: string]: number } = {}; // 存储实际高度
 const { scrollTop, scrollParentSize, initScrollParent, scrollParent, isOverflowX, releaseScrollParent } = useScrollParent(containerRef);
 
 const finalBuffer = computed(() => props.buffer ?? 10);
 const finalContentPadding = computed(() => {
-    if (typeof props.contentPadding === 'string') {
+    if (typeof props.contentPadding === "string") {
         return newPaddingFromString(props.contentPadding);
     }
     return props.contentPadding ?? zeroPadding();
@@ -74,10 +75,10 @@ const finalColumns = computed(() => {
         arr[i] = {
             ...col,
             __style__: {
-                width: col.width + 'px',
-                marginRight: `${gap}px`
-            }
-        } as any;
+                width: col.width + "px",
+                marginRight: `${gap}px`,
+            },
+        } as never;
     }
     return arr;
 });
@@ -125,18 +126,18 @@ const contentWidthWithPadding = computed(() => {
 
 const renderVisibleRange = shallowRef<RenderVisibleRange>(zeroRenderVisibleRange());
 const emit = defineEmits<{
-    (e: "visble-range-changed", range: VisibleRange): void
+    (e: "visble-range-changed", range: VisibleRange): void;
 }>();
 
 watch(isOverflowX, (val) => {
     // logger.debug('isOverflowX', val);
     if (!containerRef.value || !contentRef.value) return;
     if (val) {
-        containerRef.value.style.alignItems = 'flex-start';
-        contentRef.value.style.left = finalContentPadding.value.left + 'px';
+        containerRef.value.style.alignItems = "flex-start";
+        contentRef.value.style.left = finalContentPadding.value.left + "px";
     } else {
-        containerRef.value.style.alignItems = 'center';
-        contentRef.value.style.left = '';
+        containerRef.value.style.alignItems = "center";
+        contentRef.value.style.left = "";
     }
 });
 watch(scrollTop, () => refresh());
@@ -163,14 +164,18 @@ const itemResizeObserver = newResizeObserver((entries) => {
         }
     }
 });
-watch(rowItemsRef, (newVal, oldVal) => {
-    oldVal.forEach((item) => {
-        itemResizeObserver.unobserve(item);
-    });
-    newVal.forEach((item) => {
-        itemResizeObserver.observe(item);
-    });
-}, { deep: true });
+watch(
+    rowItemsRef,
+    (newVal, oldVal) => {
+        oldVal.forEach((item) => {
+            itemResizeObserver.unobserve(item);
+        });
+        newVal.forEach((item) => {
+            itemResizeObserver.observe(item);
+        });
+    },
+    { deep: true },
+);
 
 const getHeightToIndex = (index: number) => {
     let height = finalContentPadding.value.top;
@@ -204,7 +209,7 @@ const getStartIndex = (topsHeight: number) => {
     return {
         bufferStart: Math.max(0, start - finalBuffer.value),
         visibleStart: start,
-        startRelativeOffset: startRelativeOffset
+        startRelativeOffset: startRelativeOffset,
     };
 };
 
@@ -228,7 +233,7 @@ const getViewportInfo = () => {
     }
 
     // 此处需要计算相对 top，因为 getBoundingClientRect 会返回相对于视口的位置，而不是相对于滚动容器的位置
-    const containerTop = (containerRef.value?.getBoundingClientRect()?.top ?? 0);
+    const containerTop = containerRef.value?.getBoundingClientRect()?.top ?? 0;
     const relativeTop = containerTop - scrollContainerTop;
     let viewportHeight = scrollParentSize.value.height;
     // 此处需要处理掉 padding 部分的高度
@@ -263,7 +268,7 @@ const checkVisibleRange = () => {
         if (visibleItemsHeight >= viewportHeight) {
             break;
         }
-        if (i === props.items.length - 1) break; // 已经是最后一个项了，不再处理 
+        if (i === props.items.length - 1) break; // 已经是最后一个项了，不再处理
 
         // 加了间隔之后，如果大于了可显示高度，则还是取当前的索引
         // 此处暂不➕到visibleItemsHeight上，否则后面计算visibleEndRelativeOffset 会不准确
@@ -287,15 +292,15 @@ const checkVisibleRange = () => {
         bufferEnd,
         startOffset,
         visibleStartRelativeOffset: startRelativeOffset,
-        visibleEndRelativeOffset: viewportHeight - visibleItemsHeight
+        visibleEndRelativeOffset: viewportHeight - visibleItemsHeight,
     };
     if (!isRenderVisibleRangeSame(curRange, renderVisibleRange.value)) {
         renderVisibleRange.value = curRange;
         // emit('visble-range-changed', curRange);
-        if (typeof requestAnimationFrame === 'undefined') {
-            emit('visble-range-changed', curRange);
+        if (typeof requestAnimationFrame === "undefined") {
+            emit("visble-range-changed", curRange);
         } else {
-            requestAnimationFrame(() => emit('visble-range-changed', curRange));
+            requestAnimationFrame(() => emit("visble-range-changed", curRange));
         }
     }
 };
@@ -311,8 +316,8 @@ const visibleItems = computed(() => {
                 ...items[i],
                 __style__: {
                     marginBottom: `${getRowBottomGap(rowIndex)}px`,
-                }
-            } as any;
+                },
+            } as never;
         }
     }
 
@@ -325,8 +330,10 @@ const visibleSpans = computed(() => {
     const spans = props.spans || [];
     for (let i = 0; i < spans.length; i += 1) {
         const span = spans[i]!;
-        let rowBegin = span.row, rowEnd = span.row + span.rowSpan;
-        let colBegin = span.col, colEnd = span.col + span.colSpan;
+        let rowBegin = span.row,
+            rowEnd = span.row + span.rowSpan;
+        let colBegin = span.col,
+            colEnd = span.col + span.colSpan;
         if (rowBegin < 0) rowBegin = 0;
         if (colBegin < 0) colBegin = 0;
         if (rowEnd > props.items.length) rowEnd = props.items.length;
@@ -363,12 +370,12 @@ const visibleSpans = computed(() => {
         }
 
         span.__style__ = {
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             left: 0,
             width: `${width}px`,
             height: `${height}px`,
-            willChange: 'transform',
+            willChange: "transform",
             transform: `translateY(${offsetY}px) translateX(${offsetX}px)`,
             // top: `${getHeightToIndex(span.row)}px`,
         };
@@ -378,14 +385,16 @@ const visibleSpans = computed(() => {
 });
 
 const hiddenCellsStyle = computed(() => {
-    // 计算需要隐藏的单元格（即被 span 覆盖的单元格） 
+    // 计算需要隐藏的单元格（即被 span 覆盖的单元格）
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const hideCells = {} as Record<string, Record<string, any>>;
     const spans = props.spans || [];
     for (let i = 0; i < spans.length; i += 1) {
         const span = spans[i]!;
-        let rowBegin = span.row, rowEnd = span.row + span.rowSpan;
-        let colBegin = span.col, colEnd = span.col + span.colSpan;
+        let rowBegin = span.row,
+            rowEnd = span.row + span.rowSpan;
+        let colBegin = span.col,
+            colEnd = span.col + span.colSpan;
         if (rowBegin < 0) rowBegin = 0;
         if (colBegin < 0) colBegin = 0;
         if (rowEnd > props.items.length) rowEnd = props.items.length;
@@ -399,9 +408,9 @@ const hiddenCellsStyle = computed(() => {
         for (let r = rowBegin; r < rowEnd; r += 1) {
             for (let c = colBegin; c < colEnd; c += 1) {
                 hideCells[`${r}-${c}`] = {
-                    visibility: 'hidden',
-                    userSelect: 'none',
-                    pointerEvents: 'none',
+                    visibility: "hidden",
+                    userSelect: "none",
+                    pointerEvents: "none",
                 };
             }
         }
@@ -432,9 +441,9 @@ onUnmounted(() => {
     clearScrollTimeout();
 });
 
-const scrollToTop = (behavior: ScrollBehavior = 'auto') => {
+const scrollToTop = (behavior: ScrollBehavior = "auto") => {
     clearScrollTimeout();
-    logger.debug('scrollToTop', behavior, scrollParent.value);
+    logger.debug("scrollToTop", behavior, scrollParent.value);
     scrollParent.value?.scrollTo({ top: 0, behavior });
 };
 
@@ -445,9 +454,9 @@ const clearScrollTimeout = () => {
         scrollTimeout = undefined;
     }
 };
-const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
+const scrollToBottom = (behavior: ScrollBehavior = "auto") => {
     // 由于高度无法提前感知，所以需要试探性的滚动，满足条件时再退出
-    const delay = behavior === 'instant' ? 10 : 500;
+    const delay = behavior === "instant" ? 10 : 500;
     const doScroll = () => {
         clearScrollTimeout();
         const { scrollHeight, viewportHeight } = getViewportInfo();
@@ -455,27 +464,27 @@ const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
             scrollParent.value?.scrollTo({ top: scrollHeight - viewportHeight, behavior });
             scrollTimeout = setTimeout(() => doScroll(), delay);
         } else {
-            logger.debug('scrollToBottom', 'break', scrollTop.value, scrollHeight, viewportHeight);
+            logger.debug("scrollToBottom", "break", scrollTop.value, scrollHeight, viewportHeight);
         }
     };
     doScroll();
 };
-const scrollToIndex = (index: number, behavior: ScrollBehavior = 'auto') => {
+const scrollToIndex = (index: number, behavior: ScrollBehavior = "auto") => {
     if (index < 0) return;
     // 由于高度无法提前感知，所以需要试探性的滚动，满足条件时再退出
-    const delay = behavior === 'instant' ? 10 : 500;
+    const delay = behavior === "instant" ? 10 : 500;
     const doScroll = () => {
         clearScrollTimeout();
         const { topsHeight, scrollHeight } = getViewportInfo();
         const height = topsHeight + getHeightToIndex(index);
-        logger.debug('scrollToIndex', index, topsHeight, height, scrollHeight);
+        logger.debug("scrollToIndex", index, topsHeight, height, scrollHeight);
         if (height > scrollHeight) {
             scrollToBottom(behavior);
             return;
         }
         scrollParent.value?.scrollTo({ top: height, behavior });
         if (index >= renderVisibleRange.value.visibleStart && index < renderVisibleRange.value.visibleEnd) {
-            logger.debug('scrollToIndex', 'break');
+            logger.debug("scrollToIndex", "break");
             return;
         }
         scrollTimeout = setTimeout(() => doScroll(), delay);
@@ -483,32 +492,48 @@ const scrollToIndex = (index: number, behavior: ScrollBehavior = 'auto') => {
     doScroll();
 };
 defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex });
-
 </script>
 
 <template>
-    <div ref="containerRef" class="ui-virtual-table" style="padding: 0;" @wheel="onMouseWheel">
+    <div ref="containerRef" class="ui-virtual-table" style="padding: 0" @wheel="onMouseWheel">
         <!-- 撑开滚动条的占位元素 -->
-        <div :class="contentClass" :style="{
-            minWidth: contentWidthWithPadding + 'px',
-            minHeight: totalHeight + 'px',
-        }"></div>
-        <div ref="contentRef" :class="tableClass" :style="{
-            position: 'absolute',
-            width: contentWidth + 'px',
-            willChange: 'transform',
-            transform: `translateY(${renderVisibleRange.startOffset}px)`,
-        }">
-            <div v-for="(row, index) in visibleItems" :key="rowKey(row)" ref="rowItemsRef"
-                class="ui-flex ui-flex-align-stretch" :class="rowClass" :data-row-id="rowKey(row)"
-                :style="row.__style__">
-                <div v-for="(col, colIndex) in finalColumns" :key="col.field" :class="cellClass" :style="{
-                    ...col.__style__,
-                    ...(hiddenCellsStyle[`${renderVisibleRange.bufferStart + index}-${colIndex}`] ?? {}),
-                }">
-                    <slot name="cell" :row="row" :row-index="renderVisibleRange.bufferStart + index" :col="col"
-                        :col-index="colIndex">
-                        {{ row[col.field] ?? '' }}
+        <div
+            :class="contentClass"
+            :style="{
+                minWidth: contentWidthWithPadding + 'px',
+                minHeight: totalHeight + 'px',
+            }"
+        ></div>
+        <div
+            ref="contentRef"
+            :class="tableClass"
+            :style="{
+                position: 'absolute',
+                width: contentWidth + 'px',
+                willChange: 'transform',
+                transform: `translateY(${renderVisibleRange.startOffset}px)`,
+            }"
+        >
+            <div
+                v-for="(row, index) in visibleItems"
+                :key="rowKey(row)"
+                ref="rowItemsRef"
+                class="ui-flex ui-flex-align-stretch"
+                :class="rowClass"
+                :data-row-id="rowKey(row)"
+                :style="row.__style__"
+            >
+                <div
+                    v-for="(col, colIndex) in finalColumns"
+                    :key="col.field"
+                    :class="cellClass"
+                    :style="{
+                        ...col.__style__,
+                        ...(hiddenCellsStyle[`${renderVisibleRange.bufferStart + index}-${colIndex}`] ?? {}),
+                    }"
+                >
+                    <slot name="cell" :row="row" :row-index="renderVisibleRange.bufferStart + index" :col="col" :col-index="colIndex">
+                        {{ row[col.field] ?? "" }}
                     </slot>
                 </div>
             </div>
