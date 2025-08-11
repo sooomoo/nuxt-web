@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{
     direction: "hor" | "vert" | "all";
+    class?: string;
     activeClass?: string;
 }>();
 
@@ -12,6 +13,9 @@ const className = computed(() => {
         className.push("ui-resizer-vert");
     } else {
         className.push("ui-resizer-all");
+    }
+    if (props.class) {
+        className.push(props.class);
     }
     if (isResizing.value && props.activeClass) {
         className.push(props.activeClass);

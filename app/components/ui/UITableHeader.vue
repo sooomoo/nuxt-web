@@ -7,7 +7,24 @@ const props = defineProps<{
     columnGap?: { [key: number]: number };
     columns: T[];
     colClass?: string;
+    resizerClass?: string;
+    resizerActiveClass?: string;
 }>();
+
+const finalResizerClass = computed(() => {
+    if (props.resizerClass) {
+        return "hor-resizer " + props.resizerClass;
+    }
+    return "hor-resizer";
+});
+
+const finalResizerActiveClass = computed(() => {
+    if (props.resizerActiveClass) {
+        return "hor-resizer-active " + props.resizerActiveClass;
+    }
+    return "hor-resizer-active";
+});
+
 const getColumnRightGap = (index: number): number => {
     const val = props.columnGap?.[index];
     if (val) {
@@ -55,8 +72,8 @@ const handleResize = (leftColIndex: number, rightColumnIndex: number, deltaX: nu
             </slot>
             <UIResizer
                 v-if="colIndex < finalColumns.length - 1"
-                class="hor-resizer"
-                active-class="hor-resizer-active"
+                :class="finalResizerClass"
+                :active-class="finalResizerActiveClass"
                 :direction="'hor'"
                 :style="{
                     width: '4px',

@@ -382,12 +382,13 @@
             bottom: 0;
             right: 0;
             width: 4px;
+            transition: background-color 0.3s ease;
             &:hover {
-                background-color: red;
+                background-color: currentColor;
             }
         }
         & .hor-resizer-active {
-            background-color: red;
+            background-color: currentColor;
         }
     }
 }

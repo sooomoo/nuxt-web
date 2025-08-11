@@ -1,22 +1,20 @@
 <script setup lang="ts">
-import { logger } from 'vuepkg';
-import type { TableSpan, VirtualScrollerExpose, VisibleRange } from '~/components/ui/scripts/Virtuals';
-
+import { logger } from "vuepkg";
+import type { TableSpan, VirtualScrollerExpose, VisibleRange } from "~/components/ui/scripts/Virtuals";
 
 interface TableColumn {
-    width: number,
-    minWidth: number,
-    maxWidth: number,
-    field: string
-    title: string
+    width: number;
+    minWidth: number;
+    maxWidth: number;
+    field: string;
+    title: string;
 }
 interface TableRowItem {
-    id: number,
-    name: string,
-    title: string
-    [key: string]: unknown
+    id: number;
+    name: string;
+    title: string;
+    [key: string]: unknown;
 }
-
 
 const nowSeconds = Date.now() / 1000;
 
@@ -26,36 +24,36 @@ const columns = reactive<TableColumn[]>([
         minWidth: 80,
         maxWidth: 200,
         field: "id",
-        title: "ID"
+        title: "ID",
     },
     {
         width: 200,
         minWidth: 150,
         maxWidth: 300,
         field: "name",
-        title: "Name"
+        title: "Name",
     },
     {
         width: 500,
         minWidth: 300,
         maxWidth: 600,
         field: "title",
-        title: "Title"
+        title: "Title",
     },
     {
         width: 180,
         minWidth: 140,
         maxWidth: 300,
         field: "time",
-        title: "Time"
-    }
+        title: "Time",
+    },
 ]);
 
 const items: TableRowItem[] = Array.from({ length: 10000 }, (_, i) => ({
     id: i,
     name: `Name ${i}`,
     title: `Title ${i}`,
-    time: i
+    time: i,
 }));
 
 const rowGap: { [key: number]: number } = {
@@ -74,21 +72,21 @@ const spans: TableSpan<string>[] = [
         col: 0,
         rowSpan: 5,
         colSpan: 1,
-        item: 'Cross1'
+        item: "Cross1",
     },
     {
         row: 5,
         col: 0,
         rowSpan: 3,
         colSpan: 1,
-        item: 'Cross2'
+        item: "Cross2",
     },
     {
         row: 8,
         col: 0,
         rowSpan: 10,
         colSpan: 1,
-        item: 'Cross3'
+        item: "Cross3",
     },
     // {
     //     row: 7,
@@ -102,14 +100,14 @@ const spans: TableSpan<string>[] = [
         col: 0,
         rowSpan: 10,
         colSpan: 1,
-        item: 'Cross1998'
+        item: "Cross1998",
     },
     {
         row: 2000,
         col: 2,
         rowSpan: 6,
         colSpan: 2,
-        item: 'Cross2000'
+        item: "Cross2000",
     },
 ];
 
@@ -130,11 +128,9 @@ const indexChange = (evt: Event) => {
     if (!(evt.target instanceof HTMLInputElement)) {
         return;
     }
-    logger.debug('indexChange', evt.target.valueAsNumber);
+    logger.debug("indexChange", evt.target.valueAsNumber);
     vtableRef.value?.scrollToIndex(evt.target.valueAsNumber);
 };
-
-
 </script>
 
 <template>
@@ -142,18 +138,15 @@ const indexChange = (evt: Event) => {
         <div class="sth-big-header">
             <UITime :unix-seconds="nowSeconds"></UITime>
             <div class="ui-flex ui-flex-align-stretch">
-                <div style="background: red; width: 100px; height: 50px;"></div>
-                <div style="background: green; width: 100px; height: 80px;"></div>
-                <div style="background: burlywood; width: 100px;"></div>
+                <div style="background: red; width: 100px; height: 50px"></div>
+                <div style="background: green; width: 100px; height: 80px"></div>
+                <div style="background: burlywood; width: 100px"></div>
             </div>
         </div>
         <div class="sth-sticky">
             <div class="v-info">
-                itemsRange: {{ visibleRange?.bufferStart }} - [ {{ visibleRange?.visibleStart }} - {{
-                    visibleRange?.visibleEnd
-                }}
-                ] - {{
-                    visibleRange?.bufferEnd }}<br />
+                itemsRange: {{ visibleRange?.bufferStart }} - [ {{ visibleRange?.visibleStart }} - {{ visibleRange?.visibleEnd }} ] -
+                {{ visibleRange?.bufferEnd }}<br />
                 visibleStartRelativeOffset: {{ visibleRange?.visibleStartRelativeOffset }}px<br />
                 visibleEndRelativeOffset: {{ visibleRange?.visibleEndRelativeOffset }}px
             </div>
@@ -164,22 +157,41 @@ const indexChange = (evt: Event) => {
             </div>
         </div>
         <div class="ui-flex ui-flex-justify-center v-table-header-container">
-            <UITableHeader class="v-table-header" :columns="columns"
+            <UITableHeader
+                class="v-table-header"
+                :columns="columns"
                 col-class="ui-cell-border ui-flex ui-flex-align-center ui-flex-justify-space-between v-table-header-col"
-                :column-gap="colGap">
+                :column-gap="colGap"
+                resizer-active-class="col-resizer-active111"
+                resizer-class="col-resizer111"
+            >
                 <template #col="{ col }">
                     {{ col.title }}
                     <UISorter></UISorter>
                 </template>
             </UITableHeader>
         </div>
-        <UIVirtualTable ref="vtableRef" :columns="columns" :buffer="20" :items="items"
-            :row-key="item => item.id.toString()" :item-height="50" content-class="v-table-content" content-padding="16"
-            table-class="v-table" :ssr-visible-items="20" row-class="v-table-row"
-            cell-class="ui-cell-border v-table-cell" span-class="ui-cell-border v-table-span" :row-gap="rowGap"
-            :column-gap="colGap" :spans="spans" @visble-range-changed="onVisibleRangeChanged">
+        <UIVirtualTable
+            ref="vtableRef"
+            :columns="columns"
+            :buffer="20"
+            :items="items"
+            :row-key="(item) => item.id.toString()"
+            :item-height="50"
+            content-class="v-table-content"
+            content-padding="16"
+            table-class="v-table"
+            :ssr-visible-items="20"
+            row-class="v-table-row"
+            cell-class="ui-cell-border v-table-cell"
+            span-class="ui-cell-border v-table-span"
+            :row-gap="rowGap"
+            :column-gap="colGap"
+            :spans="spans"
+            @visble-range-changed="onVisibleRangeChanged"
+        >
             <template #cell="{ row, col }">
-                {{ row[col.field] ?? '' }}
+                {{ row[col.field] ?? "" }}
             </template>
         </UIVirtualTable>
         <Footer></Footer>
@@ -262,7 +274,6 @@ const indexChange = (evt: Event) => {
     border-radius: 3px;
 }
 
-
 :deep(.v-table) {
     position: relative;
 
@@ -299,7 +310,6 @@ const indexChange = (evt: Event) => {
     // }
 }
 
-
 :deep(.v-table-cell) {
     padding: 0 12px;
     position: relative;
@@ -314,7 +324,7 @@ const indexChange = (evt: Event) => {
 
     &:first-child {
         &::before {
-            content: '';
+            content: "";
             position: absolute;
             top: -4px;
             bottom: -4px;
@@ -322,7 +332,7 @@ const indexChange = (evt: Event) => {
             width: 30px;
             pointer-events: none;
             transform: translateX(100%);
-            transition: box-shadow .3s ease;
+            transition: box-shadow 0.3s ease;
             box-shadow: inset 12px 0 8px -8px rgba(0, 0, 0, 0.1);
         }
     }
@@ -338,6 +348,33 @@ const indexChange = (evt: Event) => {
         // border-right: none;
         // border-top: none;
         // background: var(--color-primary);
+    }
+}
+
+:deep(.col-resizer111) {
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 2px;
+        margin: 0 auto;
+        transition: background-color 0.3s ease;
+        background-color: transparent;
+    }
+    &:hover {
+        background-color: transparent !important;
+        &::before {
+            background-color: var(--color-primary);
+        }
+    }
+}
+:deep(.col-resizer-active111) {
+    background-color: transparent !important;
+    &::before {
+        background-color: var(--color-primary);
     }
 }
 </style>
