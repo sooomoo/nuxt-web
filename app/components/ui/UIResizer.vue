@@ -75,7 +75,6 @@ const startResize = async (e: MouseEvent) => {
     document.addEventListener("mouseup", stopResize);
     document.body.style.pointerEvents = "none";
     document.body.style.userSelect = "none";
-    // document.documentElement.style.cursor = "move";
 };
 </script>
 <template>
