@@ -37,11 +37,11 @@ const handleResize = async (e: MouseEvent) => {
     e.preventDefault();
 
     if (props.direction === "hor") {
-        document.body.style.cursor = "col-resize";
+        document.documentElement.style.cursor = "col-resize";
     } else if (props.direction === "vert") {
-        document.body.style.cursor = "row-resize";
+        document.documentElement.style.cursor = "row-resize";
     } else {
-        document.body.style.cursor = "move";
+        document.documentElement.style.cursor = "move";
     }
 
     if (isUpdating) return;
@@ -60,7 +60,9 @@ const handleResize = async (e: MouseEvent) => {
 
 const stopResize = () => {
     isResizing.value = false;
-    document.body.style.cursor = "auto";
+    document.body.style.userSelect = "";
+    document.body.style.pointerEvents = "";
+    document.documentElement.style.cursor = "";
     document.removeEventListener("mousemove", handleResize);
     document.removeEventListener("mouseup", stopResize);
 };
@@ -71,6 +73,9 @@ const startResize = async (e: MouseEvent) => {
 
     document.addEventListener("mousemove", handleResize);
     document.addEventListener("mouseup", stopResize);
+    document.body.style.pointerEvents = "none";
+    document.body.style.userSelect = "none";
+    // document.documentElement.style.cursor = "move";
 };
 </script>
 <template>
