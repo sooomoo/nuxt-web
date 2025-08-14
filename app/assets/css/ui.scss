@@ -114,6 +114,12 @@
     position: fixed;
 }
 
+.ui-singleline {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 // ----- components styles
 .ui-tooltip {
     position: relative;
@@ -389,6 +395,55 @@
         }
         & .hor-resizer-active {
             background-color: currentColor;
+        }
+    }
+}
+
+.ui-virtual-tree {
+    & .ui-virtual-tree-expand-square {
+        width: 12px;
+        height: 12px;
+        border: 1px solid currentColor;
+        margin-right: 6px;
+        position: relative;
+        &::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 6px;
+            height: 1px;
+            margin: auto;
+            border-top: 1px solid currentColor;
+            transition: border-color 0.3s ease;
+        }
+        &::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 6px;
+            height: 1px;
+            margin: auto;
+            border-top: 1px solid currentColor;
+            transform: rotateZ(90deg);
+            transition:
+                transform 0.3s ease,
+                border-color 0.3s ease;
+        }
+    }
+    & .ui-virtual-tree-expand-square[data-expanded="true"] {
+        // border-color: red;
+        // &::before {
+        //     border-color: red;
+        // }
+        &::after {
+            transform: rotateZ(0deg);
+            // border-color: red;
         }
     }
 }

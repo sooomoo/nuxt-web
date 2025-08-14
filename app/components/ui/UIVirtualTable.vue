@@ -142,6 +142,10 @@ watch(isOverflowX, (val) => {
 });
 watch(scrollTop, () => refresh());
 watch(scrollParentSize, () => refresh());
+watch(
+    () => props.items,
+    () => refresh(),
+);
 
 const itemResizeObserver = newResizeObserver((entries) => {
     // logger.debug('itemResizeObserver', entries);
