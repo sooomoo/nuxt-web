@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { logger } from "vuepkg";
+
+// definePageMeta({
+//     middleware: ['authed-check']
+// });
+
 const authStore = useAuthStore();
-if (authStore.user) {
-    // 登录成功，跳转到首页
-    navigateTo("/", { replace: true });
-}
 
 const route = useRoute();
+const log = logger.tag("LOGIN");
 
 const handleLoginStatusUpdated = (status: LoginStatus) => {
     switch (status) {
@@ -23,6 +26,15 @@ const handleLoginStatusUpdated = (status: LoginStatus) => {
             break;
     }
 };
+
+onMounted(async () => {
+    await authStore.getUserInfo();
+    log.debug("authStore.user is : ", authStore.user);
+    if (authStore.user) {
+        // 登录成功，跳转到首页
+        navigateTo("/", { replace: true });
+    }
+});
 </script>
 
 <template>

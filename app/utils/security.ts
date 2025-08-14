@@ -6,14 +6,14 @@ import {
     newBoxKeyPair,
     newBoxKeyPairFromArray,
     newSignKeyPair,
-    newSignKeyPairFromArray
+    newSignKeyPairFromArray,
 } from "vuepkg";
 /**
  * 获取会话密钥
  * @returns
  */
 export const getSecuretsFromCookie = (cookies: string[], ctx?: NuxtApp): Secrets | undefined => {
-    const runtimeConfig = useRuntimeConfig(ctx?.ssrContext?.event)
+    const runtimeConfig = useRuntimeConfig(ctx?.ssrContext?.event);
     const parsedCookies = parseCookies(cookies);
     const sessionId = parsedCookies.find((c) => c.name === runtimeConfig.public.sidName)?.value ?? "";
     const clientKey = parsedCookies.find((c) => c.name === runtimeConfig.public.cidName)?.value ?? "";
@@ -36,7 +36,7 @@ export const getSecuretsFromCookie = (cookies: string[], ctx?: NuxtApp): Secrets
  * @returns
  */
 export const ensureSecurets = (): Secrets => {
-    const runtimeConfig = useRuntimeConfig()
+    const runtimeConfig = useRuntimeConfig();
     const sessionId = useCookie(runtimeConfig.public.sidName, {
         path: "/",
         sameSite: import.meta.dev ? "none" : "strict",

@@ -5,6 +5,13 @@ import { openWebSocket, startWebSocket } from "./workers/websocket";
 const authStore = useAuthStore();
 const config = useRuntimeConfig();
 
+// onBeforeRouteUpdate(async (to, from) => {
+//     logger.debug("routing...to is : ", to.fullPath);
+//     logger.debug("routing...from is : ", from.fullPath);
+//     if (to.fullPath.toLowerCase().startsWith("/login")) {
+//         return false;
+//     }
+// });
 onMounted(async () => {
     // // 15986004295946240
     // // 15994431603740672
@@ -23,14 +30,7 @@ onMounted(async () => {
     // console.log(obj);
     // return;
     const unixtime = unixNow();
-    logger.info(
-        "onMounted",
-        config,
-        unixtime,
-        Date.now(),
-        unixtime.toString(36),
-        unixtime.toString(16),
-    );
+    logger.info("onMounted", config, unixtime, Date.now(), unixtime.toString(36), unixtime.toString(16));
     await authStore.getUserInfo();
     startWebSocket((event) => {
         console.log("WebSocket message received:", event.data);

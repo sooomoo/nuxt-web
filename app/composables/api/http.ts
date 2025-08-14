@@ -222,7 +222,7 @@ const doFetch = async <TResp>(
     logger.newlines("\n\n");
     let redirect = "";
     if (import.meta.client) {
-        const pagePath = window.location.pathname + window.location.search;
+        const pagePath = (window.location.pathname + window.location.search).toLowerCase();
         redirect = pagePath === "/" || pagePath.startsWith("/login") ? "" : `?redirect=${encodeURIComponent(pagePath)}`;
     } else if (import.meta.server && ctx) {
         const pagePath = ctx?._route?.fullPath ?? ctx?.ssrContext?.event.node.req.url ?? "/";
