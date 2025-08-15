@@ -163,6 +163,7 @@ h1 {
     border-left: 1px dashed var(--hover-background);
     cursor: pointer;
     user-select: none;
+    // flex-direction: row-reverse;
     transition: background-color 0.3s ease;
     &:hover {
         background-color: var(--hover-background);

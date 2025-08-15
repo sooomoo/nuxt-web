@@ -435,6 +435,7 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
                 ref="listItemsRef"
                 class="ui-virtual-list-item"
                 :data-item-id="itemKey(item)"
+                :data-index="renderVisibleRange.bufferStart + index"
                 :style="item.__style__"
             >
                 <slot name="item" :item="item" :index="renderVisibleRange.bufferStart + index"></slot>
