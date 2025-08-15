@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T extends { children: T[]; [key: string]: any }">
 import { logger } from "vuepkg";
-import type { VisibleRange } from "./scripts/Virtuals";
+import type { VirtualScrollerExpose, VirtualTreeScrollerExpose, VisibleRange } from "./scripts/Virtuals";
 
 const props = defineProps<{
     items: T[];
@@ -9,10 +9,11 @@ const props = defineProps<{
     buffer?: number;
     gap?: number;
     ssrVisibleItems?: number;
-    itemClass?: (item: T, index: number, isExpand: boolean) => string;
+    itemClass?: string;
     expandTrigger?: "icon" | "item";
 }>();
 
+const vlistRef = ref<VirtualScrollerExpose | undefined>();
 const finalExpandTrigger = computed(() => props.expandTrigger ?? "icon");
 
 const flattedNodes = shallowRef<T[]>([]);
@@ -39,7 +40,6 @@ const flatNodes = (newNodes: T[]) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (node as any).__depth = depth;
             fnodes.push(node);
-            logger.debug("in traverse", node, node.__isExpanded);
             if (isNodeExpand(node) && node.children.length > 0) {
                 traverse(node.children, depth + 1);
             }
@@ -49,10 +49,30 @@ const flatNodes = (newNodes: T[]) => {
     flattedNodes.value = fnodes;
 };
 
+const findNode = (newNodes: T[], key: string): T | undefined => {
+    const traverse = (nodes: T[], depth: number, parent?: T): T | undefined => {
+        if (!nodes || nodes.length === 0) return;
+        for (const node of nodes) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (node as any).__parent = parent;
+            if (props.itemKey(node) === key) {
+                return node;
+            }
+
+            const res = traverse(node.children, depth + 1, node);
+            if (res) {
+                return res;
+            }
+        }
+    };
+    return traverse(newNodes, 0);
+};
+
 flatNodes(props.items);
 
 const emit = defineEmits<{
     (e: "visble-range-changed", range: VisibleRange): void;
+    (e: "click-item", item: T): void;
 }>();
 const onVisibleRangeChanged = (range: VisibleRange) => {
     emit("visble-range-changed", range);
@@ -73,10 +93,48 @@ const onClickItem = (item: T) => {
     if (finalExpandTrigger.value === "item") {
         toggleExpand(item);
     }
+    emit("click-item", item);
 };
+
+const scrollToTop = (behavior: ScrollBehavior = "auto") => {
+    vlistRef.value?.scrollToTop(behavior);
+};
+const scrollToBottom = (behavior: ScrollBehavior = "auto") => {
+    vlistRef.value?.scrollToBottom(behavior);
+};
+const scrollToIndex = (index: number, behavior: ScrollBehavior = "auto") => {
+    if (index < 0) return;
+    vlistRef.value?.scrollToIndex(index, behavior);
+};
+const scrollToItem = (key: string | T, behavior: ScrollBehavior = "auto") => {
+    // 先展开指定项所在的父节点
+    if (typeof key === "object") {
+        key = props.itemKey(key);
+    }
+    logger.debug("scrollToItem", key);
+    const node = findNode(props.items, key);
+    logger.debug("scrollToItem", node);
+    if (node) {
+        // 递归展开父节点
+        let cur: T | undefined = node;
+        while (cur) {
+            if (cur.__parent) {
+                expanedNodeSet.add(props.itemKey(cur.__parent));
+            }
+            cur = cur.__parent;
+        }
+        flatNodes(props.items);
+        const index = flattedNodes.value.findIndex((item) => props.itemKey(item) === key);
+        if (index !== -1) {
+            scrollToIndex(index, behavior);
+        }
+    }
+};
+defineExpose<VirtualTreeScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex, scrollToItem });
 </script>
 <template>
     <UIVirtualList
+        ref="vlistRef"
         :items="flattedNodes"
         :item-height="itemHeight"
         :item-key="itemKey"
@@ -89,7 +147,7 @@ const onClickItem = (item: T) => {
         <template #item="{ item, index }">
             <div
                 class="ui-flex ui-flex-align-center"
-                :class="itemClass?.(item, index, isNodeExpand(item))"
+                :class="itemClass"
                 :data-expanded="isNodeExpand(item)"
                 :data-depth="item.__depth"
                 :data-index="index"

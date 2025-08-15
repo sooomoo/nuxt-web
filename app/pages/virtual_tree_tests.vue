@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { logger } from "vuepkg";
-import type { VirtualScrollerExpose, VisibleRange } from "~/components/ui/scripts/Virtuals";
+import type { VirtualTreeScrollerExpose, VisibleRange } from "~/components/ui/scripts/Virtuals";
 
 const items = Array.from({ length: 50 }, (_, i) => ({
     id: i + "",
@@ -22,12 +22,18 @@ const onVisibleRangeChanged = (range: VisibleRange) => {
 };
 
 const nowSeconds = Date.now() / 1000;
-const vlistRef = ref<VirtualScrollerExpose | undefined>();
+const vlistRef = ref<VirtualTreeScrollerExpose | undefined>();
 const scrollToTop = () => {
     vlistRef.value?.scrollToTop();
 };
 const scrollToBottom = () => {
     vlistRef.value?.scrollToBottom();
+};
+
+const scrollToItemValue = ref("");
+
+const scrollToItem = () => {
+    vlistRef.value?.scrollToItem(scrollToItemValue.value);
 };
 
 const indexChange = (evt: Event) => {
@@ -36,10 +42,6 @@ const indexChange = (evt: Event) => {
     }
     logger.debug("indexChange", evt.target.valueAsNumber);
     vlistRef.value?.scrollToIndex(evt.target.valueAsNumber);
-};
-
-const itemClass = (item: unknown, index: number, isExpand: boolean) => {
-    return isExpand ? "item-even" : "item";
 };
 </script>
 
@@ -55,6 +57,9 @@ const itemClass = (item: unknown, index: number, isExpand: boolean) => {
             <button @click="scrollToTop">Scroll to Top</button>
             <button @click="scrollToBottom">Scroll to Bottom</button>
             <input type="number" @change="indexChange" />
+            <br />
+            <input v-model="scrollToItemValue" type="text" />
+            <button @click="scrollToItem">Scroll to Item</button>
         </div>
     </div>
     <div class="v-list-contaner">
@@ -65,10 +70,10 @@ const itemClass = (item: unknown, index: number, isExpand: boolean) => {
         <UIVirtualTree
             ref="vlistRef"
             :items="items"
-            :item-key="(item) => item.id.toString()"
+            :item-key="(item) => item.id"
             :item-height="32"
             :buffer="20"
-            :item-class="itemClass"
+            item-class="item"
             @visble-range-changed="onVisibleRangeChanged"
         >
             <template #item="{ item, index }">
@@ -105,6 +110,10 @@ h1 {
     margin: 0;
     height: 50px;
     align-content: center;
+    position: sticky;
+    top: 0;
+    background-color: var(--hover-background);
+    z-index: 1;
 }
 
 .sth-sticky {
@@ -151,38 +160,19 @@ h1 {
     align-content: center;
     padding: 0 12px;
     transform: translateX(calc(var(--depth) * 18px));
-    border-left: 1px dashed #666;
+    border-left: 1px dashed var(--hover-background);
     cursor: pointer;
     user-select: none;
     transition: background-color 0.3s ease;
     &:hover {
-        background-color: #282828;
+        background-color: var(--hover-background);
     }
 }
 :deep(.item[data-depth="0"]) {
     border-left: none;
 }
-
-:deep(.item-even) {
-    height: 32px;
-    // min-width: 160px;
-    // border: 1px solid #2eca99;
-    align-content: center;
-    padding: 0 12px;
-    transform: translateX(calc(var(--depth) * 18px));
-    border-left: 1px dashed red;
-    cursor: pointer;
-    // flex-direction: row-reverse;
-    user-select: none;
-    // color: var(--color-primary);
-    transition: background-color 0.3s ease;
-    background-color: #282828;
-    &:hover {
-        background-color: #282828;
-    }
-}
-
-:deep(.item-even[data-depth="0"]) {
+:deep(.item[data-expanded="true"]) {
     border-left: none;
+    background-color: var(--hover-background);
 }
 </style>
