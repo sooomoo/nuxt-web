@@ -68,6 +68,11 @@ const checkedIds = ref<string[]>(["1", "3"]);
 watch(checkedIds, (val) => {
     logger.debug("checkedIds", val);
 });
+
+const checkedIdsLong = ref<string[]>(["1", "3"]);
+watch(checkedIdsLong, (val) => {
+    logger.debug("checkedIdsLong", val);
+});
 </script>
 
 <template>
@@ -88,12 +93,13 @@ watch(checkedIds, (val) => {
     </div>
     <div style="width: 200px; margin-top: 20px">
         <UICheckBoxGroup
-            v-model:model-value="checkedIds"
+            v-model:model-value="checkedIdsLong"
             :virtualize="true"
             items-container-class="checkbox-list-long-container"
             :item-height="20"
             :items="checkboxGroupItemsLong"
             :buffer="15"
+            item-class="checkbox-listitem"
         >
             <template #item="{ item }">
                 {{ item.title }}
@@ -206,6 +212,10 @@ $backcolor: #f0f0f0;
 :deep(.checkbox-list-long-container) {
     height: 300px;
     overflow-y: auto;
+}
+:deep(.checkbox-listitem) {
+    width: 192px; // width - scrollbarwidth
+    // height: 24px;
 }
 
 .margin {

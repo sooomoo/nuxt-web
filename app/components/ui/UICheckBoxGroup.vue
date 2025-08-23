@@ -11,6 +11,7 @@ const props = defineProps<{
     buffer?: number;
     gap?: number;
     itemsContainerClass?: string;
+    itemClass?: string;
 }>();
 
 const checkedIds = defineModel<Key[]>({
@@ -73,7 +74,7 @@ updateStatus();
 <template>
     <div class="ui-checkbox-group">
         <UICheckBoxThreeState v-model:model-value="isAllChecked">Check All</UICheckBoxThreeState>
-        <div v-if="virtualize" :class="itemsContainerClass">
+        <div v-if="virtualize" :class="['ui-checkbox-group-content', itemsContainerClass]">
             <UIVirtualList
                 :items="items"
                 :item-key="(item) => item.id + ''"
@@ -83,7 +84,7 @@ updateStatus();
                 :gap="gap ? { row: gap, column: 0 } : undefined"
             >
                 <template #item="{ item, index }">
-                    <UICheckBox v-model:model-value="innerCheckedIds[item.id]">
+                    <UICheckBox v-model:model-value="innerCheckedIds[item.id]" :class="itemClass">
                         <slot name="item" :item="item" :index="index">
                             {{ item.id }}
                         </slot>
@@ -91,8 +92,8 @@ updateStatus();
                 </template>
             </UIVirtualList>
         </div>
-        <div v-else :class="itemsContainerClass">
-            <UICheckBox v-for="(item, index) in items" :key="item.id" v-model:model-value="innerCheckedIds[item.id]">
+        <div v-else :class="['ui-checkbox-group-content', itemsContainerClass]">
+            <UICheckBox v-for="(item, index) in items" :key="item.id" v-model:model-value="innerCheckedIds[item.id]" :class="itemClass">
                 <slot name="item" :item="item" :index="index">
                     {{ item.id }}
                 </slot>
