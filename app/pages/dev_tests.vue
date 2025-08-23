@@ -2,7 +2,7 @@
 import { logger } from "vuepkg";
 import type { ThreeState } from "~/components/ui/scripts/Types";
 
-const activeTab = ref(0);
+const activeTab = ref("0");
 const tabList = [
     { title: "报告模", id: 0 },
     { title: "报告报告模", id: 1 },
@@ -107,17 +107,23 @@ watch(checkedIdsLong, (val) => {
         </UICheckBoxGroup>
     </div>
 
-    <UITab v-model:active-index="activeTab" class="tab-test" :items="tabList"></UITab>
-    <UITab v-model:active-index="activeTab" class="vtab-test" :items="vtabList" orientation="vertical"></UITab>
+    <UITab v-model:active-id="activeTab" :item-key="(item) => item.id + ''" class="tab-test" :items="tabList" title-key="title"></UITab>
+    <UITab
+        v-model:active-id="activeTab"
+        :item-key="(item) => item.id + ''"
+        class="vtab-test"
+        :items="vtabList"
+        orientation="vertical"
+        title-key="title"
+    >
+        <template #default="{ item }">
+            {{ item.title }}
+        </template>
+    </UITab>
 
     <UISorter class="margin"></UISorter>
     <UITooltiop tooltip="This is a tooltip" class="tooltip-test">
         <button>Hover me</button>
-        <template #content>
-            <div>
-                <p>This is a tooltip</p>
-            </div>
-        </template>
     </UITooltiop>
     <UITooltiop tooltip="This is a tooltip" class="tooltip-test" anchor="bottomLeft">
         <button>Hover me</button>
