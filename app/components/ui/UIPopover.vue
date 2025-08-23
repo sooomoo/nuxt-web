@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from "vue";
-import { logger } from "vuepkg";
+import { logger, Rect } from "vuepkg";
 import type { Anchor } from "./scripts/Enums";
 import { BoundingClientRectObserver } from "./scripts/Observers";
-import { Rect } from "./scripts/Types";
 
 const props = defineProps<{
     trigger?: "hover" | "click";

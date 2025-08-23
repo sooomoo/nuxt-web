@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { logger } from "vuepkg";
+import type { ThreeState } from "~/components/ui/scripts/Types";
 
 const activeTab = ref(0);
 const tabList = [
@@ -56,12 +57,13 @@ const onClickStartSSE = () => {
 
 const checked = ref(false);
 
-const threeStateChecked = ref<"indeterminate" | "checked" | "unchecked">("indeterminate");
-const checkboxGroupItems = ref<{ id: string; title: string }[]>([
-    { id: "1", title: "checkbox 1" },
-    { id: "2", title: "checkbox 2" },
-    { id: "3", title: "checkbox 3" },
-]);
+const threeStateChecked = ref<ThreeState>("indeterminate");
+const checkboxGroupItems = ref<{ id: string; title: string }[]>(
+    Array.from({ length: 10 }, (_, i) => ({ id: i + "", title: `checkbox ${i}` })),
+);
+const checkboxGroupItemsLong = ref<{ id: string; title: string }[]>(
+    Array.from({ length: 1000 }, (_, i) => ({ id: i + "", title: `checkbox ${i}` })),
+);
 const checkedIds = ref<string[]>(["1", "3"]);
 watch(checkedIds, (val) => {
     logger.debug("checkedIds", val);
@@ -79,6 +81,20 @@ watch(checkedIds, (val) => {
     </div>
     <div style="width: 200px">
         <UICheckBoxGroup v-model:model-value="checkedIds" :items="checkboxGroupItems">
+            <template #item="{ item }">
+                {{ item.title }}
+            </template>
+        </UICheckBoxGroup>
+    </div>
+    <div style="width: 200px; margin-top: 20px">
+        <UICheckBoxGroup
+            v-model:model-value="checkedIds"
+            :virtualize="true"
+            items-container-class="checkbox-list-long-container"
+            :item-height="20"
+            :items="checkboxGroupItemsLong"
+            :buffer="15"
+        >
             <template #item="{ item }">
                 {{ item.title }}
             </template>
@@ -186,6 +202,11 @@ watch(checkedIds, (val) => {
 
 <style lang="scss" scoped>
 $backcolor: #f0f0f0;
+
+:deep(.checkbox-list-long-container) {
+    height: 300px;
+    overflow-y: auto;
+}
 
 .margin {
     margin: 10px 20px;

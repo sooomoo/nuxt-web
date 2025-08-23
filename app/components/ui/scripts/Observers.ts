@@ -1,5 +1,4 @@
-import { logger } from "vuepkg";
-import { Rect } from "./Types";
+import { logger, Rect } from "vuepkg";
 
 export class BoundingClientRectObserver {
     prevValue: Rect | null = null;

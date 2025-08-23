@@ -20,6 +20,7 @@ const props = defineProps<{
     contentPadding?: Padding | string;
     contentClass?: string;
     ssrVisibleItems?: number;
+    alignItems?: "start" | "center" | "end";
 }>();
 
 const containerRef = ref<HTMLDivElement | null>(null);
@@ -99,7 +100,7 @@ watch(isOverflowX, (val) => {
         containerRef.value.style.alignItems = "flex-start";
         contentRef.value.style.left = finalContentPadding.value.left + "px";
     } else {
-        containerRef.value.style.alignItems = "center";
+        containerRef.value.style.alignItems = props.alignItems || "center";
         contentRef.value.style.left = "";
     }
 });
@@ -410,7 +411,15 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
 </script>
 
 <template>
-    <div ref="containerRef" class="ui-virtual-list" style="padding: 0" @wheel="onMouseWheel">
+    <div
+        ref="containerRef"
+        class="ui-virtual-list"
+        :style="{
+            padding: '0px',
+            alignItems: alignItems,
+        }"
+        @wheel="onMouseWheel"
+    >
         <!-- 撑开滚动条的占位元素 -->
         <div
             class="ui-virtual-sizes"

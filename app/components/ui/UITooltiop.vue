@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { Anchor } from './scripts/Enums';
-import { BoundingClientRectObserver } from './scripts/Observers';
-import { Rect } from './scripts/Types';
+import { Rect } from "vuepkg";
+import type { Anchor } from "./scripts/Enums";
+import { BoundingClientRectObserver } from "./scripts/Observers";
 
 const props = defineProps<{
-    tooltip?: string
-    anchor?: Anchor
+    tooltip?: string;
+    anchor?: Anchor;
 }>();
 
 const showTooltip = ref(false);
@@ -14,7 +14,7 @@ const tooltipRef = ref<HTMLElement | null>(null);
 const rootRect = ref<Rect | null>(null);
 
 const finalAnchor = computed(() => {
-    return props.anchor || 'bottomCenter';
+    return props.anchor || "bottomCenter";
 });
 
 const tooltipStyle = computed(() => {
@@ -22,8 +22,8 @@ const tooltipStyle = computed(() => {
     const tooltipRect = rootRect.value.anchorOutside(finalAnchor.value, Rect.fromDOMRect(tooltipRef.value.getBoundingClientRect()));
     return {
         // transform: `translate(${tooltipRect.x}px, ${tooltipRect.y}px)`,
-        left: tooltipRect.x + 'px',
-        top: tooltipRect.y + 'px',
+        left: tooltipRect.x + "px",
+        top: tooltipRect.y + "px",
     };
 });
 
@@ -37,7 +37,7 @@ watch(showTooltip, (val) => {
 
 const boundingRectObserver = new BoundingClientRectObserver((rect) => {
     rootRect.value = Rect.fromDOMRect(rect);
-}, 'UITooltiop');
+}, "UITooltiop");
 
 const onMouseEnter = (_: MouseEvent) => {
     showTooltip.value = true;

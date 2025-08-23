@@ -1,20 +1,20 @@
 <script setup lang="ts">
+import type { ThreeState } from "./scripts/Types";
+
 defineProps<{
     label?: string;
 }>();
 
-type State = "indeterminate" | "checked" | "unchecked";
-
-const checked = defineModel<State>({
+const checked = defineModel<ThreeState>({
     default: "unchecked",
-    validator: (val: State) => ["indeterminate", "checked", "unchecked"].includes(val),
+    validator: (val: ThreeState) => ["indeterminate", "checked", "unchecked"].includes(val),
 });
 
 const emit = defineEmits<{
-    (e: "change", checked: State): void;
+    (e: "change", checked: ThreeState): void;
 }>();
 watch(checked, (val) => {
-    emit("change", val as State);
+    emit("change", val as ThreeState);
 });
 
 const className = computed(() => {

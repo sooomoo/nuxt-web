@@ -1,11 +1,16 @@
 <script setup lang="ts" generic="T extends { id: string | number }">
+import type { ThreeState } from "./scripts/Types";
 import UICheckBox from "./UICheckBox.vue";
-import UICheckBoxThreeState from "./UICheckBoxThreeState.vue";
 
 type Key = string | number;
 
 const props = defineProps<{
     items: T[];
+    virtualize?: boolean;
+    itemHeight?: number;
+    buffer?: number;
+    gap?: number;
+    itemsContainerClass?: string;
 }>();
 
 const checkedIds = defineModel<Key[]>({
@@ -13,7 +18,7 @@ const checkedIds = defineModel<Key[]>({
     type: Array as PropType<Key[]>,
 });
 
-const isAllChecked = ref<"indeterminate" | "checked" | "unchecked">("unchecked");
+const isAllChecked = ref<ThreeState>("unchecked");
 const innerCheckedIds = reactive<Record<Key, boolean>>({});
 watch(isAllChecked, (val) => {
     if (val === "checked") {
@@ -68,10 +73,30 @@ updateStatus();
 <template>
     <div class="ui-checkbox-group">
         <UICheckBoxThreeState v-model:model-value="isAllChecked">Check All</UICheckBoxThreeState>
-        <UICheckBox v-for="(item, index) in items" :key="item.id" v-model:model-value="innerCheckedIds[item.id]">
-            <slot name="item" :item="item" :index="index">
-                {{ item.id }}
-            </slot>
-        </UICheckBox>
+        <div v-if="virtualize" :class="itemsContainerClass">
+            <UIVirtualList
+                :items="items"
+                :item-key="(item) => item.id + ''"
+                :item-height="itemHeight ?? 50"
+                :buffer="buffer"
+                :align-items="'start'"
+                :gap="gap ? { row: gap, column: 0 } : undefined"
+            >
+                <template #item="{ item, index }">
+                    <UICheckBox v-model:model-value="innerCheckedIds[item.id]">
+                        <slot name="item" :item="item" :index="index">
+                            {{ item.id }}
+                        </slot>
+                    </UICheckBox>
+                </template>
+            </UIVirtualList>
+        </div>
+        <div v-else :class="itemsContainerClass">
+            <UICheckBox v-for="(item, index) in items" :key="item.id" v-model:model-value="innerCheckedIds[item.id]">
+                <slot name="item" :item="item" :index="index">
+                    {{ item.id }}
+                </slot>
+            </UICheckBox>
+        </div>
     </div>
 </template>
