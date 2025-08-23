@@ -1,57 +1,90 @@
 <script setup lang="ts">
-import { logger } from 'vuepkg';
+import { logger } from "vuepkg";
 
 const activeTab = ref(0);
 const tabList = [
-    { title: '报告模', id: 0 },
-    { title: '报告报告模', id: 1 },
-    { title: '建模', id: 2 },
+    { title: "报告模", id: 0 },
+    { title: "报告报告模", id: 1 },
+    { title: "建模", id: 2 },
 ];
 const vtabList = [
-    { title: '报', id: 0 },
-    { title: '模', id: 1 },
-    { title: '建', id: 2 },
+    { title: "报", id: 0 },
+    { title: "模", id: 1 },
+    { title: "建", id: 2 },
 ];
 
-const collapseItems = [{
-    id: '1',
-    header: 'This is panel header 1',
-    content: 'A dog is a type of domesticated animal.Known for its loyalty and faithfulness,it can be found as a welcome guest in many households across the world.',
-}, {
-    id: '2',
-    header: 'This is panel header 2',
-    content: 'A dog is a type of domesticated animal.Known for its loyalty and faithfulness,it can be found as a welcome guest in many households across the world.',
-}, {
-    id: '3',
-    header: 'This is panel header 3',
-    content: 'A dog is a type of domesticated animal.Known for its loyalty and faithfulness,it can be found as a welcome guest in many households across the world.',
-}];
-const defaultOpenedItems = ['2'];
+const collapseItems = [
+    {
+        id: "1",
+        header: "This is panel header 1",
+        content:
+            "A dog is a type of domesticated animal.Known for its loyalty and faithfulness,it can be found as a welcome guest in many households across the world.",
+    },
+    {
+        id: "2",
+        header: "This is panel header 2",
+        content:
+            "A dog is a type of domesticated animal.Known for its loyalty and faithfulness,it can be found as a welcome guest in many households across the world.",
+    },
+    {
+        id: "3",
+        header: "This is panel header 3",
+        content:
+            "A dog is a type of domesticated animal.Known for its loyalty and faithfulness,it can be found as a welcome guest in many households across the world.",
+    },
+];
+const defaultOpenedItems = ["2"];
 
 const onClickStartSSE = () => {
     const id = Date.now();
     const config = useRuntimeConfig();
-    const url = config.public.apiBaseUrl + '/sse/ai/ask?id=' + id;
-    logger.debug('Start SSE', url);
+    const url = config.public.apiBaseUrl + "/sse/ai/ask?id=" + id;
+    logger.debug("Start SSE", url);
     const source = new EventSource(url, {
         withCredentials: true,
     });
     source.onopen = (event) => {
-        logger.info('sse open', event);
+        logger.info("sse open", event);
     };
     source.onmessage = (event) => {
-        logger.info('sse message', event.data);
+        logger.info("sse message", event.data);
     };
     source.onerror = (event) => {
-        logger.error('sse error', event);
+        logger.error("sse error", event);
     };
 };
 
+const checked = ref(false);
+
+const threeStateChecked = ref<"indeterminate" | "checked" | "unchecked">("indeterminate");
+const checkboxGroupItems = ref<{ id: string; title: string }[]>([
+    { id: "1", title: "checkbox 1" },
+    { id: "2", title: "checkbox 2" },
+    { id: "3", title: "checkbox 3" },
+]);
+const checkedIds = ref<string[]>(["1", "3"]);
+watch(checkedIds, (val) => {
+    logger.debug("checkedIds", val);
+});
 </script>
 
 <template>
     <h1>Dev Tests</h1>
     <button @click="onClickStartSSE">Start SSE</button>
+    <div>
+        <span>Checked: {{ checked }}</span> <UICheckBox v-model="checked" label="Checkbox"> This is Checkbox </UICheckBox>
+    </div>
+    <div>
+        <UICheckBoxThreeState v-model="threeStateChecked" :label="'CheckBoxThreeState'"></UICheckBoxThreeState>
+    </div>
+    <div style="width: 200px">
+        <UICheckBoxGroup v-model:model-value="checkedIds" :items="checkboxGroupItems">
+            <template #item="{ item }">
+                {{ item.title }}
+            </template>
+        </UICheckBoxGroup>
+    </div>
+
     <UITab v-model:active-index="activeTab" class="tab-test" :items="tabList"></UITab>
     <UITab v-model:active-index="activeTab" class="vtab-test" :items="vtabList" orientation="vertical"></UITab>
 
@@ -113,25 +146,34 @@ const onClickStartSSE = () => {
         <UIAlign vertical="top" horizontal="center" class="align-test">Align</UIAlign>
     </div>
     <UIFlex direction="column" class="flex-test">
-        <UIAlign vertical='center' horizontal='center' class="size">124</UIAlign>
+        <UIAlign vertical="center" horizontal="center" class="size">124</UIAlign>
         <UIFlexFillRemain direction="vertical" scroll-if-need>
             <div class="sub">234</div>
         </UIFlexFillRemain>
     </UIFlex>
-    <UICollapse class="collapse-test" header-class="ui-flex ui-flex-align-center collapse-test-header"
-        content-class="collapse-test-content">
+    <UICollapse
+        class="collapse-test"
+        header-class="ui-flex ui-flex-align-center collapse-test-header"
+        content-class="collapse-test-content"
+    >
         <template #header>
             <UIIconArrowFill></UIIconArrowFill>
             a type of domesticated
         </template>
         <template #content>
-            A dog is a type of domesticated animal.Known for its loyalty and faithfulness,it can be found as a
-            welcome guest in many households across the world.
+            A dog is a type of domesticated animal.Known for its loyalty and faithfulness,it can be found as a welcome guest in many
+            households across the world.
         </template>
     </UICollapse>
-    <UICollapseGroup :items="collapseItems" mutex :default-opened-items="defaultOpenedItems"
-        class="ui-flex ui-flex-column ui-flex-align-stretch collapse-group-test" item-class="collapse-item"
-        item-header-class="ui-flex ui-flex-align-center item-header" item-content-class="item-content">
+    <UICollapseGroup
+        :items="collapseItems"
+        mutex
+        :default-opened-items="defaultOpenedItems"
+        class="ui-flex ui-flex-column ui-flex-align-stretch collapse-group-test"
+        item-class="collapse-item"
+        item-header-class="ui-flex ui-flex-align-center item-header"
+        item-content-class="item-content"
+    >
         <template #itemHeader="{ item }">
             <UIIconArrowFill></UIIconArrowFill>
             {{ item.header }}
@@ -180,7 +222,7 @@ $backcolor: #f0f0f0;
     width: min-content;
     height: 200px;
 
-    &>div {
+    & > div {
         height: 600px;
     }
 }

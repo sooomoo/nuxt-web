@@ -447,3 +447,111 @@
         }
     }
 }
+
+.ui-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0 4px;
+    cursor: pointer;
+    user-select: none;
+
+    & .ui-checkbox-icon {
+        width: 14px;
+        height: 14px;
+        border: 1px solid currentColor;
+        border-radius: 2px;
+        transition: background-color 0.3s ease;
+        position: relative;
+        &::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 5px;
+            height: 8px;
+            border-top: 1.5px solid transparent;
+            border-left: 1.5px solid transparent;
+            transform: translateX(3.5px) translateY(1px) rotateZ(-135deg);
+            transition: border-color 0.3s ease;
+        }
+    }
+    &.active {
+        & .ui-checkbox-icon {
+            background-color: currentColor;
+            &::after {
+                border-color: white;
+            }
+        }
+    }
+}
+
+.ui-checkbox-three-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 0 4px;
+    cursor: pointer;
+    user-select: none;
+
+    & .ui-checkbox-icon {
+        width: 14px;
+        height: 14px;
+        border: 1px solid currentColor;
+        border-radius: 2px;
+        transition: background-color 0.3s ease;
+        position: relative;
+        &::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 5px;
+            height: 8px;
+            border-top: 1.5px solid transparent;
+            border-left: 1.5px solid transparent;
+            transform: translateX(3.5px) translateY(1px) rotateZ(-135deg);
+            transition: border-color 0.3s ease;
+        }
+        &::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+            height: 0;
+            width: 8px;
+            border-top: 1.5px solid transparent;
+            transform: translateY(-0.5px);
+        }
+    }
+    &-checked {
+        & .ui-checkbox-icon {
+            background-color: currentColor;
+            &::after {
+                border-color: white;
+            }
+            &::before {
+                border-color: transparent;
+            }
+        }
+    }
+    &-indeterminate {
+        & .ui-checkbox-icon {
+            background-color: transparent;
+            &::after {
+                border-color: transparent;
+            }
+            &::before {
+                border-color: currentColor;
+            }
+        }
+    }
+}
+
+.ui-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+}

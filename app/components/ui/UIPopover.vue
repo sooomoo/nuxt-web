@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { logger } from 'vuepkg';
-import type { Anchor } from './scripts/Enums';
-import { BoundingClientRectObserver } from './scripts/Observers';
-import { Rect } from './scripts/Types';
+import { onMounted, onUnmounted, ref, watch } from "vue";
+import { logger } from "vuepkg";
+import type { Anchor } from "./scripts/Enums";
+import { BoundingClientRectObserver } from "./scripts/Observers";
+import { Rect } from "./scripts/Types";
 
 const props = defineProps<{
-    trigger?: 'hover' | 'click'
-    disabled?: boolean
-    anchor?: Anchor
+    trigger?: "hover" | "click";
+    disabled?: boolean;
+    anchor?: Anchor;
 }>();
 
-const popoverVisible = defineModel('popoverVisible', {
+const popoverVisible = defineModel("popoverVisible", {
     type: Boolean,
-    default: false
+    default: false,
 });
 const popoverRef = ref<HTMLElement | null>(null);
 const popoverContentRef = ref<HTMLElement | null>(null);
@@ -21,45 +21,48 @@ const rootRect = ref<Rect | null>(null);
 
 const boundingRectObserver = new BoundingClientRectObserver((rect) => {
     rootRect.value = Rect.fromDOMRect(rect);
-}, 'UIPopover');
+}, "UIPopover");
 
 watch(popoverVisible, (val) => {
     if (val) {
         if (popoverRef.value) boundingRectObserver.observe(popoverRef.value);
-        document.addEventListener('click', onClickDocument);
-        if (props.trigger === 'hover' && popoverRef.value) {
-            popoverRef.value.removeEventListener('mouseenter', onMouseLeave);
-            popoverRef.value.addEventListener('mouseleave', onMouseLeave);
+        document.addEventListener("click", onClickDocument);
+        if (props.trigger === "hover" && popoverRef.value) {
+            popoverRef.value.removeEventListener("mouseenter", onMouseLeave);
+            popoverRef.value.addEventListener("mouseleave", onMouseLeave);
             nextTick(() => {
                 if (popoverContentRef.value) {
-                    popoverContentRef.value.addEventListener('mouseleave', onContentMouseLeave);
+                    popoverContentRef.value.addEventListener("mouseleave", onContentMouseLeave);
                 }
             });
         }
     } else {
         boundingRectObserver.unobserve();
 
-        document.removeEventListener('click', onClickDocument);
-        if (props.trigger === 'hover' && popoverRef.value) {
-            popoverRef.value.addEventListener('mouseenter', onMouseEnter);
-            popoverRef.value.removeEventListener('mouseleave', onMouseLeave);
+        document.removeEventListener("click", onClickDocument);
+        if (props.trigger === "hover" && popoverRef.value) {
+            popoverRef.value.addEventListener("mouseenter", onMouseEnter);
+            popoverRef.value.removeEventListener("mouseleave", onMouseLeave);
             if (popoverContentRef.value) {
-                popoverContentRef.value.removeEventListener('mouseleave', onContentMouseLeave);
+                popoverContentRef.value.removeEventListener("mouseleave", onContentMouseLeave);
             }
         }
     }
 });
-watch(() => props.disabled, (val) => {
-    if (val) {
-        popoverVisible.value = false;
-        unhookEvent();
-    } else {
-        hookEvent();
-    }
-});
+watch(
+    () => props.disabled,
+    (val) => {
+        if (val) {
+            popoverVisible.value = false;
+            unhookEvent();
+        } else {
+            hookEvent();
+        }
+    },
+);
 
 const finalAnchor = computed(() => {
-    return props.anchor || 'bottomCenter';
+    return props.anchor || "bottomCenter";
 });
 const popoverContentStyle = computed(() => {
     if (!rootRect.value || !popoverContentRef.value) return {};
@@ -67,38 +70,39 @@ const popoverContentStyle = computed(() => {
     const tooltipRect = rect.anchorOutside(finalAnchor.value, Rect.fromDOMRect(popoverContentRef.value.getBoundingClientRect()));
     return {
         // transform: `translate(${tooltipRect.x}px, ${tooltipRect.y}px)`,
-        left: tooltipRect.x + 'px',
-        top: tooltipRect.y + 'px',
+        left: tooltipRect.x + "px",
+        top: tooltipRect.y + "px",
     };
 });
 
 const hookEvent = () => {
     unhookEvent();
 
-    if (props.trigger === 'hover') {
+    if (props.trigger === "hover") {
         if (!popoverRef.value) return;
-        popoverRef.value.addEventListener('mouseenter', onMouseEnter);
+        popoverRef.value.addEventListener("mouseenter", onMouseEnter);
     } else {
-        document.addEventListener('click', onClickDocument);
+        document.addEventListener("click", onClickDocument);
     }
 };
 const unhookEvent = () => {
-    document.removeEventListener('click', onClickDocument);
+    document.removeEventListener("click", onClickDocument);
     if (popoverRef.value) {
-        popoverRef.value.removeEventListener('mouseenter', onMouseEnter);
-        popoverRef.value.removeEventListener('mouseleave', onMouseLeave);
+        popoverRef.value.removeEventListener("mouseenter", onMouseEnter);
+        popoverRef.value.removeEventListener("mouseleave", onMouseLeave);
     }
     if (popoverContentRef.value) {
-        popoverContentRef.value.removeEventListener('mouseleave', onContentMouseLeave);
+        popoverContentRef.value.removeEventListener("mouseleave", onContentMouseLeave);
     }
 };
 
-
 const onClickDocument = (evt: Event) => {
-    logger.debug('onClickDocument', evt);
+    // logger.debug('onClickDocument', evt);
     if (popoverRef.value) {
         const isClickInside = popoverRef.value === evt.target || popoverRef.value.contains(evt.target as HTMLElement);
-        const isClickInContent = popoverContentRef.value && (popoverContentRef.value === evt.target || popoverContentRef.value.contains(evt.target as HTMLElement));
+        const isClickInContent =
+            popoverContentRef.value &&
+            (popoverContentRef.value === evt.target || popoverContentRef.value.contains(evt.target as HTMLElement));
         if (!isClickInside && !isClickInContent) {
             popoverVisible.value = false; // 点击在popover和 content 的外部
         }
@@ -106,13 +110,14 @@ const onClickDocument = (evt: Event) => {
 };
 
 const onMouseEnter = (_: Event) => {
-    // logger.debug('onMouseEnter', evt); 
+    // logger.debug('onMouseEnter', evt);
     popoverVisible.value = true;
 };
 const onMouseLeave = (evt: MouseEvent) => {
     // logger.debug('onMouseLeave', evt);
     if (popoverContentRef.value) {
-        const isToContent = popoverContentRef.value === evt.relatedTarget || popoverContentRef.value.contains(evt.relatedTarget as HTMLElement);
+        const isToContent =
+            popoverContentRef.value === evt.relatedTarget || popoverContentRef.value.contains(evt.relatedTarget as HTMLElement);
         if (isToContent) {
             // 鼠标移动到了 content 上
             return;
@@ -121,8 +126,8 @@ const onMouseLeave = (evt: MouseEvent) => {
     popoverVisible.value = false;
 };
 const onContentMouseLeave = (evt: MouseEvent) => {
-    if (props.trigger !== 'hover') return;
-    logger.debug('onContentMouseLeave', evt);
+    if (props.trigger !== "hover") return;
+    logger.debug("onContentMouseLeave", evt);
     if (popoverRef.value) {
         const isInPopover = popoverRef.value === evt.relatedTarget || popoverRef.value.contains(evt.relatedTarget as HTMLElement);
         if (isInPopover) {
@@ -141,7 +146,6 @@ const onClickRoot = (_: Event) => {
 
 onMounted(() => hookEvent());
 onUnmounted(() => unhookEvent());
-
 </script>
 
 <template>
@@ -150,8 +154,7 @@ onUnmounted(() => unhookEvent());
         <slot></slot>
         <Teleport to="#teleports">
             <Transition name="ui-slidefade">
-                <div v-if="popoverVisible" ref="popoverContentRef" :style="popoverContentStyle"
-                    class="ui-popover-content">
+                <div v-if="popoverVisible" ref="popoverContentRef" :style="popoverContentStyle" class="ui-popover-content">
                     <slot name="content"></slot>
                 </div>
             </Transition>
