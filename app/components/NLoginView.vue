@@ -5,7 +5,7 @@ const lvLogger = logger.tag("LoginView");
 const authStore = useAuthStore();
 
 const emit = defineEmits<{
-    (e: 'status-update', value: LoginStatus): void;
+    (e: "status-update", value: LoginStatus): void;
 }>();
 
 const mobile = ref("");
@@ -39,12 +39,7 @@ const doPrepareLogin = async () => {
  */
 const handleSubmit = async () => {
     if (!mobile.value || !imgCode.value || !msgCode.value) {
-        lvLogger.debug(
-            "请输入手机号、验证码和密码",
-            mobile.value,
-            imgCode.value,
-            msgCode.value,
-        );
+        lvLogger.debug("请输入手机号、验证码和密码", mobile.value, imgCode.value, msgCode.value);
         return;
     }
     if (!csrfResp.value?.csrfToken) {
@@ -60,7 +55,7 @@ const handleSubmit = async () => {
     });
     lvLogger.debug("login result", data.value, error.value);
     if (error.value) {
-        emit("status-update", 'fail' as LoginStatus);
+        emit("status-update", "fail" as LoginStatus);
         return;
     }
     if (data.value && data.value.code === RespCode.succeed) {
@@ -77,8 +72,7 @@ const handleSubmit = async () => {
     <div class="nlogin-view">
         <div class="row">
             <label for="mobile">手机号</label>
-            <input id="mobile" v-model="mobile" type="text" name="mobile" autocomplete="mobile" placeholder="请输入手机号"
-                required />
+            <input id="mobile" v-model="mobile" type="text" name="mobile" autocomplete="mobile" placeholder="请输入手机号" required />
         </div>
         <div class="row">
             <label for="imgCode">人机检测</label>
@@ -94,9 +88,7 @@ const handleSubmit = async () => {
                 <button type="button" class="primary-button">获取验证码</button>
             </div>
         </div>
-        <button type="submit" class="primary-button submit-button" @click="handleSubmit">
-            登录
-        </button>
+        <button type="submit" class="primary-button submit-button" @click="handleSubmit">登录</button>
     </div>
 </template>
 
@@ -139,7 +131,7 @@ const handleSubmit = async () => {
 
     @media (prefers-color-scheme: dark) {
         .img-code {
-            background-color: #ffffff8d;
+            background-color: #ffffffd0;
         }
     }
 }
