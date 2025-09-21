@@ -89,8 +89,8 @@ export default defineNuxtConfig({
         port: 3000,
         host: "127.0.0.1",
         https: {
-            cert: fs.readFileSync("/Users/muro/work/certs/cert.pem", "utf-8"),
-            key: fs.readFileSync("/Users/muro/work/certs/key.pem", "utf-8"),
+            cert: fs.readFileSync("E:\\experiment\\certs\\localhost+2.pem", "utf-8"),
+            key: fs.readFileSync("E:\\experiment\\certs\\localhost+2-key.pem", "utf-8"),
         },
     },
     typescript: {
