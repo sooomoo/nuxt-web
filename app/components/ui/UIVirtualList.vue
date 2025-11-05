@@ -24,9 +24,10 @@ const props = defineProps<{
 }>();
 
 const containerRef = ref<HTMLDivElement | null>(null);
+const vsizeRef = ref<HTMLDivElement | null>(null);
 const contentRef = ref<HTMLDivElement | null>(null);
 const listItemsRef = ref<HTMLDivElement[]>([]);
-const { scrollTop, scrollParentSize, initScrollParent, scrollParent, isOverflowX, releaseScrollParent } = useScrollParent(containerRef);
+const { scrollTop, scrollParentSize, initScrollParent, scrollParent, isOverflowX, releaseScrollParent } = useScrollParent(vsizeRef);
 
 const measuredHeights: { [key: string]: number } = {}; // 存储实际高度
 const finalColumn = computed(() => props.column || 1);
@@ -203,7 +204,7 @@ const getViewportInfo = () => {
     }
 
     // 此处需要计算相对 top，因为 getBoundingClientRect 会返回相对于视口的位置，而不是相对于滚动容器的位置
-    const containerTop = containerRef.value?.getBoundingClientRect()?.top ?? 0;
+    const containerTop = vsizeRef.value?.getBoundingClientRect()?.top ?? 0;
     const relativeTop = containerTop - scrollContainerTop;
     let viewportHeight = scrollParentSize.value.height;
     // 此处需要处理掉 padding 部分的高度
@@ -423,6 +424,7 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
         <!-- 撑开滚动条的占位元素 -->
         <div
             class="ui-virtual-sizes"
+            ref="vsizeRef"
             :class="contentClass"
             :style="{
                 minWidth: finalContentWidth + 'px',
