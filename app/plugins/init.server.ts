@@ -5,14 +5,7 @@ import { generateUUID, logger } from "vuepkg";
  */
 export default defineNuxtPlugin((nuxtApp) => {
     nuxtApp.hook("app:created", () => {
-        ensureSecurets(); // 本身就在 nuxt 上下文中，因此不需要传递 ctx
-        const platform = useCookie("pla", {
-            path: "/",
-            httpOnly: true,
-            sameSite: "none",
-            secure: true,
-        });
-        platform.value = "8";
+        ensureSecurets(); // 本身就在 nuxt 上下文中，因此不需要传递 ctx 
         // client id 先由插件生成，后由服务端续期
         const clientId = useCookie("cli", {
             path: "/",
