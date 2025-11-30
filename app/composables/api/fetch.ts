@@ -9,7 +9,6 @@ import { FetchError, type FetchResponse } from "ofetch";
 // import { isInteger, parse, stringify } from 'lossless-json';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
-import { JSONParse, JSONStringify } from "json-with-bigint";
 
 import { callOncePromise, generateUUID, logger, stringifyObj, useDecrypt, useEncrypt, useSignData, useSignVerify } from "vuepkg";
 
@@ -90,7 +89,7 @@ export class Fetcher {
         return { userAgent, cookies };
     };
 
-    private doRawFetch = async <TResp>(
+    private doRawFetch = async (
         method: string,
         path: string,
         body?: Record<string, any>,
@@ -131,7 +130,7 @@ export class Fetcher {
         // 1. 加密请求体（仅针对 POST/PUT 请求）
         const config = useRuntimeConfig(this.ctx?.ssrContext?.event);
         if (body && ["post", "put"].includes(method.toLowerCase()) && config.public.enableCrypto === "true") {
-            let reqData = JSONStringify(body);
+            let reqData = JSON.stringify(body);
             reqData = useEncrypt(boxKeyPair, reqData, config.public.serverExPubKey);
             finalBody = reqData; // 替换原始数据为加密后的数据
             signData["body"] = bytesToHex(sha256(reqData));
@@ -147,48 +146,69 @@ export class Fetcher {
         headers.set(headerSignature, useSignData(signKeyPair, str));
         fetchLogger.debug("request headers are: \n", headers);
 
-        const response = await $fetch.raw<TResp>(path, {
+        const response = await $fetch.raw(path, {
             baseURL: useRuntimeConfig(this.ctx?.ssrContext?.event).public.apiBaseUrl,
             body: finalBody,
             query: query,
             method: method as any,
             headers: headers,
             signal: signal,
+            responseType: "blob",
+            ignoreResponseError: true,
             timeout: this.timeout,
             credentials: "include",
+            retry: this.retry,
+            retryDelay: this.retryDelay,
         });
-        // fetchLogger.debug('response', response)
+        fetchLogger.debug('response', response)
         if (response.status !== 200) {
             return;
         }
 
+        fetchLogger.debug("response data is: ", response);
         const respTimestamp = response.headers.get(headerTimestamp) ?? "";
         const respNonce = response.headers.get(headerNonce) ?? "";
         const respSignature = response.headers.get(headerSignature) ?? "";
-        let respData = response._data as any;
-        const respBodyHash = bytesToHex(sha256(respData));
-        const respStr = stringifyObj({ session: sessionId, nonce: respNonce, timestamp: respTimestamp, method: method, path: path, query: strQuery, body: respBodyHash });
-        if (!useSignVerify(respStr, respSignature, config.public.serverSignPubKey)) {
-            fetchLogger.warn(`【FAILED】签名验证失败`, respData);
-            throw new Error("签名验证失败");
-        }
-
         const contentType = (response.headers.get(headerContentType) ?? "").toLowerCase();
-        if (contentType === encryptContentTypeJSON || contentType === encryptContentTypeText) {
-            respData = useDecrypt(boxKeyPair, respData, config.public.serverExPubKey);
-            try {
-                if (contentType === encryptContentTypeJSON) {
-                    respData = JSONParse(respData);
-                } else {
-                    respData = respData.toString();
-                }
-            } catch (error) {
-                fetchLogger.error(`【FAILED】解析响应数据失败`, respData, error);
+        fetchLogger.debug("response headers are: ", respTimestamp, respNonce, respSignature);
+
+        let respBodyHash = ''
+        let needDecrypt = contentType === encryptContentTypeJSON || contentType === encryptContentTypeText
+        let respEncryptText = '';
+        if (response._data instanceof Blob) {
+            const respBytes = await response._data.arrayBuffer()
+            const text = new TextDecoder().decode(respBytes);
+            respBodyHash = bytesToHex(sha256(text));
+            if (response._data.type === encryptContentTypeJSON || response._data.type === encryptContentTypeText) {
+                respEncryptText = await response._data.text();
+                needDecrypt = true // 需要解密
             }
         }
 
+        fetchLogger.debug("response body hash is: ", respBodyHash);
+        fetchLogger.debug("response body is: ", respEncryptText);
+        const respStr = stringifyObj({ session: sessionId, nonce: respNonce, timestamp: respTimestamp, method: method, path: path, query: strQuery, body: respBodyHash });
+        if (!useSignVerify(respStr, respSignature, config.public.serverSignPubKey)) {
+            fetchLogger.warn(`【FAILED】签名验证失败`, respEncryptText);
+            throw new Error("签名验证失败");
+        }
+
         saveCookies(this.ctx, response.headers.getSetCookie());
-        response._data = respData;
+        if (!needDecrypt) {
+            return response;
+        }
+
+        const decryptedText = useDecrypt(boxKeyPair, respEncryptText, config.public.serverExPubKey);
+        try {
+            if (contentType === encryptContentTypeJSON) {
+                response._data = JSON.parse(decryptedText);
+            } else {
+                response._data = decryptedText;
+            }
+        } catch (error) {
+            fetchLogger.error(`【FAILED】解析响应数据失败`, respEncryptText, error);
+        }
+
         return response;
     };
 
@@ -220,7 +240,7 @@ export class Fetcher {
         }
         logger.tag("doFetch").debug("redirect path is :", redirect);
         try {
-            const res = await this.doRawFetch<TResp>(method, path, body, query, signal);
+            const res = await this.doRawFetch(method, path, body, query, signal);
             return res?._data as TResp;
         } catch (error) {
             if (this.isStatusError(error, 401) && this.autoHandle401) {
@@ -246,7 +266,7 @@ export class Fetcher {
                     // 重新发起请求
                     // 此处需要手动传递新的 cookie，因为在 ssr 时，刷新 token 返回的 cookie 还未同步到上下文中
                     this.setCookie(resRefresh.headers.getSetCookie().join(";"));
-                    const res = await this.doRawFetch<TResp>(method, path, body, query, signal);
+                    const res = await this.doRawFetch(method, path, body, query, signal);
                     return res?._data as TResp;
                 } catch (error2) {
                     refLog.error(`refresh token failed.`, error2);
