@@ -20,7 +20,7 @@ export const apiAuth = {
         return await usePost<ResponseDto<PrepareLoginResponse>>("/v1/auth/login/prepare");
     },
     login: async (param: LoginParam) => {
-        const res = await usePost<ResponseDto<null>>("/v1/auth/login/do", param);
+        const res = await usePost<ResponseDto<null>>("/v1/auth/login/msgcode", param);
         if (res.error.value === null && res.data.value?.code === RespCode.succeed) {
             if (import.meta.client) {
                 openWebSocket(useRuntimeConfig().public.apiBaseUrl);

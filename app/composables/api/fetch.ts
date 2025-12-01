@@ -29,8 +29,81 @@ const headerNonce = "X-Nonce"
 const headerTimestamp = "X-Timestamp"
 const headerSignature = "X-Signature"
 // encrypt content-type
-const encryptContentTypeJSON = "application/encrypt-json"
-const encryptContentTypeText = "application/encrypt-text"
+const encryptContentTypeJSON = "application/vnd.quantify+json;version=1.0"
+const encryptContentTypeText = "application/vnd.quantify+text;version=1.0"
+
+class QuantifyContentType {
+    type: string = ""
+    subtype: string = ""
+    charset: string = ""
+    version: string = ""
+    raw: string = ""
+    constructor(contentType: string) {
+        this.parse(contentType)
+    }
+
+    private parse(contentType: string) {
+        this.raw = contentType;
+        const parts = contentType.split(";");
+        if (parts.length < 1) {
+            return
+        }
+        const typePart = parts[0]!.split("/");
+        if (typePart.length !== 2) {
+            return
+        }
+        this.type = typePart[0]!;
+        this.subtype = typePart[1]!;
+        const remain = parts.slice(1);
+        const charsetPart = remain.find((p) => p.startsWith("charset="));
+        if (charsetPart) {
+            this.charset = charsetPart.split("=")[1]!.trim();
+        }
+        const versionPart = remain.find((p) => p.startsWith("version="));
+        if (versionPart) {
+            this.version = versionPart.split("=")[1]!.trim();
+        }
+    }
+
+    public isEncryptedJson() {
+        return this.subtype.toLowerCase() === 'vnd.quantify+json';
+    }
+
+    public isEncryptedText() {
+        return this.subtype.toLowerCase() === 'vnd.quantify+text';
+    }
+
+    public shouldDecrypt() {
+        return this.isEncryptedJson() || this.isEncryptedText();
+    }
+
+    public getContentTypeAfterDecrypted() {
+        if (this.isEncryptedJson()) return "application/json";
+        if (this.isEncryptedText()) return "text/plain";
+        return this.raw;
+    }
+
+    public isGeneralJson() {
+        const tp = this.type + "/" + this.subtype
+        return tp.toLowerCase() === 'application/json';
+    }
+
+    public isGeneralText() {
+        const tp = this.type + "/" + this.subtype
+        return tp.toLowerCase() === 'text/plain';
+    }
+
+    public shouldEncrypt() {
+        return this.isGeneralJson() || this.isGeneralText()
+    }
+
+    public getContentTypeAfterEncrypted() {
+        if (this.isGeneralJson()) return encryptContentTypeJSON;
+        if (this.isGeneralText()) return encryptContentTypeText;
+        return this.raw;
+    }
+
+}
 
 export class Fetcher {
     private ctx?: NuxtApp
@@ -101,7 +174,8 @@ export class Fetcher {
         const fetchLogger = logger.tag(`doRawFetch: ${method} ${path}`);
         fetchLogger.debug(`ctx has value ? ${this.ctx !== null && this.ctx !== undefined}, running on ${import.meta.client ? "CLIENT" : "SERVER"}\n`);
 
-        const headers = new Headers({ [headerContentType]: this.contentType ?? "application/json" });
+        const reqContentType = this.contentType ?? "application/json"
+        const headers = new Headers({ [headerContentType]: reqContentType });
         const { userAgent, cookies } = this.getUserAgentAndCookies();
         if (import.meta.server) {
             headers.set(headerCookie, cookies.join(";"));
@@ -129,16 +203,13 @@ export class Fetcher {
         let finalBody = body as any;
         // 1. 加密请求体（仅针对 POST/PUT 请求）
         const config = useRuntimeConfig(this.ctx?.ssrContext?.event);
-        if (body && ["post", "put"].includes(method.toLowerCase()) && config.public.enableCrypto === "true") {
+        const reqQuan = new QuantifyContentType(reqContentType)
+        if (body && reqQuan.shouldEncrypt()) {
             let reqData = JSON.stringify(body);
             reqData = useEncrypt(boxKeyPair, reqData, config.public.serverExPubKey);
             finalBody = reqData; // 替换原始数据为加密后的数据
             signData["body"] = bytesToHex(sha256(reqData));
-            if (this.contentType?.toLowerCase() === 'application/json') {
-                headers.set(headerContentType, encryptContentTypeJSON);
-            } else if (this.contentType?.toLowerCase() === 'text/plain') {
-                headers.set(headerContentType, encryptContentTypeText);
-            }
+            headers.set(headerContentType, reqQuan.getContentTypeAfterEncrypted());
         }
         const str = stringifyObj(signData);
         headers.set(headerTimestamp, timestamp);
@@ -169,17 +240,19 @@ export class Fetcher {
         const respTimestamp = response.headers.get(headerTimestamp) ?? "";
         const respNonce = response.headers.get(headerNonce) ?? "";
         const respSignature = response.headers.get(headerSignature) ?? "";
-        const contentType = (response.headers.get(headerContentType) ?? "").toLowerCase();
+        const respContentType = (response.headers.get(headerContentType) ?? "").toLowerCase();
+        let respQuan = new QuantifyContentType(respContentType)
         fetchLogger.debug("response headers are: ", respTimestamp, respNonce, respSignature);
 
         let respBodyHash = ''
-        let needDecrypt = contentType === encryptContentTypeJSON || contentType === encryptContentTypeText
+        let needDecrypt = respQuan.shouldDecrypt()
         let respEncryptText = '';
         if (response._data instanceof Blob) {
             const respBytes = await response._data.arrayBuffer()
             const text = new TextDecoder().decode(respBytes);
             respBodyHash = bytesToHex(sha256(text));
-            if (response._data.type === encryptContentTypeJSON || response._data.type === encryptContentTypeText) {
+            respQuan = new QuantifyContentType(response._data.type)
+            if (respQuan.shouldDecrypt()) {
                 respEncryptText = await response._data.text();
                 needDecrypt = true // 需要解密
             }
@@ -200,7 +273,7 @@ export class Fetcher {
 
         const decryptedText = useDecrypt(boxKeyPair, respEncryptText, config.public.serverExPubKey);
         try {
-            if (contentType === encryptContentTypeJSON) {
+            if (respContentType === encryptContentTypeJSON) {
                 response._data = JSON.parse(decryptedText);
             } else {
                 response._data = decryptedText;
