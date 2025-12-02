@@ -225,7 +225,7 @@ export class Fetcher {
             headers: headers,
             signal: signal,
             responseType: "blob",
-            ignoreResponseError: true,
+            ignoreResponseError: false,
             timeout: this.timeout,
             credentials: "include",
             retry: this.retry,
@@ -233,7 +233,7 @@ export class Fetcher {
         });
         fetchLogger.debug('response', response)
         if (response.status !== 200) {
-            return;
+            return response;
         }
 
         fetchLogger.debug("response data is: ", response);

@@ -1,5 +1,4 @@
-<script setup lang="ts">
-import { JSONStringify } from "json-with-bigint";
+<script setup lang="ts"> 
 import { callOncePromise, sleep } from "vuepkg";
 const doTask = async (val: number) => {
     await sleep(1000);
@@ -11,12 +10,7 @@ const singleExecutionTask = callOncePromise(() => doTask(1));
 const authStore = useAuthStore();
 const wsMsg = ref("");
 const bus = useAppEventBus();
-
-const userJson = computed(() => JSONStringify(authStore.user, undefined, 2));
-const userIDStr = computed(() => {
-    const t = 1602107439422259216021074394222592n;
-    return `${t}`;
-});
+ 
 
 onMounted(() => {
     singleExecutionTask().then((res) => {
@@ -27,7 +21,7 @@ onMounted(() => {
     });
     bus.on("websocketMessage", (message) => {
         console.log("websocketMessage", message);
-        wsMsg.value = JSONStringify(message, null, 2) + "\n" + Date.now().toString();
+        wsMsg.value = JSON.stringify(message, null, 2) + "\n" + Date.now().toString();
     });
 });
 </script>
@@ -38,10 +32,9 @@ onMounted(() => {
         是一种底层的网络通信机制，提供更灵活的使用方式。选择使用哪种技术取决于具体的应用场景和需求。对于需要实时交互的 Web 应用，WebSocket
         是更合适的选择；而对于底层或高性能要求的网络通信，Socket 提供了更多的控制和灵活性。333
     </p>
-    <div>UserID: {{ authStore.user?.id }}</div>
-    <div>UserID: {{ userIDStr }}</div>
+    <div>UserID: {{ authStore.user?.id }}</div> 
     <div>
-        <pre>{{ userJson }}</pre>
+        <pre>{{ authStore.user }}</pre>
     </div>
     <pre>{{ wsMsg }}</pre>
     <!-- <button @click="handleClick">get</button> -->

@@ -1,7 +1,7 @@
 import { callOncePromise } from "vuepkg";
 
 export interface GetUserInfoResponse {
-    id: bigint;
+    id: string;
     name: string;
     avatarUrl: string;
     role: string;
@@ -10,7 +10,7 @@ export interface GetUserInfoResponse {
 
 class ApiUser {
     private readonly _getUserInfoOnce = callOncePromise(async () => {
-        return await useGet<ResponseDto<GetUserInfoResponse>>("/v1/user/info");
+        return await useGet<ResponseDto<GetUserInfoResponse>>("/v1/account/info");
     });
 
     getUserInfo() {
