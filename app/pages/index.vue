@@ -43,7 +43,6 @@ onMounted(() => {
     监听卡片的鼠标移动事件mouseover，鼠标移动时修改光的left、top，让光跟随鼠标移动 监听卡片的鼠标移出事件mouseleave，鼠标移出时，隐藏光
     作者：Sunshine_Lin 链接：https://juejin.cn/post/7373867360019742758 来源：稀土掘金
     著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
-    <div class="block" />
 </template>
 
 <style scoped lang="scss">
