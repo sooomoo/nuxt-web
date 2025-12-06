@@ -39,12 +39,12 @@ export const ensureSecurets = (): Secrets => {
     const runtimeConfig = useRuntimeConfig();
     const sessionId = useCookie(runtimeConfig.public.sidName, {
         path: "/",
-        sameSite: import.meta.dev ? "none" : "strict",
+        sameSite: "lax",
         secure: true,
     });
     const clientKey = useCookie(runtimeConfig.public.cidName, {
         path: "/",
-        sameSite: import.meta.dev ? "none" : "strict",
+        sameSite: "lax",
         secure: true,
     });
     const pubKeys = decodeSecureString(sessionId.value || "");

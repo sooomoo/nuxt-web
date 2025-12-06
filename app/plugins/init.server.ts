@@ -10,7 +10,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         const clientId = useCookie("cli", {
             path: "/",
             httpOnly: true,
-            sameSite: "none",
+            sameSite: "lax",
             secure: true,
             maxAge: 60 * 60 * 24 * 60,
         });
