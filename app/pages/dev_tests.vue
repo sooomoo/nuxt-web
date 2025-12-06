@@ -37,9 +37,8 @@ const collapseItems = [
 const defaultOpenedItems = ["2"];
 
 const onClickStartSSE = () => {
-    const id = Date.now();
     const config = useRuntimeConfig();
-    const url = config.public.apiBaseUrl + "/sse/ai/ask?id=" + id;
+    const url = config.public.apiBaseUrl + "/hub/ai";
     logger.debug("Start SSE", url);
     const source = new EventSource(url, {
         withCredentials: true,
