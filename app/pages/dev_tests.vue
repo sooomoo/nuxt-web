@@ -36,6 +36,7 @@ const collapseItems = [
 ];
 const defaultOpenedItems = ["2"];
 
+const sseMsg = reactive<string[]>([]);
 const onClickStartSSE = () => {
     const config = useRuntimeConfig();
     const url = config.public.apiBaseUrl + "/hub/ai";
@@ -47,11 +48,30 @@ const onClickStartSSE = () => {
         logger.info("sse open", event);
     };
     source.onmessage = (event) => {
-        logger.info("sse message", event.data);
+        logger.info("sse message", event);
+        sseMsg.push(`${event.lastEventId}: ${event.data}`);
     };
     source.onerror = (event) => {
         logger.error("sse error", event);
     };
+};
+
+const onClickStartWS = () => { 
+    const config = useRuntimeConfig(); 
+    const url = config.public.apiBaseUrl + "/hub/chat"; 
+    logger.debug("Start WS", url); 
+    const ws = new WebSocket(url); 
+    ws.onopen = (event) => { 
+        logger.info("ws open", event); 
+    };
+
+    ws.onmessage = (event) => { 
+        logger.info("ws message", event);  
+
+    }; 
+    ws.onerror = (event) => { 
+        logger.error("ws error", event); 
+    };  
 };
 
 const checked = ref(false);
@@ -76,7 +96,11 @@ watch(checkedIdsLong, (val) => {
 
 <template>
     <h1>Dev Tests</h1>
+    <button @click="onClickStartWS">Start WS</button>
     <button @click="onClickStartSSE">Start SSE</button>
+    <ol>
+        <li v-for="msg in sseMsg">{{ msg }}</li>
+    </ol>
     <div>
         <span>Checked: {{ checked }}</span> <UICheckBox v-model="checked" label="Checkbox"> This is Checkbox </UICheckBox>
     </div>
