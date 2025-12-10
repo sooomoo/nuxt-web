@@ -72,6 +72,10 @@ const onClickStartWS = () => {
     ws.onerror = (event) => { 
         logger.error("ws error", event); 
     };  
+    setInterval(() => {
+        const te = new TextEncoder()
+        ws.send(te.encode(`{"type": "message", "data": "hello world", "id": "${Date.now()}"`))
+    }, 2000);
 };
 
 const checked = ref(false);
