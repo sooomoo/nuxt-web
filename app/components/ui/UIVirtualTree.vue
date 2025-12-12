@@ -9,14 +9,16 @@ const props = defineProps<{
     buffer?: number;
     gap?: number;
     ssrVisibleItems?: number;
-    itemClass?: string;
-    expandTrigger?: "icon" | "item";
+    itemClass?: string | ((item: T, depth: number) => string);
+    expandTrigger?: "icon" | "item" | 'both';
+    expandNodes?: string[]
 }>();
 
 const vlistRef = ref<VirtualScrollerExpose | undefined>();
 const finalExpandTrigger = computed(() => props.expandTrigger ?? "icon");
 
 const flattedNodes = shallowRef<T[]>([]);
+const expanedNodeSet = new Set<string>(props.expandNodes || []);
 
 watch(
     () => props.items,
@@ -25,8 +27,22 @@ watch(
         flatNodes(newNodes);
     },
 );
+watch(() => props.expandNodes, (newExpandNodes) => {
+    expanedNodeSet.clear();
+    (newExpandNodes || []).forEach((key) => expanedNodeSet.add(key));
+    console.log("expanedNodeSet", expanedNodeSet, newExpandNodes);
+    flatNodes(props.items)
+});
 
-const expanedNodeSet = new Set<string>();
+const getItemClass = (item: T, depth: number) => {
+    if (!props.itemClass) return undefined
+    if (typeof props.itemClass === "string") {
+        return props.itemClass;
+    }
+
+    return props.itemClass(item, depth);
+}
+
 const isNodeExpand = (node: T) => {
     return expanedNodeSet.has(props.itemKey(node));
 };
@@ -47,6 +63,8 @@ const flatNodes = (newNodes: T[]) => {
     };
     traverse(newNodes);
     flattedNodes.value = fnodes;
+    logger.debug('flattedNodes', fnodes)
+    triggerRef(flattedNodes)
 };
 
 const findNode = (newNodes: T[], key: string): T | undefined => {
@@ -90,7 +108,7 @@ const toggleExpand = (item: T) => {
 };
 
 const onClickItem = (item: T) => {
-    if (finalExpandTrigger.value === "item") {
+    if (finalExpandTrigger.value === "item" || finalExpandTrigger.value === "both") {
         toggleExpand(item);
     }
     emit("click-item", item);
@@ -133,40 +151,25 @@ const scrollToItem = (key: string | T, behavior: ScrollBehavior = "auto") => {
 defineExpose<VirtualTreeScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex, scrollToItem });
 </script>
 <template>
-    <UIVirtualList
-        ref="vlistRef"
-        :items="flattedNodes"
-        :item-height="itemHeight"
-        :item-key="itemKey"
-        :buffer="buffer"
-        :gap="{ row: gap ?? 0, column: 0 }"
-        :ssr-visible-items="ssrVisibleItems"
-        class="ui-virtual-tree"
-        @visble-range-changed="onVisibleRangeChanged"
-    >
+    <UIVirtualList ref="vlistRef" :items="flattedNodes" :item-height="itemHeight" :item-key="itemKey" :buffer="buffer"
+        :gap="{ row: gap ?? 0, column: 0 }" :ssr-visible-items="ssrVisibleItems" class="ui-virtual-tree"
+        @visble-range-changed="onVisibleRangeChanged">
         <template #item="{ item, index }">
-            <div
-                class="ui-flex ui-flex-align-center"
-                :class="itemClass"
-                :data-expanded="isNodeExpand(item)"
-                :data-depth="item.__depth"
-                :data-index="index"
-                :style="{
+            <div class="ui-flex ui-flex-align-center" :class="getItemClass(item, item.__depth)"
+                :data-expanded="isNodeExpand(item)" :data-depth="item.__depth" :data-index="index" :style="{
                     '--depth': item.__depth,
                     '--index': index,
-                }"
-                @click="onClickItem(item)"
-            >
-                <div v-if="finalExpandTrigger === 'icon'" @click="toggleExpand(item)">
+                }" @click="onClickItem(item)">
+                <div v-if="finalExpandTrigger === 'icon' || finalExpandTrigger === 'both'"
+                    @click.stop="toggleExpand(item)">
                     <slot name="expand" :item="item" :index="index" :is-expand="isNodeExpand(item)">
-                        <div
-                            v-if="item.children.length > 0"
-                            class="ui-virtual-tree-expand-square"
-                            :data-expanded="isNodeExpand(item)"
-                        ></div>
+                        <div v-if="item.children.length > 0" class="ui-virtual-tree-expand-square"
+                            :data-expanded="isNodeExpand(item)"></div>
                     </slot>
                 </div>
-                <slot name="item" :item="item" :index="index" :is-expand="isNodeExpand(item)"> {{ item.name }} - {{ index }} </slot>
+                <slot name="item" :item="item" :index="index" :depth="item.__depth" :is-expand="isNodeExpand(item)"> {{
+                    item.name }} - {{
+                        index }} </slot>
             </div>
         </template>
     </UIVirtualList>

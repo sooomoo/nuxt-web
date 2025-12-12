@@ -112,7 +112,7 @@ watch(checkedIdsLong, (val) => {
         <UICheckBoxThreeState v-model="threeStateChecked" :label="'CheckBoxThreeState'"></UICheckBoxThreeState>
     </div>
     <div style="width: 200px">
-        <UICheckBoxGroup v-model:model-value="checkedIds" :items="checkboxGroupItems">
+        <UICheckBoxGroup v-model:model-value="checkedIds" :item-key="t=>t.id" :items="checkboxGroupItems">
             <template #item="{ item }">
                 {{ item.title }}
             </template>
@@ -124,7 +124,7 @@ watch(checkedIdsLong, (val) => {
             :virtualize="true"
             items-container-class="checkbox-list-long-container"
             :item-height="20"
-            :items="checkboxGroupItemsLong"
+            :items="checkboxGroupItemsLong" :item-key="t=>t.id"
             :buffer="15"
             item-class="checkbox-listitem"
         >
@@ -237,6 +237,8 @@ watch(checkedIdsLong, (val) => {
             {{ item.content }}
         </template>
     </UICollapseGroup>
+
+    <UIScrollToTop behavior="smooth"></UIScrollToTop>
 </template>
 
 <style lang="scss" scoped>

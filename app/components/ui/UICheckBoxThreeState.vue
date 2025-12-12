@@ -1,5 +1,6 @@
-<script setup lang="ts">
-import type { ThreeState } from "./scripts/Types";
+<script setup lang="ts"> 
+import { computed } from 'vue';
+import type { ThreeState } from './scripts/Types';
 
 defineProps<{
     label?: string;
@@ -13,9 +14,9 @@ const checked = defineModel<ThreeState>({
 const emit = defineEmits<{
     (e: "change", checked: ThreeState): void;
 }>();
-watch(checked, (val) => {
-    emit("change", val as ThreeState);
-});
+// watch(checked, (val) => {
+//     emit("change", val as ThreeState);
+// });
 
 const className = computed(() => {
     const arr = ["ui-checkbox-three-state"];
@@ -29,16 +30,19 @@ const className = computed(() => {
 });
 
 const onClick = () => {
+    let newVal:ThreeState
     if (checked.value !== "checked") {
-        checked.value = "checked";
+        newVal = "checked";
     } else {
-        checked.value = "unchecked";
+        newVal = "unchecked";
     }
+    checked.value = newVal
+    emit("change", newVal);
 };
 </script>
 
 <template>
-    <div :class="className" @click="onClick">
+    <div :class="className" @click.stop="onClick">
         <div class="ui-checkbox-icon"></div>
         <slot :label="label">{{ label }}</slot>
     </div>

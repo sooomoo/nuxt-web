@@ -69,6 +69,9 @@ const itemResizeObserver = newResizeObserver((entries) => {
 
         const height = entry.contentRect.height;
         const itemId = entry.target.dataset.itemId;
+        if (!itemId) {
+            logger.error("itemResizeObserver: itemId is null or empty, 这可能会出现布局错误", itemId);
+        }
         // 此处需要过滤掉==0 的值，当元素被重用时，其元素的值会短暂为 0
         // === props.itemHeight 的也没必要处理，因为默认会回退到这个尺寸
         if (!itemId || height < 1 || height === props.itemHeight) {
@@ -109,7 +112,13 @@ watch(scrollTop, () => checkVisibleRange());
 watch(scrollParentSize, () => checkVisibleRange());
 watch(
     () => props.items,
-    () => refresh(),
+    () => {
+        itemResizeObserver.disconnect();
+        releaseScrollParent();
+        clearScrollTimeout();
+        initScrollParent();
+        refresh()
+    },
 );
 
 const getItemHeight = (item: T): number => {
@@ -148,6 +157,7 @@ const getStartIndex = (topsHeight: number) => {
         }
         startIndexRowHeight = Math.max(...rowHeights);
         offset += startIndexRowHeight;
+        // logger.debug('startIndexRowHeight', startIndexRowHeight, offset, actualTopForList, topsHeight)
         if (offset >= actualTopForList) {
             start = i;
             break;
@@ -165,6 +175,8 @@ const getStartIndex = (topsHeight: number) => {
     //     offset,
     //     scrollTopValue: scrollTop.value,
     //     startRelativeOffset,
+    //     bufferStart: Math.max(0, start - finalBuffer.value * finalColumn.value),
+    //     visibleStart: start, 
     // });
 
     return {
@@ -216,14 +228,13 @@ const getViewportInfo = () => {
     const topsHeight = Math.floor(relativeTop + scrollTop.value);
     const bottomsHeight = othersHeight - topsHeight;
     // logger.debug('getViewportInfo', {
-    //     // scrollContainerTop,
-    //     // scrollHeight,
-    //     // othersHeight,
-    //     // topsHeight,
-    //     // bottomsHeight,
-    //     // scrollTop: scrollTop.value,
-    //     // totalHeight: totalHeight.value,
-    //     // containerRect,
+    //     scrollContainerTop,
+    //     scrollHeight,
+    //     othersHeight,
+    //     topsHeight,
+    //     bottomsHeight,
+    //     scrollTop: scrollTop.value,
+    //     totalHeight: totalHeight.value, 
     //     viewportHeight,
     //     scrollParentHeight: scrollParentSize.value.height,
     // });
@@ -237,11 +248,13 @@ const getViewportInfo = () => {
 
 const checkVisibleRange = () => {
     const { topsHeight, viewportHeight } = getViewportInfo();
+    // logger.debug('topsHeight', topsHeight, 'viewportHeight', viewportHeight)
     if (viewportHeight < 1) {
         return;
     }
     updateTotalHeight();
     const { bufferStart, visibleStart, startRelativeOffset } = getStartIndex(topsHeight);
+    // logger.debug('getStartIndex', { bufferStart, visibleStart, startRelativeOffset })
     let visibleEnd = visibleStart;
     // 计算视口可见项
     let visibleItemsHeight = startRelativeOffset;
@@ -255,6 +268,7 @@ const checkVisibleRange = () => {
             visibleEnd = i + j;
         }
         visibleItemsHeight += Math.max(...rowHeights);
+        // logger.debug('visibleItemsHeight', visibleItemsHeight, rowHeights, viewportHeight)
         if (visibleItemsHeight >= viewportHeight) {
             break;
         }
@@ -298,7 +312,7 @@ const checkVisibleRange = () => {
 // 可见项列表
 const visibleItems = computed(() => {
     const items = props.items.slice(renderVisibleRange.value.bufferStart, renderVisibleRange.value.bufferEnd + 1);
-    // logger.debug('visibleRange', visibleRange.value);//, 'visibleItems', items);
+    // logger.debug('visibleRange', renderVisibleRange.value);//, 'visibleItems', items);
 
     let itemWidth = 0;
     if (finalColumn.value > 0) {
@@ -412,43 +426,23 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
 </script>
 
 <template>
-    <div
-        ref="containerRef"
-        class="ui-virtual-list"
-        :style="{
-            padding: '0px',
-            alignItems: alignItems,
-        }"
-        @wheel="onMouseWheel"
-    >
+    <div ref="containerRef" class="ui-virtual-list" :style="{
+        padding: '0px',
+        alignItems: alignItems,
+    }" @wheel="onMouseWheel">
         <!-- 撑开滚动条的占位元素 -->
-        <div
-            class="ui-virtual-sizes"
-            ref="vsizeRef"
-            :class="contentClass"
-            :style="{
-                minWidth: finalContentWidth + 'px',
-                minHeight: totalHeight + 'px',
-            }"
-        ></div>
-        <div
-            ref="contentRef"
-            class="ui-virtual-content"
-            :style="{
-                width: finalContentWidthExcludePadding + 'px',
-                willChange: 'transform',
-                transform: `translateY(${renderVisibleRange.startOffset}px)`,
-            }"
-        >
-            <div
-                v-for="(item, index) in visibleItems"
-                :key="itemKey(item)"
-                ref="listItemsRef"
-                class="ui-virtual-list-item"
-                :data-item-id="itemKey(item)"
-                :data-index="renderVisibleRange.bufferStart + index"
-                :style="item.__style__"
-            >
+        <div class="ui-virtual-sizes" ref="vsizeRef" :class="contentClass" :style="{
+            minWidth: finalContentWidth + 'px',
+            minHeight: totalHeight + 'px',
+        }"></div>
+        <div ref="contentRef" class="ui-virtual-content" :style="{
+            width: finalContentWidthExcludePadding + 'px',
+            willChange: 'transform',
+            transform: `translateY(${renderVisibleRange.startOffset}px)`,
+        }">
+            <div v-for="(item, index) in visibleItems" :key="itemKey(item)" ref="listItemsRef"
+                class="ui-virtual-list-item" :data-item-id="itemKey(item)"
+                :data-index="renderVisibleRange.bufferStart + index" :style="item.__style__">
                 <slot name="item" :item="item" :index="renderVisibleRange.bufferStart + index"></slot>
             </div>
         </div>

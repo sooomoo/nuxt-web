@@ -33,6 +33,7 @@ const props = defineProps<{
      * 合并单元格的定义，也做了虚拟化
      */
     spans?: TableSpan<TSpanItem>[];
+    spanKey?: (span: TableSpan<TSpanItem>)=> string;
     buffer?: number;
     contentPadding?: Padding | string;
     contentClass?: string;
@@ -41,6 +42,7 @@ const props = defineProps<{
     cellClass?: string;
     spanClass?: string;
     ssrVisibleItems?: number;
+    dataCell?: (item:T, col: TCol)=> string | undefined
 }>();
 
 const containerRef = ref<HTMLDivElement | null>(null);
@@ -531,6 +533,7 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
                     v-for="(col, colIndex) in finalColumns"
                     :key="col.field"
                     :class="cellClass"
+                    :data-cell="dataCell?.(row, col)"
                     :style="{
                         ...col.__style__,
                         ...(hiddenCellsStyle[`${renderVisibleRange.bufferStart + index}-${colIndex}`] ?? {}),
@@ -541,7 +544,7 @@ defineExpose<VirtualScrollerExpose>({ scrollToTop, scrollToBottom, scrollToIndex
                     </slot>
                 </div>
             </div>
-            <div v-for="span in visibleSpans" :key="span.row + span.col" :class="spanClass" :style="span.__style__">
+            <div v-for="span in visibleSpans" :key="spanKey?.(span) || (span.row + span.col)" :class="spanClass" :style="span.__style__">
                 <slot name="span" :span="span">
                     {{ span.item }}
                 </slot>

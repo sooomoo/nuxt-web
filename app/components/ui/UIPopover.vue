@@ -8,6 +8,8 @@ const props = defineProps<{
     trigger?: "hover" | "click";
     disabled?: boolean;
     anchor?: Anchor;
+    contentClass?: string;
+    stopPropagation?: boolean
 }>();
 
 const popoverVisible = defineModel("popoverVisible", {
@@ -65,8 +67,22 @@ const finalAnchor = computed(() => {
 });
 const popoverContentStyle = computed(() => {
     if (!rootRect.value || !popoverContentRef.value) return {};
-    const rect = rootRect.value.shrink(1);
-    const tooltipRect = rect.anchorOutside(finalAnchor.value, Rect.fromDOMRect(popoverContentRef.value.getBoundingClientRect()));
+    let rect = rootRect.value.shrink(1);
+    if (props.trigger !== 'hover') {
+        rect = rootRect.value.expand(4);
+    }
+    const contentRect = popoverContentRef.value.getBoundingClientRect()
+    const tooltipRect = rect.anchorOutside(finalAnchor.value, Rect.fromDOMRect(contentRect));
+    if (tooltipRect.x > document.body.clientWidth - contentRect.width - 8) {
+        tooltipRect.x = document.body.clientWidth - contentRect.width - 8
+    }
+    if (tooltipRect.x < 8) {
+        tooltipRect.x = 8
+    }
+    // if (tooltipRect.x < rect.right - contentRect.width) {
+    //     tooltipRect.x = rect.right - contentRect.width
+    // }
+
     return {
         // transform: `translate(${tooltipRect.x}px, ${tooltipRect.y}px)`,
         left: tooltipRect.x + "px",
@@ -79,7 +95,7 @@ const hookEvent = () => {
 
     if (props.trigger === "hover") {
         if (!popoverRef.value) return;
-        popoverRef.value.addEventListener("mouseenter", onMouseEnter);
+        popoverRef.value.addEventListener("mouseenter", onMouseEnter); 
     } else {
         document.addEventListener("click", onClickDocument);
     }
@@ -136,9 +152,12 @@ const onContentMouseLeave = (evt: MouseEvent) => {
     popoverVisible.value = false;
 };
 
-const onClickRoot = (_: Event) => {
+const onClickRoot = (evt: Event) => {
     // logger.debug('onClickRoot', evt);
     if (props.disabled) return;
+    if (props.stopPropagation) {
+        evt.stopPropagation()
+    }
 
     popoverVisible.value = !popoverVisible.value;
 };
@@ -153,7 +172,8 @@ onUnmounted(() => unhookEvent());
         <slot></slot>
         <Teleport to="#teleports">
             <Transition name="ui-slidefade">
-                <div v-if="popoverVisible" ref="popoverContentRef" :style="popoverContentStyle" class="ui-popover-content">
+                <div v-if="popoverVisible" ref="popoverContentRef" :style="popoverContentStyle"
+                    :class="['ui-popover-content', contentClass]">
                     <slot name="content"></slot>
                 </div>
             </Transition>
