@@ -30,7 +30,7 @@ export const openWebSocket = (apiBaseUrl: string) => {
         cmd: WebSocketCmdConnect,
         data: {
             url: apiBaseUrl + "/hub/chat",
-            subprotocol: ["niu-v1"],
+            // subprotocol: ["niu-v1"], // 服务器也需要支持子协议才行，否则会连不上
             heartbeatInterval: 10000,
             maxRetryAttempts: 10,
         },

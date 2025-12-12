@@ -66,7 +66,7 @@ const onClickStartWS = () => {
     };
 
     ws.onmessage = (event) => { 
-        logger.info("ws message", event);  
+        logger.info("ws message", event);   
 
     }; 
     ws.onerror = (event) => { 

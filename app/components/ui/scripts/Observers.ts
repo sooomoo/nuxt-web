@@ -15,7 +15,7 @@ export class BoundingClientRectObserver {
     observe(elem: Element) {
         this.unobserveInternal(false);
         this.cancelled = false;
-        logger.debug(`${this.tag} observing.....`);
+        // logger.debug(`${this.tag} observing.....`);
 
         const iter = (elem: Element) => {
             if (this.cancelled) return;
@@ -35,7 +35,7 @@ export class BoundingClientRectObserver {
     }
 
     unobserve() {
-        this.unobserveInternal(true);
+        this.unobserveInternal(false);
     }
 
     unobserveInternal(log: boolean) {

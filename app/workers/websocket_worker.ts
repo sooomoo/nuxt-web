@@ -73,14 +73,14 @@ export class WebSocketClient extends WebSocketClientBase {
             this.clog.debug("text message: ", data);
         } else if (data instanceof ArrayBuffer) {
             const dataArr = new Uint8Array(data);
-            const { msgType, requestId, timestamp, code } = this.protocal.getResponseMeta(dataArr);
-            this.clog.debug("[META] recv message: ", msgType, requestId, timestamp, code);
-            if (msgType == WebSocketMsgType.pong) {
-                this.clog.debug("pong message");
-            }
+            // const { msgType, requestId, timestamp, code } = this.protocal.getResponseMeta(dataArr);
+            // this.clog.debug("[META] recv message: ", msgType, requestId, timestamp, code);
+            // if (msgType == WebSocketMsgType.pong) {
+            //     this.clog.debug("pong message");
+            // }
             notifyPorts({
                 type: "websocket_message",
-                data: this.protocal.decodeResp(dataArr),
+                data: dataArr,
             });
         }
     }
@@ -108,9 +108,11 @@ export class WebSocketClient extends WebSocketClientBase {
 
     sendMsg<T>(msgType: WebSocketMsgType, payload?: T): number {
         this.requestId = (this.requestId + 1) % 0xffffffff;
-        const packet = this.protocal.encodeReq<T>(msgType, this.requestId, payload);
-        this.clog.debug("send message: ", msgType, this.requestId, payload, packet, this.readyState);
-        this.send(packet.buffer);
+        // const packet = this.protocal.encodeReq<T>(msgType, this.requestId, payload);
+        // this.clog.debug("send message: ", msgType, this.requestId, payload, packet, this.readyState);
+        // this.send(packet.buffer);
+        const te = new TextEncoder().encode(`{"type": "message", "data": "hello world", "id": "${Date.now()}"`)
+        this.send(te.buffer)
         return this.requestId;
     }
 }
