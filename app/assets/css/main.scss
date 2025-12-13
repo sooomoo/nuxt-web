@@ -2,7 +2,7 @@
 
 :root {
     color-scheme: light dark;
-    --header-height: 56px;
+    --header-height: 48px;
     --footer-height: 40px;
     --scrollbar-size: 8px;
     --ui-transition-duration: 0.35s;
@@ -16,7 +16,7 @@ html[data-theme='dark'] {
     :root {
         --background-color: #f8f8f8;
         --color-container: white;
-        --color-header-background: #fffb;
+        --color-header-background: #fffc;
         --color-input-background: #f8f8f8;
         --color-text: #000;
         --color-primary: #1068ff;
@@ -36,7 +36,7 @@ html[data-theme='dark'] {
     :root {
         --background-color: #121212;
         --color-container: #222;
-        --color-header-background: #222b;
+        --color-header-background: #222c;
         --color-input-background: #222b;
         --color-text: #eee;
         --color-primary: #1068ff;

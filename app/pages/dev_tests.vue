@@ -56,28 +56,6 @@ const onClickStartSSE = () => {
     };
 };
 
-const onClickStartWS = () => { 
-    const config = useRuntimeConfig(); 
-    const url = config.public.apiBaseUrl + "/hub/chat"; 
-    logger.debug("Start WS", url); 
-    const ws = new WebSocket(url); 
-    ws.onopen = (event) => { 
-        logger.info("ws open", event); 
-    };
-
-    ws.onmessage = (event) => { 
-        logger.info("ws message", event);   
-
-    }; 
-    ws.onerror = (event) => { 
-        logger.error("ws error", event); 
-    };  
-    setInterval(() => {
-        const te = new TextEncoder()
-        ws.send(te.encode(`{"type": "message", "data": "hello world", "id": "${Date.now()}"`))
-    }, 2000);
-};
-
 const checked = ref(false);
 
 const threeStateChecked = ref<ThreeState>("indeterminate");
@@ -100,7 +78,6 @@ watch(checkedIdsLong, (val) => {
 
 <template>
     <h1>Dev Tests</h1>
-    <button @click="onClickStartWS">Start WS</button>
     <button @click="onClickStartSSE">Start SSE</button>
     <ol>
         <li v-for="msg in sseMsg">{{ msg }}</li>

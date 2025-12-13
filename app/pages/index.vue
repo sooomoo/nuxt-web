@@ -11,6 +11,12 @@ const authStore = useAuthStore();
 const wsMsg = ref("");
 const bus = useAppEventBus();
  
+const activeTab = ref("0");
+const tabList = [
+    { title: "报告模", id: 0 },
+    { title: "报告报告模", id: 1 },
+    { title: "建模", id: 2 },
+];
 
 onMounted(() => {
     singleExecutionTask().then((res) => {
